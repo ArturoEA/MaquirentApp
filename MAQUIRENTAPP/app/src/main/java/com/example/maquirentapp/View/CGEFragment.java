@@ -1,7 +1,11 @@
 package com.example.maquirentapp.View;
 
+import android.app.Dialog;
 import android.os.Bundle;
+import android.net.Uri;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
@@ -13,14 +17,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.maquirentapp.Access.GrupoElectrogenoAdapter;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.ApiServicio;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.Network.RetrofitCliente;
 import com.example.maquirentapp.R;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.List;
 
@@ -32,7 +41,11 @@ import retrofit2.Retrofit;
 public class CGEFragment extends Fragment {
     private RecyclerView recyclerView;
     private GrupoElectrogenoAdapter adapter;
-    private ApiServicio api;
+    private FirebaseServicio firebaseServicio;
+    // Para selección de imágenes
+    private ActivityResultLauncher<String> imagePickerLauncher;
+    private Uri selectedImageUri;
+    private ImageView dialogImagePreview;
 
     public CGEFragment() {
         // Required empty public constructor
@@ -45,10 +58,28 @@ public class CGEFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Configurar launcher para seleccionar imágenes
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        selectedImageUri = uri;
+                        if (dialogImagePreview != null) {
+                            dialogImagePreview.setImageURI(uri);
+                        }
+                    }
+                });
+    }
+
+    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         NavController navController = Navigation.findNavController(view);
+        firebaseServicio = new FirebaseServicio();
 
         recyclerView = view.findViewById(R.id.recycler_grupos_electrogenos);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -62,29 +93,80 @@ public class CGEFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
+        // Configurar botón de agregar grupo
+        ExtendedFloatingActionButton btnAgregar = view.findViewById(R.id.btnAgregarGrupo);
+        btnAgregar.setOnClickListener(v -> mostrarDialogoNuevoGrupo());
+
         fetchGruposElectrogenos();
 
     }
+    private void mostrarDialogoNuevoGrupo() {
+        Dialog dialog = new Dialog(requireContext());
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_nuevo_grupo, null);
+        dialog.setContentView(dialogView);
+
+        // Referencias a las vistas del diálogo
+        dialogImagePreview = dialogView.findViewById(R.id.imgPreview);
+        MaterialButton btnSeleccionarFoto = dialogView.findViewById(R.id.btnSeleccionarFoto);
+        TextInputEditText inputCodigo = dialogView.findViewById(R.id.inputCodigo);
+        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelar);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardar);
+
+        // Configurar listeners
+        btnSeleccionarFoto.setOnClickListener(v -> {
+            imagePickerLauncher.launch("image/*");
+        });
+
+        btnCancelar.setOnClickListener(v -> {
+            selectedImageUri = null;
+            dialog.dismiss();
+        });
+
+        btnGuardar.setOnClickListener(v -> {
+            String codigo = inputCodigo.getText().toString().trim();
+            if (codigo.isEmpty()) {
+                Toast.makeText(requireContext(), "Ingresa un código", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Deshabilitar botón mientras se guarda
+            btnGuardar.setEnabled(false);
+            btnGuardar.setText("Guardando...");
+
+            firebaseServicio.crearGrupoConImagen(codigo, selectedImageUri,
+                    new FirebaseServicio.OnGrupoCreatedListener() {
+                        @Override
+                        public void onSuccess(GrupoElectrogeno grupo) {
+                            Toast.makeText(requireContext(), "Grupo creado exitosamente", Toast.LENGTH_SHORT).show();
+                            selectedImageUri = null;
+                            dialog.dismiss();
+                            fetchGruposElectrogenos(); // Recargar lista
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            btnGuardar.setEnabled(true);
+                            btnGuardar.setText("Guardar");
+                        }
+                    });
+        });
+
+        dialog.show();
+    }
 
     private void fetchGruposElectrogenos() {
-        api = RetrofitCliente.getCliente().create(ApiServicio.class);
-        Call<List<GrupoElectrogeno>> peticion = api.GetGruposElectrogenos();
-        peticion.enqueue(new Callback<List<GrupoElectrogeno>>() {
+        firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
             @Override
-            public void onResponse(Call<List<GrupoElectrogeno>> call,
-                                   Response<List<GrupoElectrogeno>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    adapter.setItems(response.body());
-                } else {
-                    Toast.makeText(getContext(),
-                            "Error API: " + response.message(),
-                            Toast.LENGTH_LONG).show();
-                }
+            public void onSuccess(List<GrupoElectrogeno> grupos) {
+                adapter.setItems(grupos);
             }
+
             @Override
-            public void onFailure(Call<List<GrupoElectrogeno>> call, Throwable t) {
+            public void onError(Exception e) {
                 Toast.makeText(getContext(),
-                        "Conexión al API: " + t.getMessage(),
+                        "Error al cargar grupos: " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         });

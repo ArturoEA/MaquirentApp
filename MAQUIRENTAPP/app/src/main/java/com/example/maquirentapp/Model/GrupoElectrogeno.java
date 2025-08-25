@@ -1,15 +1,20 @@
 package com.example.maquirentapp.Model;
 
 public class GrupoElectrogeno {
-    private int id;
+    private String id;
     private String codigo;
     private String foto;
+    public GrupoElectrogeno() {}
+    public GrupoElectrogeno(String codigo, String foto) {
+        this.codigo = codigo;
+        this.foto = foto;
+    }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

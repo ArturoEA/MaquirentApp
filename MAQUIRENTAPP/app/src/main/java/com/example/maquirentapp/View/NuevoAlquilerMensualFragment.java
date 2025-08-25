@@ -127,19 +127,17 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             datePickerDialog.show();
         });
 
-        ApiServicio api = RetrofitCliente.getCliente().create(ApiServicio.class);
-        api.GetGruposElectrogenos().enqueue(new Callback<List<GrupoElectrogeno>>() {
+        FirebaseServicio firebaseServicio = new FirebaseServicio();
+        firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
             @Override
-            public void onResponse(Call<List<GrupoElectrogeno>> call, Response<List<GrupoElectrogeno>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    listaDeGrupos.clear();
-                    listaDeGrupos.addAll(response.body());
-                }
+            public void onSuccess(List<GrupoElectrogeno> grupos) {
+                listaDeGrupos.clear();
+                listaDeGrupos.addAll(grupos);
             }
 
             @Override
-            public void onFailure(Call<List<GrupoElectrogeno>> call, Throwable t) {
-                Toast.makeText(requireContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
+            public void onError(Exception e) {
+                Toast.makeText(requireContext(), "Error al cargar grupos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -175,10 +173,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setCarreta(chkCarreta.isChecked());
 
         String idGrupo = obtenerIdGrupoPorCodigo(codigo);
-//        if (idGrupo < 0) {
-//            Toast.makeText(getContext(), "Código de grupo inválido", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
+        if (idGrupo == null) {
+            Toast.makeText(getContext(), "Código de grupo inválido", Toast.LENGTH_SHORT).show();
+            return;
+        }
         alquiler.setIdGrupo(idGrupo);
 
         FirebaseServicio firebaseServicio = new FirebaseServicio();
@@ -199,10 +197,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private String obtenerIdGrupoPorCodigo(String codigoBuscado) {
         for (GrupoElectrogeno g : listaDeGrupos) {
             if (g.getCodigo().equalsIgnoreCase(codigoBuscado)) {
-                return String.valueOf(g.getId());
+                return g.getId();
             }
         }
-        return "No encontrado";
+        return null;
     }
 
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464499581195",
+    "project_id": "maquirentapp-aa462",
+    "storage_bucket": "maquirentapp-aa462.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464499581195:android:a67bbdee4e72a8ae20020e",
+        "android_client_info": {
+          "package_name": "com.example.maquirentapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMwVzEiqrdx4qTOqf1kdVS_2XFDTxJ9ms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

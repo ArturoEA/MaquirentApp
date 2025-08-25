@@ -1,18 +1,62 @@
 package com.example.maquirentapp.Network;
 
+import android.net.Uri;
+
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FirebaseServicio {
     private final FirebaseFirestore db;
-
+    private final FirebaseStorage storage;
     public FirebaseServicio() {
         db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
+    }
+
+    // Subir imagen y crear grupo
+    public void crearGrupoConImagen(String codigo, Uri imageUri, OnGrupoCreatedListener listener) {
+        if (imageUri == null) {
+            // Crear grupo sin imagen
+            crearGrupo(codigo, null, listener);
+            return;
+        }
+
+        // Subir imagen primero
+        String fileName = "grupos/" + codigo + "_" + System.currentTimeMillis() + ".jpg";
+        StorageReference storageRef = storage.getReference().child(fileName);
+
+        storageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    // Obtener URL de descarga
+                    storageRef.getDownloadUrl()
+                            .addOnSuccessListener(downloadUri -> {
+                                // Crear grupo con URL de imagen
+                                crearGrupo(codigo, downloadUri.toString(), listener);
+                            })
+                            .addOnFailureListener(listener::onError);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    private void crearGrupo(String codigo, String fotoUrl, OnGrupoCreatedListener listener) {
+        GrupoElectrogeno grupo = new GrupoElectrogeno();
+        grupo.setCodigo(codigo);
+        grupo.setFoto(fotoUrl);
+
+        db.collection("gruposElectrogenos")
+                .add(grupo)
+                .addOnSuccessListener(documentReference -> {
+                    grupo.setId(documentReference.getId());
+                    listener.onSuccess(grupo);
+                })
+                .addOnFailureListener(listener::onError);
     }
 
     // Obtener alquileres mensuales
@@ -54,6 +98,7 @@ public class FirebaseServicio {
                         List<GrupoElectrogeno> grupos = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             GrupoElectrogeno grupo = document.toObject(GrupoElectrogeno.class);
+                            grupo.setId(document.getId());
                             grupos.add(grupo);
                         }
                         listener.onSuccess(grupos);
@@ -64,6 +109,10 @@ public class FirebaseServicio {
     }
 
     // Interfaces para callbacks
+    public interface OnGrupoCreatedListener {
+        void onSuccess(GrupoElectrogeno grupo);
+        void onError(Exception e);
+    }
     public interface OnAlquileresLoadedListener {
         void onSuccess(List<AlquilerMensual> alquileres);
         void onError(Exception e);
