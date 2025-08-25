@@ -2,6 +2,7 @@ package com.example.maquirentapp;
 
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,6 +21,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
     private LinearLayout navHome, navRent, navPerfil;
@@ -49,6 +51,17 @@ public class MainActivity extends AppCompatActivity {
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("gruposElectrogenos")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("Firebase", "Conexión exitosa! Documentos: " + task.getResult().size());
+                    } else {
+                        Log.e("Firebase", "Error de conexión", task.getException());
+                    }
+                });
 
         scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
 

@@ -1,8 +1,8 @@
 package com.example.maquirentapp.Model;
 
 public class AlquilerMensual {
-    private int id;
-    private int idGrupo;
+    private String id;
+    private String idGrupo;
     private String nombreCliente;
     private double horometroInicial;
     private String fechaInicial;
@@ -19,6 +19,9 @@ public class AlquilerMensual {
     private boolean cableElectrico;
     private boolean tableroDistribucion;
     private boolean carreta;
+
+    public AlquilerMensual() {
+    }
 
     public boolean isCarreta() {
         return carreta;
@@ -131,19 +134,19 @@ public class AlquilerMensual {
         this.nombreCliente = empresa;
     }
 
-    public int getIdGrupo() {
+    public String getIdGrupo() {
         return idGrupo;
     }
 
-    public void setIdGrupo(int idGrupo) {
+    public void setIdGrupo(String idGrupo) {
         this.idGrupo = idGrupo;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -18,6 +18,7 @@ import com.example.maquirentapp.Access.GrupoElectrogenoAdapter;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.ApiServicio;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.Network.RetrofitCliente;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adaptadores.AlquilerMensualAdapter;
@@ -33,7 +34,7 @@ import retrofit2.Response;
 public class HistorialAlquilerMensualFragment extends Fragment {
     private RecyclerView recyclerView;
     private AlquilerMensualAdapter adapter;
-    private ApiServicio api;
+    private FirebaseServicio firebaseServicio;
     private String codigo;
     public HistorialAlquilerMensualFragment() {
         // Required empty public constructor
@@ -57,6 +58,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        firebaseServicio = new FirebaseServicio();
         String codigo = getArguments().getString("codigo");
 
         ExtendedFloatingActionButton btnAñadir = view.findViewById(R.id.btnAñadir);
@@ -77,24 +79,16 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void fetchAlquileresMensuales() {
-        api = RetrofitCliente.getCliente().create(ApiServicio.class);
-        Call<List<AlquilerMensual>> peticion = api.GetAlquileresMensuales();
-        peticion.enqueue(new Callback<List<AlquilerMensual>>() {
+        firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
             @Override
-            public void onResponse(Call<List<AlquilerMensual>> call,
-                                   Response<List<AlquilerMensual>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    adapter.setItems(response.body());
-                } else {
-                    Toast.makeText(getContext(),
-                            "Error API: " + response.message(),
-                            Toast.LENGTH_LONG).show();
-                }
+            public void onSuccess(List<AlquilerMensual> alquileres) {
+                adapter.setItems(alquileres);
             }
+
             @Override
-            public void onFailure(Call<List<AlquilerMensual>> call, Throwable t) {
+            public void onError(Exception e) {
                 Toast.makeText(getContext(),
-                        "Conexión al API: " + t.getMessage(),
+                        "Error al cargar alquileres: " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
             }
         });

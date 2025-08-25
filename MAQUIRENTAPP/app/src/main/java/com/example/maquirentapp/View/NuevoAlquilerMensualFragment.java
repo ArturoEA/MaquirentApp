@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.ApiServicio;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.Network.RetrofitCliente;
 import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -173,41 +174,37 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setTableroDistribucion(chkTablero.isChecked());
         alquiler.setCarreta(chkCarreta.isChecked());
 
-        int idGrupo = obtenerIdGrupoPorCodigo(codigo);
-        if (idGrupo < 0) {
-            Toast.makeText(getContext(), "Código de grupo inválido", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        String idGrupo = obtenerIdGrupoPorCodigo(codigo);
+//        if (idGrupo < 0) {
+//            Toast.makeText(getContext(), "Código de grupo inválido", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
         alquiler.setIdGrupo(idGrupo);
 
-        ApiServicio api = RetrofitCliente.getCliente().create(ApiServicio.class);
-        Call<AlquilerMensual> call = api.crearAlquilerMensual(alquiler);
-        call.enqueue(new Callback<AlquilerMensual>() {
+        FirebaseServicio firebaseServicio = new FirebaseServicio();
+        firebaseServicio.crearAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerCreatedListener() {
             @Override
-            public void onResponse(@NonNull Call<AlquilerMensual> call, @NonNull Response<AlquilerMensual> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
-                    requireActivity().onBackPressed(); // o redirige al historial
-                } else {
-                    Toast.makeText(getContext(), "Error: " + response.code(), Toast.LENGTH_LONG).show();
-                }
+            public void onSuccess(AlquilerMensual alquilerCreado) {
+                Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
+                requireActivity().onBackPressed();
             }
 
             @Override
-            public void onFailure(@NonNull Call<AlquilerMensual> call, @NonNull Throwable t) {
-                Toast.makeText(getContext(), "Fallo: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private int obtenerIdGrupoPorCodigo(String codigoBuscado) {
+    private String obtenerIdGrupoPorCodigo(String codigoBuscado) {
         for (GrupoElectrogeno g : listaDeGrupos) {
             if (g.getCodigo().equalsIgnoreCase(codigoBuscado)) {
-                return g.getId();
+                return String.valueOf(g.getId());
             }
         }
-        return -1;
+        return "No encontrado";
     }
+
 
 
 }
