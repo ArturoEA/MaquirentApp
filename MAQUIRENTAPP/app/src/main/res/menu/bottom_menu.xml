@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/icon_home_blanco"
+        android:title="Inicio"/>
+    <item
+        android:id="@+id/nav_rent"
+        android:icon="@drawable/icon_generador"
+        android:title="Alquiler"/>
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/icon_perfil_blanco"
+        android:title="Perfil"/>
+</menu>

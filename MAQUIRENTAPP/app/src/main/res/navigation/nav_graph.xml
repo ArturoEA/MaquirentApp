@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.maquirentapp.View.HomeFragment"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_home_to_CGE"
+            app:destination="@+id/cgeFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_homeFragment_to_nuevoAlquilerFragment"
+            app:destination="@id/nuevoAlquilerFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_home_to_Perfil"
+            app:destination="@id/perfilFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_home_to_PlanosCambioVoltajeFragment"
+            app:destination="@+id/planosCambioVoltajeFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+
+        <action
+            android:id="@+id/action_home_to_FichasTecnicasFragment"
+            app:destination="@+id/fichasTecnicasFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/cgeFragment"
+        android:name="com.example.maquirentapp.View.CGEFragment"
+        tools:layout="@layout/fragment_cge">
+
+        <action
+            android:id="@+id/action_cge_to_Inicio"
+            app:destination="@+id/homeFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/slide_out_right"
+            app:popEnterAnim="@anim/slide_in_right"
+            app:popExitAnim="@anim/slide_out_left"/>
+
+        <action
+            android:id="@+id/action_cge_to_Perfil"
+            app:destination="@+id/perfilFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_cge_to_grupoElectrogeno"
+            app:destination="@+id/grupoElectrogenoFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"
+            />
+    </fragment>
+
+    <fragment
+        android:id="@+id/grupoElectrogenoFragment"
+        android:name="com.example.maquirentapp.View.GrupoElectrogenoFragment"
+        tools:layout="@layout/fragment_grupo_electrogeno">
+        <argument
+            android:name="codigo"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_grupoElectrogeno_to_mantenimientos"
+            app:destination="@id/mantenimientosFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+        <action
+            android:id="@+id/action_grupoElectrogeno_to_historialAlquilerMensual"
+            app:destination="@+id/historialAlquilerMensualFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/historialAlquilerMensualFragment"
+        android:name="com.example.maquirentapp.View.HistorialAlquilerMensualFragment"
+        tools:layout="@layout/fragment_historial_alquiler_mensual">
+
+        <action
+            android:id="@+id/action_historialAlquilerMensual_to_nuevoAlquilerMensual"
+            app:destination="@+id/nuevoAlquilerMensualFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nuevoAlquilerMensualFragment"
+        android:name="com.example.maquirentapp.View.NuevoAlquilerMensualFragment"
+        tools:layout="@layout/fragment_nuevo_alquiler_mensual">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/mantenimientosFragment"
+        android:name="com.example.maquirentapp.View.MantenimientosFragment"
+        tools:layout="@layout/fragment_mantenimientos">
+        <argument
+            android:name="codigo"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/planosCambioVoltajeFragment"
+        android:name="com.example.maquirentapp.View.PlanosCambioVoltajeFragment"
+        tools:layout="@layout/fragment_planos_cambio_voltaje">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/perfilFragment"
+        android:name="com.example.maquirentapp.View.PerfilFragment"
+        tools:layout="@layout/fragment_perfil">
+
+        <action
+            android:id="@+id/action_perfil_to_home"
+            app:destination="@+id/homeFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/slide_out_right"
+            app:popEnterAnim="@anim/slide_in_right"
+            app:popExitAnim="@anim/slide_out_left"/>
+
+        <action
+            android:id="@+id/action_perfil_to_cge"
+            app:destination="@+id/cgeFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/slide_out_right"
+            app:popEnterAnim="@anim/slide_in_right"
+            app:popExitAnim="@anim/slide_out_left"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nuevoAlquilerFragment"
+        android:name="com.example.maquirentapp.View.NuevoAlquilerDiaFragment"
+        tools:layout="@layout/fragment_fichas_tecnicas" />
+
+    <fragment
+        android:id="@+id/fichasTecnicasFragment"
+        android:name="com.example.maquirentapp.View.FichasTecnicasFragment"
+        tools:layout="@layout/fragment_fichas_tecnicas"/>
+
+</navigation>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="gris_100">#CECBE6</color>
+    <color name="gris_200">#555555</color>
+    <color name="azul_100">#2877BC</color>
+    <color name="azul_200">#0403FD</color>
+
+    <!-- Colores principales -->
+    <color name="background_light">#F5F2F0</color>
+    <color name="background_dark">#1E1E1E</color>
+    <color name="white">#FFFFFF</color>
+    <color name="card_dark">#1E1E1E</color>
+
+    <!-- Colores de texto -->
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#666666</color>
+
+    <!-- Colores de acento -->
+    <color name="red_accent">#F65D5D</color>
+    <color name="yellow_accent">#F6B65D</color>
+
+    <!-- Colores adicionales -->
+    <color name="black">#1E1E1E</color>
+    <color name="colorHints">#626262</color>
+    <color name="gray_light">#E0E0E0</color>
+    <color name="gray_dark">#424242</color>
+    <color name="selection_indicator">#9DB2CE</color>
+    <color name="menu_background">#3A3A3A</color>
+</resources>
