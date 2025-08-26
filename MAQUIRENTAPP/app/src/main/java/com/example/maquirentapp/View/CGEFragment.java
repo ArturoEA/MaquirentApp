@@ -42,7 +42,6 @@ public class CGEFragment extends Fragment {
     private RecyclerView recyclerView;
     private GrupoElectrogenoAdapter adapter;
     private FirebaseServicio firebaseServicio;
-    // Para selección de imágenes
     private ActivityResultLauncher<String> imagePickerLauncher;
     private Uri selectedImageUri;
     private ImageView dialogImagePreview;
@@ -94,7 +93,7 @@ public class CGEFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // Configurar botón de agregar grupo
-        ExtendedFloatingActionButton btnAgregar = view.findViewById(R.id.btnAgregarGrupo);
+        CardView btnAgregar = view.findViewById(R.id.btnAgregarGrupo);
         btnAgregar.setOnClickListener(v -> mostrarDialogoNuevoGrupo());
 
         fetchGruposElectrogenos();
@@ -132,7 +131,7 @@ public class CGEFragment extends Fragment {
 
             // Deshabilitar botón mientras se guarda
             btnGuardar.setEnabled(false);
-            btnGuardar.setText("Guardando...");
+            btnGuardar.setText("Guardando");
 
             firebaseServicio.crearGrupoConImagen(codigo, selectedImageUri,
                     new FirebaseServicio.OnGrupoCreatedListener() {
