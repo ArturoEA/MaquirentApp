@@ -19,6 +19,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.maquirentapp.Model.Usuario;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,13 +32,16 @@ public class MainActivity extends AppCompatActivity {
     private ImageView headerIcon;
     private NestedScrollView contentScrollView;
     private ScrollStateViewModel scrollViewModel;
+    private FirebaseServicio firebaseServicio;
+    // Datos del usuario
+    private String userRole;
+    private String userUid;
+    private String userName;
 
     // Para el indicador animado
     private View currentSelectedIndicator;
-    private int currentSelectedIndex = 0; // 0: home, 1: rent, 2: perfil
-
+    private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: perfil
     private int previousDestinationId = R.id.homeFragment;
-
     // Keys para identificar cada fragment
     private static final String HOME_FRAGMENT_KEY = "home_fragment";
     private static final String CGE_FRAGMENT_KEY = "cge_fragment";
@@ -52,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        firebaseServicio = new FirebaseServicio();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("gruposElectrogenos")
                 .get()
@@ -72,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        verificarAutenticacion();
+
         // Inicializar vistas
         initViews();
 
@@ -81,7 +89,106 @@ public class MainActivity extends AppCompatActivity {
         // Configurar estado inicial
         setupInitialState();
     }
+    private void verificarAutenticacion() {
+        firebaseServicio.verificarEstadoUsuario(new FirebaseServicio.OnAuthListener() {
+            @Override
+            public void onLoginExitoso(Usuario usuario) {
+                userRole = usuario.getRol();
+                userUid = usuario.getUid();
+                userName = usuario.getNombre();
 
+                inicializarApp();
+                navegarSegunRol();
+            }
+
+            @Override
+            public void onRegistroExitoso(Usuario usuario) {
+                // No se usa aquí
+            }
+
+            @Override
+            public void onUsuarioPendiente() {
+                mostrarAuthFragment();
+            }
+
+            @Override
+            public void onUsuarioInactivo() {
+                mostrarAuthFragment();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                mostrarAuthFragment();
+            }
+        });
+    }
+    private void mostrarAuthFragment() {
+        // Ocultar la navegación y mostrar solo el fragment de auth
+        configurarUIParaAuth();
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        if (navHostFragment != null) {
+            NavController navController = navHostFragment.getNavController();
+            navController.navigate(R.id.authFragment);
+        }
+    }
+    private void configurarUIParaAuth() {
+        // Ocultar la navegación bottom y header
+        findViewById(R.id.menuFlotante).setVisibility(View.GONE);
+        findViewById(R.id.headerLayout).setVisibility(View.GONE);
+    }
+    private void inicializarApp() {
+        // Mostrar la navegación y header
+        findViewById(R.id.menuFlotante).setVisibility(View.VISIBLE);
+        findViewById(R.id.headerLayout).setVisibility(View.VISIBLE);
+
+        // Inicializar vistas
+        initViews();
+        // Configurar Navigation Component
+        setupNavigation();
+        // Configurar estado inicial
+        setupInitialState();
+    }
+    private void navegarSegunRol() {
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        if (navHostFragment != null) {
+            NavController navController = navHostFragment.getNavController();
+
+            if ("empleado".equals(userRole)) {
+                // Para empleados, ir directo a tareas y ocultar ciertas opciones
+                setupEmpleadoUI();
+                navController.navigate(R.id.tareasFragment);
+            } else {
+                // Para admins, mostrar todo
+                setupAdminUI();
+                navController.navigate(R.id.homeFragment);
+            }
+        }
+    }
+    private void setupEmpleadoUI() {
+        // Ocultar el tab de CGE para empleados
+        navRent.setVisibility(View.GONE);
+
+        // Cambiar el ícono del home para mostrar "Tareas"
+        navHomeText.setText("Tareas");
+        // Actualizar el listener para ir a tareas
+        navHome.setOnClickListener(v -> {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+                navigateWithAnimation(navController, R.id.tareasFragment, 0);
+            }
+        });
+    }
+    private void setupAdminUI() {
+        // Mostrar toda la navegación
+        navRent.setVisibility(View.VISIBLE);
+        navHomeText.setText("Inicio");
+        // Mantener listeners originales
+    }
     private void initViews() {
         headerTitle = findViewById(R.id.header_title);
         headerIcon = findViewById(R.id.header_icon);
@@ -111,7 +218,20 @@ public class MainActivity extends AppCompatActivity {
             // Listener para cambios de destino
             navController.addOnDestinationChangedListener((ctrl, dest, args) -> {
                 saveScrollPositionForDestination(previousDestinationId);
-                if (dest.getId() == R.id.homeFragment) {
+                if (dest.getId() == R.id.authFragment) {
+                    // No mostrar header ni navegación en auth
+                    configurarUIParaAuth();
+                } else if (dest.getId() == R.id.tareasFragment) {
+                    setHeaderTitle("Lista de Tareas");
+                    setHeaderIcon(R.drawable.icon_voltaje_blanco); // Necesitas este ícono
+                    updateNavigationUI(0); // Para empleados será el "home"
+                    restoreScrollPosition("tareas_fragment");
+                } else if (dest.getId() == R.id.homeFragment) {
+                    setHeaderTitle("Inicio");
+                    setHeaderIcon(R.drawable.icon_home_blanco);
+                    updateNavigationUI(0);
+                    restoreScrollPosition(HOME_FRAGMENT_KEY);
+                } else if (dest.getId() == R.id.homeFragment) {
                     setHeaderTitle("Inicio");
                     setHeaderIcon(R.drawable.icon_home_blanco);
                     updateNavigationUI(0);
@@ -134,33 +254,29 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderTitle("Planos de cambio de voltaje");
                     setHeaderIcon(R.drawable.icon_voltaje_blanco);
                     contentScrollView.scrollTo(0, 0);
-                }
-                else if(dest.getId() == R.id.fichasTecnicasFragment){
+                } else if (dest.getId() == R.id.fichasTecnicasFragment) {
                     setHeaderTitle("Fichas técnicas");
                     setHeaderIcon(R.drawable.icon_ficha_tecnica_blanco);
                     contentScrollView.scrollTo(0, 0);
-                }
-                else if(dest.getId() == R.id.grupoElectrogenoFragment){
+                } else if (dest.getId() == R.id.grupoElectrogenoFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")
                             : "GEP";
                     setHeaderTitle(codigo);
                     setHeaderIcon(R.drawable.icon_generador);
                     contentScrollView.scrollTo(0, 0);
-                }
-                else if(dest.getId() == R.id.historialAlquilerMensualFragment){
+                } else if (dest.getId() == R.id.historialAlquilerMensualFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
-                    setHeaderTitle("Historial de alquileres\n"+codigo);
-                }
-                else if(dest.getId() == R.id.nuevoAlquilerMensualFragment){
+                    setHeaderTitle("Historial de alquileres\n" + codigo);
+                } else if (dest.getId() == R.id.nuevoAlquilerMensualFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
-                    setHeaderTitle("Nuevo alquiler mensual\n"+codigo);
+                    setHeaderTitle("Nuevo alquiler mensual\n" + codigo);
                 }
 
                 previousDestinationId = dest.getId();
@@ -168,7 +284,11 @@ public class MainActivity extends AppCompatActivity {
 
             // Configurar clicks de navegación con animaciones inteligentes
             navHome.setOnClickListener(v -> {
-                navigateWithAnimation(navController, R.id.homeFragment, 0);
+                if ("empleado".equals(userRole)) {
+                    navigateWithAnimation(navController, R.id.tareasFragment, 0);
+                } else {
+                    navigateWithAnimation(navController, R.id.homeFragment, 0);
+                }
             });
 
             navRent.setOnClickListener(v -> {
@@ -189,6 +309,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Método público para que los fragments puedan acceder a los datos del usuario
+//    public String getUserRole() { return userRole; }
+//    public String getUserUid() { return userUid; }
+//    public String getUserName() { return usserName; }
+
     private void saveScrollPositionForDestination(int destinationId) {
         if (contentScrollView != null) {
             int currentScrollY = contentScrollView.getScrollY();
@@ -199,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private void restoreScrollPosition(String fragmentKey) {
         if (contentScrollView != null) {
             int savedPosition = scrollViewModel.getScrollPosition(fragmentKey);
@@ -209,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
+
     private String getFragmentKeyByDestinationId(int destinationId) {
         if (destinationId == R.id.homeFragment) {
             return HOME_FRAGMENT_KEY;
@@ -318,19 +445,27 @@ public class MainActivity extends AppCompatActivity {
 
     private View getNavigationViewByIndex(int index) {
         switch (index) {
-            case 0: return navHome;
-            case 1: return navRent;
-            case 2: return navPerfil;
-            default: return navHome;
+            case 0:
+                return navHome;
+            case 1:
+                return navRent;
+            case 2:
+                return navPerfil;
+            default:
+                return navHome;
         }
     }
 
     private TextView getNavigationTextByIndex(int index) {
         switch (index) {
-            case 0: return navHomeText;
-            case 1: return navRentText;
-            case 2: return navPerfilText;
-            default: return navHomeText;
+            case 0:
+                return navHomeText;
+            case 1:
+                return navRentText;
+            case 2:
+                return navPerfilText;
+            default:
+                return navHomeText;
         }
     }
 
