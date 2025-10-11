@@ -23,6 +23,7 @@ import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private NestedScrollView contentScrollView;
     private ScrollStateViewModel scrollViewModel;
     private FirebaseServicio firebaseServicio;
+
+    private NavController navController;
     // Datos del usuario
     private String userRole;
     private String userUid;
@@ -58,6 +61,28 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         firebaseServicio = new FirebaseServicio();
+        scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // Configurar window insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        testFirestoreConnection();
+
+        // Inicializar vistas
+        initViews();
+
+        // Configurar Navigation Component
+        setupNavigation();
+        verificarAutenticacion();
+        // Configurar estado inicial
+        //setupInitialState();
+    }
+    private void testFirestoreConnection() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("gruposElectrogenos")
                 .get()
@@ -68,28 +93,13 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("Firebase", "Error de conexión", task.getException());
                     }
                 });
-
-        scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
-
-        // Configurar window insets
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-        verificarAutenticacion();
-
-        // Inicializar vistas
-        initViews();
-
-        // Configurar Navigation Component
-        setupNavigation();
-
-        // Configurar estado inicial
-        setupInitialState();
     }
     private void verificarAutenticacion() {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            mostrarAuthFragment();
+            return;
+        }
+
         firebaseServicio.verificarEstadoUsuario(new FirebaseServicio.OnAuthListener() {
             @Override
             public void onLoginExitoso(Usuario usuario) {
@@ -97,33 +107,39 @@ public class MainActivity extends AppCompatActivity {
                 userUid = usuario.getUid();
                 userName = usuario.getNombre();
 
-                inicializarApp();
+                Log.d("MainActivity", "Usuario autenticado: " + userName + " - Rol: " + userRole);
+                configurarUISegunRol();
                 navegarSegunRol();
             }
 
             @Override
             public void onRegistroExitoso(Usuario usuario) {
-                // No se usa aquí
+                // No se usa aquí, se usa en FirebaseServicio
             }
 
             @Override
             public void onUsuarioPendiente() {
+                Log.w("MainActivity", "Usuario pendiente de aprobación");
+                FirebaseAuth.getInstance().signOut();
                 mostrarAuthFragment();
             }
 
             @Override
             public void onUsuarioInactivo() {
+                Log.w("MainActivity", "Usuario inactivo");
+                FirebaseAuth.getInstance().signOut();
                 mostrarAuthFragment();
             }
 
             @Override
             public void onError(Exception e) {
+                Log.e("MainActivity", "Error al verificar usuario", e);
+                FirebaseAuth.getInstance().signOut();
                 mostrarAuthFragment();
             }
         });
     }
     private void mostrarAuthFragment() {
-        // Ocultar la navegación y mostrar solo el fragment de auth
         configurarUIParaAuth();
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
@@ -134,60 +150,75 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void configurarUIParaAuth() {
-        // Ocultar la navegación bottom y header
         findViewById(R.id.menuFlotante).setVisibility(View.GONE);
         findViewById(R.id.headerLayout).setVisibility(View.GONE);
+        findViewById(R.id.btn_back).setVisibility(View.GONE);
     }
-    private void inicializarApp() {
-        // Mostrar la navegación y header
+    private void configurarUISegunRol() {
         findViewById(R.id.menuFlotante).setVisibility(View.VISIBLE);
         findViewById(R.id.headerLayout).setVisibility(View.VISIBLE);
+        findViewById(R.id.btn_back).setVisibility(View.VISIBLE);
 
-        // Inicializar vistas
-        initViews();
-        // Configurar Navigation Component
-        setupNavigation();
-        // Configurar estado inicial
-        setupInitialState();
+        if ("empleado".equals(userRole)) {
+            setupEmpleadoUI();
+        } else {
+            setupAdminUI();
+        }
     }
+//    private void inicializarApp() {
+//        // Mostrar la navegación y header
+//        findViewById(R.id.menuFlotante).setVisibility(View.VISIBLE);
+//        findViewById(R.id.headerLayout).setVisibility(View.VISIBLE);
+//
+//        // Inicializar vistas
+//        initViews();
+//        // Configurar Navigation Component
+//        setupNavigation();
+//        // Configurar estado inicial
+//        setupInitialState();
+//    }
     private void navegarSegunRol() {
-        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host_fragment);
-        if (navHostFragment != null) {
-            NavController navController = navHostFragment.getNavController();
+//        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+//                .findFragmentById(R.id.nav_host_fragment);
+//        if (navHostFragment != null) {
+//            NavController navController = navHostFragment.getNavController();
+//
+//            if ("empleado".equals(userRole)) {
+//                // Para empleados, ir directo a tareas y ocultar ciertas opciones
+//                setupEmpleadoUI();
+//                navController.navigate(R.id.tareasFragment);
+//            } else {
+//                // Para admins, mostrar todo
+//                setupAdminUI();
+//                navController.navigate(R.id.homeFragment);
+//            }
+//        }
 
+        if (navController != null) {
             if ("empleado".equals(userRole)) {
-                // Para empleados, ir directo a tareas y ocultar ciertas opciones
-                setupEmpleadoUI();
                 navController.navigate(R.id.tareasFragment);
             } else {
-                // Para admins, mostrar todo
-                setupAdminUI();
                 navController.navigate(R.id.homeFragment);
             }
         }
     }
     private void setupEmpleadoUI() {
-        // Ocultar el tab de CGE para empleados
         navRent.setVisibility(View.GONE);
-
-        // Cambiar el ícono del home para mostrar "Tareas"
         navHomeText.setText("Tareas");
+
         // Actualizar el listener para ir a tareas
-        navHome.setOnClickListener(v -> {
-            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.nav_host_fragment);
-            if (navHostFragment != null) {
-                NavController navController = navHostFragment.getNavController();
-                navigateWithAnimation(navController, R.id.tareasFragment, 0);
-            }
-        });
+//        navHome.setOnClickListener(v -> {
+//            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+//                    .findFragmentById(R.id.nav_host_fragment);
+//            if (navHostFragment != null) {
+//                NavController navController = navHostFragment.getNavController();
+//                navigateWithAnimation(navController, R.id.tareasFragment, 0);
+//            }
+//        });
     }
     private void setupAdminUI() {
-        // Mostrar toda la navegación
         navRent.setVisibility(View.VISIBLE);
         navHomeText.setText("Inicio");
-        // Mantener listeners originales
     }
     private void initViews() {
         headerTitle = findViewById(R.id.header_title);
@@ -201,6 +232,10 @@ public class MainActivity extends AppCompatActivity {
         navHomeText = findViewById(R.id.nav_home_text);
         navRentText = findViewById(R.id.nav_rent_text);
         navPerfilText = findViewById(R.id.nav_perfil_text);
+
+        // Configurar estado inicial
+        currentSelectedIndicator = navHome;
+        updateNavigationUI(0);
     }
 
     private void setupInitialState() {
@@ -213,13 +248,12 @@ public class MainActivity extends AppCompatActivity {
                 .findFragmentById(R.id.nav_host_fragment);
 
         if (navHostFragment != null) {
-            NavController navController = navHostFragment.getNavController();
+            navController = navHostFragment.getNavController();
 
             // Listener para cambios de destino
             navController.addOnDestinationChangedListener((ctrl, dest, args) -> {
                 saveScrollPositionForDestination(previousDestinationId);
                 if (dest.getId() == R.id.authFragment) {
-                    // No mostrar header ni navegación en auth
                     configurarUIParaAuth();
                 } else if (dest.getId() == R.id.tareasFragment) {
                     setHeaderTitle("Lista de Tareas");
@@ -310,9 +344,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Método público para que los fragments puedan acceder a los datos del usuario
-//    public String getUserRole() { return userRole; }
-//    public String getUserUid() { return userUid; }
-//    public String getUserName() { return usserName; }
+    public String getUserRole() { return userRole; }
+    public String getUserUid() { return userUid; }
+    public String getUserName() { return userName; }
 
     private void saveScrollPositionForDestination(int destinationId) {
         if (contentScrollView != null) {
@@ -330,9 +364,7 @@ public class MainActivity extends AppCompatActivity {
             int savedPosition = scrollViewModel.getScrollPosition(fragmentKey);
 
             // Usar post para asegurar que el contenido se ha cargado
-            contentScrollView.post(() -> {
-                contentScrollView.scrollTo(0, savedPosition);
-            });
+            contentScrollView.post(() -> contentScrollView.scrollTo(0, savedPosition));
         }
     }
 

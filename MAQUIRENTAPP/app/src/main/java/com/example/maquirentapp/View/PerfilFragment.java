@@ -1,5 +1,6 @@
 package com.example.maquirentapp.View;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -33,28 +35,23 @@ public class PerfilFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_perfil, container, false);
 
-        // Referencia al botón
         btnSignOut = view.findViewById(R.id.btnSignOut);
-
-        // Acción al presionar el botón
         btnSignOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 signOut();
             }
         });
-
         return view;
     }
-
     private void signOut() {
         FirebaseAuth.getInstance().signOut();
-        navigateToLogin();
-    }
+        Intent intent = new Intent(getActivity(), MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
 
-    private void navigateToLogin() {
-        NavController navController = NavHostFragment.findNavController(this);
-        navController.navigate(R.id.action_perfil_to_auth);
+        if (getActivity() != null) {
+            getActivity().finish();
+        }
     }
-
 }
