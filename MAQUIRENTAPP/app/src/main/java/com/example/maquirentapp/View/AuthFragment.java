@@ -1,5 +1,6 @@
 package com.example.maquirentapp.View;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
@@ -84,22 +87,32 @@ public class AuthFragment extends Fragment {
         }
 
         btnLogin.setEnabled(false);
-        btnLogin.setText("Iniciando...");
+//        btnLogin.setText("Iniciando...");
 
         firebaseServicio.iniciarSesion(email, password, new FirebaseServicio.OnAuthListener() {
             @Override
             public void onLoginExitoso(Usuario usuario) {
                 // Pasar datos al MainActivity y navegar
-                Bundle bundle = new Bundle();
-                bundle.putString("usuario_rol", usuario.getRol());
-                bundle.putString("usuario_uid", usuario.getUid());
-                bundle.putString("usuario_nombre", usuario.getNombre());
+//                Bundle bundle = new Bundle();
+//                bundle.putString("usuario_rol", usuario.getRol());
+//                bundle.putString("usuario_uid", usuario.getUid());
+//                bundle.putString("usuario_nombre", usuario.getNombre());
+//
+//                if ("admin".equals(usuario.getRol())) {
+//                    Navigation.findNavController(getView()).navigate(R.id.main, bundle);
+////                    Navigation.findNavController(getView()).navigate(R.id.action_auth_to_home, bundle);
+//                } else {
+//                    Navigation.findNavController(getView()).navigate(R.id.action_auth_to_tareas, bundle);
+//                }
 
-                if ("admin".equals(usuario.getRol())) {
-                    Navigation.findNavController(getView()).navigate(R.id.main, bundle);
-//                    Navigation.findNavController(getView()).navigate(R.id.action_auth_to_home, bundle);
-                } else {
-                    Navigation.findNavController(getView()).navigate(R.id.action_auth_to_tareas, bundle);
+                Toast.makeText(getContext(), "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show();
+                // Reiniciar MainActivity completamente
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                // Finalizar la actividad actual
+                if (getActivity() != null) {
+                    getActivity().finish();
                 }
             }
 
