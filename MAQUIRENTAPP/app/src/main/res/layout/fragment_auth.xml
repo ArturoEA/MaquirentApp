@@ -88,7 +88,7 @@
             android:id="@+id/btnToggleMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="¿No tienes cuenta? Haz click aquí para registrarte"
+            android:text="¿No tienes una cuenta? Haz click aquí para registrarte"
             android:textColor="@color/black"
             android:backgroundTint="@android:color/transparent"/>
 

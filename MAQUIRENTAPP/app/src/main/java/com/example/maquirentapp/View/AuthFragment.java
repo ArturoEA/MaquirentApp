@@ -68,12 +68,12 @@ public class AuthFragment extends Fragment {
     private void updateUI() {
         if (isLoginMode) {
             layoutNombre.setVisibility(View.GONE);
-            btnLogin.setText("Iniciar Sesión");
-            btnToggleMode.setText("¿No tienes cuenta? Registrarse");
+            btnLogin.setText("Iniciar sesión");
+            btnToggleMode.setText("¿No tienes una cuenta? Haz click aquí para registrarte");
         } else {
             layoutNombre.setVisibility(View.VISIBLE);
             btnLogin.setText("Registrarse");
-            btnToggleMode.setText("¿Ya tienes cuenta? Iniciar Sesión");
+            btnToggleMode.setText("¿Ya tienes una cuenta? Haz click aquí para iniciar sesión");
         }
     }
 
