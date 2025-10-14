@@ -178,27 +178,15 @@ public class MainActivity extends AppCompatActivity {
 //        setupInitialState();
 //    }
     private void navegarSegunRol() {
-//        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.nav_host_fragment);
-//        if (navHostFragment != null) {
-//            NavController navController = navHostFragment.getNavController();
-//
-//            if ("empleado".equals(userRole)) {
-//                // Para empleados, ir directo a tareas y ocultar ciertas opciones
-//                setupEmpleadoUI();
-//                navController.navigate(R.id.tareasFragment);
-//            } else {
-//                // Para admins, mostrar todo
-//                setupAdminUI();
-//                navController.navigate(R.id.homeFragment);
-//            }
-//        }
-
         if (navController != null) {
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setPopUpTo(R.id.authFragment, true)
+                    .build();
+
             if ("empleado".equals(userRole)) {
-                navController.navigate(R.id.tareasFragment);
+                navController.navigate(R.id.tareasFragment, null, navOptions);
             } else {
-                navController.navigate(R.id.homeFragment);
+                navController.navigate(R.id.homeFragment, null, navOptions);
             }
         }
     }
