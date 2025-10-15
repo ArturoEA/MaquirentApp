@@ -165,7 +165,7 @@
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.example.maquirentapp.View.ConfiguracionFragment"
-        tools:layout="@layout/fragment_perfil">
+        tools:layout="@layout/fragment_configuracion">
 
         <action
             android:id="@+id/action_perfil_to_home"
