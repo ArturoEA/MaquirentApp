@@ -27,8 +27,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
-    private LinearLayout navHome, navRent, navPerfil;
-    private TextView navHomeText, navRentText, navPerfilText;
+    private LinearLayout navHome, navRent, navConfiguracion;
+    private TextView navHomeText, navRentText, navConfiguracionText;
     private TextView headerTitle;
     private ImageView headerIcon;
     private NestedScrollView contentScrollView;
@@ -43,12 +43,12 @@ public class MainActivity extends AppCompatActivity {
 
     // Para el indicador animado
     private View currentSelectedIndicator;
-    private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: perfil
+    private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: configuracion
     private int previousDestinationId = R.id.homeFragment;
     // Keys para identificar cada fragment
     private static final String HOME_FRAGMENT_KEY = "home_fragment";
     private static final String CGE_FRAGMENT_KEY = "cge_fragment";
-    private static final String PERFIL_FRAGMENT_KEY = "perfil_fragment";
+    private static final String CONFIGURACION_FRAGMENT_KEY = "configuracion_fragment";
     private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
     private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
 
@@ -215,11 +215,11 @@ public class MainActivity extends AppCompatActivity {
 
         navHome = findViewById(R.id.nav_home);
         navRent = findViewById(R.id.nav_rent);
-        navPerfil = findViewById(R.id.nav_perfil);
+        navConfiguracion = findViewById(R.id.nav_configuracion);
 
         navHomeText = findViewById(R.id.nav_home_text);
         navRentText = findViewById(R.id.nav_rent_text);
-        navPerfilText = findViewById(R.id.nav_perfil_text);
+        navConfiguracionText = findViewById(R.id.nav_configuracion_text);
 
         // Configurar estado inicial
         currentSelectedIndicator = navHome;
@@ -265,9 +265,9 @@ public class MainActivity extends AppCompatActivity {
                     restoreScrollPosition(CGE_FRAGMENT_KEY);
                 } else if (dest.getId() == R.id.configuracionFragment) {
                     setHeaderTitle("Configuración");
-                    setHeaderIcon(R.drawable.icon_perfil_blanco);
+                    setHeaderIcon(R.drawable.icon_configuracion_blanco);
                     updateNavigationUI(2);
-                    restoreScrollPosition(PERFIL_FRAGMENT_KEY);
+                    restoreScrollPosition(CONFIGURACION_FRAGMENT_KEY);
                 } else if (dest.getId() == R.id.nuevoAlquilerFragment) {
                     setHeaderTitle("Nuevo alquiler por día(s)");
                     setHeaderIcon(R.drawable.icon_contrato_blanco);
@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
                 navigateWithAnimation(navController, R.id.cgeFragment, 1);
             });
 
-            navPerfil.setOnClickListener(v -> {
+            navConfiguracion.setOnClickListener(v -> {
                 navigateWithAnimation(navController, R.id.configuracionFragment, 2);
             });
 
@@ -362,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (destinationId == R.id.cgeFragment) {
             return CGE_FRAGMENT_KEY;
         } else if (destinationId == R.id.configuracionFragment) {
-            return PERFIL_FRAGMENT_KEY;
+            return CONFIGURACION_FRAGMENT_KEY;
         } else if (destinationId == R.id.nuevoAlquilerFragment) {
             return NUEVO_ALQUILER_DIA_KEY;
         } else if (destinationId == R.id.planosCambioVoltajeFragment) {
@@ -448,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
         // Ocultar todos los textos primero
         navHomeText.setVisibility(View.GONE);
         navRentText.setVisibility(View.GONE);
-        navPerfilText.setVisibility(View.GONE);
+        navConfiguracionText.setVisibility(View.GONE);
 
         // Mostrar el texto del elemento seleccionado con animación
         TextView selectedText = getNavigationTextByIndex(selectedIndex);
@@ -470,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
             case 1:
                 return navRent;
             case 2:
-                return navPerfil;
+                return navConfiguracion;
             default:
                 return navHome;
         }
@@ -483,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
             case 1:
                 return navRentText;
             case 2:
-                return navPerfilText;
+                return navConfiguracionText;
             default:
                 return navHomeText;
         }

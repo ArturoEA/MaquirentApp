@@ -184,7 +184,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/nav_perfil"
+                android:id="@+id/nav_configuracion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -197,14 +197,14 @@
                 <ImageView
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:src="@drawable/icon_perfil_blanco" />
+                    android:src="@drawable/icon_configuracion_blanco" />
 
                 <TextView
-                    android:id="@+id/nav_perfil_text"
+                    android:id="@+id/nav_configuracion_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Perfil"
+                    android:text="Configuración"
                     android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textStyle="bold"
