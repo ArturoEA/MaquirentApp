@@ -15,11 +15,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.maquirentapp.MainActivity;
+import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.w3c.dom.Text;
 
 public class ConfiguracionFragment extends Fragment {
     private Button btnSignOut;
+    private TextView tvNombreUsuario;
 
     public ConfiguracionFragment() {
         // Required empty public constructor
@@ -49,6 +56,32 @@ public class ConfiguracionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        TextView nombreUsuario = view.findViewById(R.id.nombreUsuario);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            String userId = user.getUid();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            DocumentReference docRef = db.collection("usuarios").document(userId);
+
+            docRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String nombre = documentSnapshot.getString("nombre");
+                    if (nombre != null && !nombre.isEmpty()) {
+                        nombreUsuario.setText(nombre);
+                    } else {
+                        nombreUsuario.setText("Usuario sin nombre");
+                    }
+                } else {
+                    nombreUsuario.setText("Usuario no encontrado");
+                }
+            }).addOnFailureListener(e -> {
+                nombreUsuario.setText("Error al cargar usuario");
+            });
+        } else {
+            nombreUsuario.setText("No hay sesión activa");
+        }
+
         View itemHistorial = view.findViewById(R.id.item_historial);
         ((TextView) itemHistorial.findViewById(R.id.text_item_configuracion)).setText("Historial de ingresos");
         ((ImageView) itemHistorial.findViewById(R.id.icon_item_configuracion)).setImageResource(R.drawable.icon_blanco_historial_ingresos);
