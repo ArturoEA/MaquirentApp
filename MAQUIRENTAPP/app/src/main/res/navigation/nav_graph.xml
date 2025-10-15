@@ -190,6 +190,21 @@
             app:exitAnim="@anim/slide_out_right"
             app:popEnterAnim="@anim/slide_in_right"
             app:popExitAnim="@anim/slide_out_left"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_gestionar_usuarios"
+            app:destination="@+id/gestionarUsuariosFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/slide_out_right"
+            app:popEnterAnim="@anim/slide_in_right"
+            app:popExitAnim="@anim/slide_out_left"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/gestionarUsuariosFragment"
+        android:name="com.example.maquirentapp.View.GestionarUsuariosFragment"
+        tools:layout="@layout/fragment_gestionar_usuarios">
+
     </fragment>
 
     <fragment
