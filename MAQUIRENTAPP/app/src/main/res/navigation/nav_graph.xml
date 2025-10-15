@@ -47,7 +47,7 @@
 
         <action
             android:id="@+id/action_home_to_Perfil"
-            app:destination="@id/perfilFragment"
+            app:destination="@id/configuracionFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -86,7 +86,7 @@
 
         <action
             android:id="@+id/action_cge_to_Perfil"
-            app:destination="@+id/perfilFragment"
+            app:destination="@+id/configuracionFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -163,7 +163,7 @@
     </fragment>
 
     <fragment
-        android:id="@+id/perfilFragment"
+        android:id="@+id/configuracionFragment"
         android:name="com.example.maquirentapp.View.ConfiguracionFragment"
         tools:layout="@layout/fragment_configuracion">
 

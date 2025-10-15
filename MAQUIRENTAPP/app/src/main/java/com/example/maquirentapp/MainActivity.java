@@ -263,8 +263,8 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderIcon(R.drawable.icon_generador);
                     updateNavigationUI(1);
                     restoreScrollPosition(CGE_FRAGMENT_KEY);
-                } else if (dest.getId() == R.id.perfilFragment) {
-                    setHeaderTitle("Perfil");
+                } else if (dest.getId() == R.id.configuracionFragment) {
+                    setHeaderTitle("Configuración");
                     setHeaderIcon(R.drawable.icon_perfil_blanco);
                     updateNavigationUI(2);
                     restoreScrollPosition(PERFIL_FRAGMENT_KEY);
@@ -318,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
             navPerfil.setOnClickListener(v -> {
-                navigateWithAnimation(navController, R.id.perfilFragment, 2);
+                navigateWithAnimation(navController, R.id.configuracionFragment, 2);
             });
 
             // Configurar botón de retroceso
@@ -361,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
             return HOME_FRAGMENT_KEY;
         } else if (destinationId == R.id.cgeFragment) {
             return CGE_FRAGMENT_KEY;
-        } else if (destinationId == R.id.perfilFragment) {
+        } else if (destinationId == R.id.configuracionFragment) {
             return PERFIL_FRAGMENT_KEY;
         } else if (destinationId == R.id.nuevoAlquilerFragment) {
             return NUEVO_ALQUILER_DIA_KEY;
