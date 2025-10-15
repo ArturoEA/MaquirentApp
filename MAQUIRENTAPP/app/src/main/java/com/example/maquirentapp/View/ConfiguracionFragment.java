@@ -4,9 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,10 +14,10 @@ import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class PerfilFragment extends Fragment {
+public class ConfiguracionFragment extends Fragment {
     private Button btnSignOut;
 
-    public PerfilFragment() {
+    public ConfiguracionFragment() {
         // Required empty public constructor
     }
 
