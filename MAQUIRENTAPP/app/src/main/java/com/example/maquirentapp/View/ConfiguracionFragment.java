@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.maquirentapp.MainActivity;
@@ -126,6 +128,8 @@ public class ConfiguracionFragment extends Fragment {
                 .setText("Lista de grupos electrógenos");
         ((ImageView) itemListaGrupos.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_generador);
+        ((ImageView) itemListaGrupos.findViewById(R.id.icon_item_configuracion))
+                .setColorFilter(ContextCompat.getColor(requireContext(), R.color.black));
 
         // Item Gestionar Usuarios
         View itemGestionarUsuarios = view.findViewById(R.id.item_gestionar_usuarios);
@@ -134,10 +138,16 @@ public class ConfiguracionFragment extends Fragment {
         ((ImageView) itemGestionarUsuarios.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_blanco_gestionar_usuarios);
 
-        // Click listener para Gestionar Usuarios
-        itemGestionarUsuarios.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.action_configuracion_to_gestionar_usuarios)
-        );
+        LinearLayout itemPerfil = view.findViewById(R.id.itemPerfil);
+        // Click listener para secciones
+        itemPerfil.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_perfil));
+        itemHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_historial_ingresos));
+        itemAccesoriosDiario.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_accesorios_alquiler_diario));
+        itemAccesoriosMensual.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_accesorios_alquiler_mensual));
+        itemMantenimientos.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_mantenimientos_configuracion));
+        itemInformacionGeneral.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_datos_informacion_general));
+        itemListaGrupos.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_lista_grupos_electrogenos));
+        itemGestionarUsuarios.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_gestionar_usuarios));
     }
 
     private void signOut() {

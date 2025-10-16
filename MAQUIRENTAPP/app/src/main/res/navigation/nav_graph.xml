@@ -192,12 +192,117 @@
             app:popExitAnim="@anim/slide_out_left"/>
 
         <action
+            android:id="@+id/action_configuracion_to_perfil"
+            app:destination="@+id/perfilFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_historial_ingresos"
+            app:destination="@+id/historialIngresosFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_accesorios_alquiler_diario"
+            app:destination="@+id/accesoriosAlquilerDiarioFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_accesorios_alquiler_mensual"
+            app:destination="@+id/accesoriosAlquilerMensualFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_mantenimientos_configuracion"
+            app:destination="@+id/mantenimientosConfiguracionFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_datos_informacion_general"
+            app:destination="@+id/datosInformacionGeneralFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
+            android:id="@+id/action_configuracion_to_lista_grupos_electrogenos"
+            app:destination="@+id/listaGruposElectrogenosFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+
+        <action
             android:id="@+id/action_configuracion_to_gestionar_usuarios"
             app:destination="@+id/gestionarUsuariosFragment"
-            app:enterAnim="@anim/slide_in_left"
-            app:exitAnim="@anim/slide_out_right"
-            app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left"/>
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/perfilFragment"
+        android:name="com.example.maquirentapp.View.PerfilFragment"
+        tools:layout="@layout/fragment_perfil">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/historialIngresosFragment"
+        android:name="com.example.maquirentapp.View.HistorialIngresosFragment"
+        tools:layout="@layout/fragment_historial_ingresos">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/accesoriosAlquilerDiarioFragment"
+        android:name="com.example.maquirentapp.View.AccesoriosAlquilerDiarioFragment"
+        tools:layout="@layout/fragment_accesorios_alquiler_diario">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/accesoriosAlquilerMensualFragment"
+        android:name="com.example.maquirentapp.View.AccesoriosAlquilerMensualFragment"
+        tools:layout="@layout/fragment_accesorios_alquiler_mensual">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/mantenimientosConfiguracionFragment"
+        android:name="com.example.maquirentapp.View.MantenimientosConfiguracionFragment"
+        tools:layout="@layout/fragment_mantenimientos_configuracion">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/datosInformacionGeneralFragment"
+        android:name="com.example.maquirentapp.View.DatosInformacionGeneralFragment"
+        tools:layout="@layout/fragment_datos_informacion_general">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/listaGruposElectrogenosFragment"
+        android:name="com.example.maquirentapp.View.ListaGruposElectrogenosFragment"
+        tools:layout="@layout/fragment_lista_grupos_electrogenos">
+
     </fragment>
 
     <fragment
