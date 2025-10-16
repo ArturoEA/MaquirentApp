@@ -215,4 +215,5 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
         usuariosList.addAll(nuevaLista);
         notifyDataSetChanged();
     }
+
 }

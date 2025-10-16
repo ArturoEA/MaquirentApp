@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -299,6 +300,11 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Nuevo alquiler mensual\n" + codigo);
+                }
+                else if(dest.getId() == R.id.gestionarUsuariosFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_gestionar_usuarios);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Gestionar usuarios");
                 }
 
                 previousDestinationId = dest.getId();
