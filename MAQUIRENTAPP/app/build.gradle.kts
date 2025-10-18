@@ -33,7 +33,20 @@ android {
 }
 
 dependencies {
+    // BOM de Firebase (ya lo tienes, mantén la versión 33.2.0)
+    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
 
+    // Firebase - Usar versiones del BOM (sin especificar versión)
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+
+    // Firebase App Check
+    implementation("com.google.firebase:firebase-appcheck-debug")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    // Resto de dependencias
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -46,20 +59,15 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
-    implementation("com.google.firebase:firebase-storage:22.0.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.0")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.0")
-    implementation ("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation ("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
-    implementation ("com.google.firebase:firebase-auth:22.3.1")
-    implementation ("com.google.firebase:firebase-database:20.3.1")
-    implementation ("com.google.firebase:firebase-firestore:25.1.1")
-    implementation ("com.google.firebase:firebase-storage")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 }

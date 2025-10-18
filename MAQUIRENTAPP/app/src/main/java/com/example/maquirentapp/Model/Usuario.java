@@ -9,6 +9,7 @@ public class Usuario {
     private long fechaCreacion;
     private long fechaUltimaActividad;
     private String creadoPor; // UID del admin que aprobó
+    private String fotoPerfil; // URL de la foto de perfil en Storage
 
     public Usuario() {
     }
@@ -20,6 +21,7 @@ public class Usuario {
         this.rol = "empleado";
         this.estado = "pendiente";
         this.fechaCreacion = System.currentTimeMillis();
+        this.fotoPerfil = "";
     }
 
     public String getUid() {
@@ -84,5 +86,12 @@ public class Usuario {
 
     public void setCreadoPor(String creadoPor) {
         this.creadoPor = creadoPor;
+    }
+
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = (fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : "";
     }
 }

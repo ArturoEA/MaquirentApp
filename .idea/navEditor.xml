@@ -135,6 +135,11 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_configuracion_to_perfil">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_perfil_to_auth">
                               <value>
                                 <LayoutPositions />
@@ -196,8 +201,8 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="-10" />
-                            <option name="y" value="-4" />
+                            <option name="x" value="66" />
+                            <option name="y" value="-254" />
                           </Point>
                         </option>
                         <option name="myPositions">
@@ -351,7 +356,7 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="p">
+                  <entry key="perfilFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">

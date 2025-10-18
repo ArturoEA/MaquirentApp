@@ -1,88 +1,118 @@
-package com.example.maquirentapp;
+    package com.example.maquirentapp;
 
-import android.animation.ObjectAnimator;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+    import android.animation.ObjectAnimator;
+    import android.os.Bundle;
+    import android.util.Log;
+    import android.view.View;
+    import android.widget.ImageView;
+    import android.widget.LinearLayout;
+    import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.widget.NestedScrollView;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.NavOptions;
-import androidx.navigation.fragment.NavHostFragment;
+    import androidx.activity.EdgeToEdge;
+    import androidx.appcompat.app.AppCompatActivity;
+    import androidx.core.content.ContextCompat;
+    import androidx.core.graphics.Insets;
+    import androidx.core.view.ViewCompat;
+    import androidx.core.view.WindowInsetsCompat;
+    import androidx.core.widget.NestedScrollView;
+    import androidx.lifecycle.ViewModelProvider;
+    import androidx.navigation.NavController;
+    import androidx.navigation.NavOptions;
+    import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.maquirentapp.Model.Usuario;
-import com.example.maquirentapp.Network.FirebaseServicio;
-import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
+    import com.example.maquirentapp.Model.Usuario;
+    import com.example.maquirentapp.Network.FirebaseServicio;
+    import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
+    import com.google.android.material.floatingactionbutton.FloatingActionButton;
+    import com.google.firebase.appcheck.FirebaseAppCheck;
+    import com.google.firebase.auth.FirebaseAuth;
+    import com.google.firebase.firestore.FirebaseFirestore;
+    import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
+    import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 
-public class MainActivity extends AppCompatActivity {
-    private LinearLayout navHome, navRent, navConfiguracion;
-    private TextView navHomeText, navRentText, navConfiguracionText;
-    private TextView headerTitle;
-    private ImageView headerIcon;
-    private NestedScrollView contentScrollView;
-    private ScrollStateViewModel scrollViewModel;
-    private FirebaseServicio firebaseServicio;
+    public class MainActivity extends AppCompatActivity {
+        private LinearLayout navHome, navRent, navConfiguracion;
+        private TextView navHomeText, navRentText, navConfiguracionText;
+        private TextView headerTitle;
+        private ImageView headerIcon;
+        private NestedScrollView contentScrollView;
+        private ScrollStateViewModel scrollViewModel;
+        private FirebaseServicio firebaseServicio;
 
-    private NavController navController;
-    // Datos del usuario
-    private String userRole;
-    private String userUid;
-    private String userName;
+        private NavController navController;
+        // Datos del usuario
+        private String userRole;
+        private String userUid;
+        private String userName;
 
-    // Para el indicador animado
-    private View currentSelectedIndicator;
-    private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: configuracion
-    private int previousDestinationId = R.id.homeFragment;
-    // Keys para identificar cada fragment
-    private static final String HOME_FRAGMENT_KEY = "home_fragment";
-    private static final String CGE_FRAGMENT_KEY = "cge_fragment";
-    private static final String CONFIGURACION_FRAGMENT_KEY = "configuracion_fragment";
-    private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
-    private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
+        // Para el indicador animado
+        private View currentSelectedIndicator;
+        private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: configuracion
+        private int previousDestinationId = R.id.homeFragment;
+        // Keys para identificar cada fragment
+        private static final String HOME_FRAGMENT_KEY = "home_fragment";
+        private static final String CGE_FRAGMENT_KEY = "cge_fragment";
+        private static final String CONFIGURACION_FRAGMENT_KEY = "configuracion_fragment";
+        private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
+        private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
 
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+            initializeAppCheck();
 
-        firebaseServicio = new FirebaseServicio();
-        scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
+            EdgeToEdge.enable(this);
+            setContentView(R.layout.activity_main);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        // Configurar window insets
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+            firebaseServicio = new FirebaseServicio();
+            scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
 
-        testFirestoreConnection();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            // Configurar window insets
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
 
-        // Inicializar vistas
-        initViews();
+            testFirestoreConnection();
 
-        // Configurar Navigation Component
-        setupNavigation();
-        verificarAutenticacion();
-        // Configurar estado inicial
-        //setupInitialState();
-    }
+            // Inicializar vistas
+            initViews();
+
+            // Configurar Navigation Component
+            setupNavigation();
+            verificarAutenticacion();
+            // Configurar estado inicial
+            //setupInitialState();
+        }
+
+        private void initializeAppCheck() {
+            try {
+                FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
+
+                // Detectar si es debug o release
+                if (isDebugBuild()) {
+                    // Modo debug: usar DebugAppCheckProviderFactory
+                    Log.d("AppCheck", "Usando Debug AppCheckProvider");
+                    firebaseAppCheck.installAppCheckProviderFactory(
+                            DebugAppCheckProviderFactory.getInstance());
+                } else {
+                    // Modo release: usar PlayIntegrityAppCheckProviderFactory
+                    Log.d("AppCheck", "Usando Play Integrity AppCheckProvider");
+                    firebaseAppCheck.installAppCheckProviderFactory(
+                            PlayIntegrityAppCheckProviderFactory.getInstance());
+                }
+            } catch (Exception e) {
+                Log.e("AppCheck", "Error inicializando App Check", e);
+            }
+        }
+
+        private boolean isDebugBuild() {
+            return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        }
     private void testFirestoreConnection() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("gruposElectrogenos")

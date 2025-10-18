@@ -1,14 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.PerfilFragment">
+    android:background="@color/background_light">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-</FrameLayout>
+        <!-- Foto de Perfil -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="32dp">
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+
+                <ImageView
+                    android:id="@+id/imgFotoPerfil"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/icon_perfil_blanco"
+                    android:scaleType="centerCrop"
+                    android:background="@color/black"
+                    android:contentDescription="Foto de perfil" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabCambiarFoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:src="@drawable/icon_bandeja_blanco"
+                    app:fabSize="mini"
+                    app:backgroundTint="@color/selection_indicator" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvNombrePerfil"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre del Usuario"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+
+        <!-- Card con información de perfil -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/background_light">
+
+                <!-- Nombre editable -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nombre"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <EditText
+                            android:id="@+id/inputNombrePerfil"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Nombre del usuario"
+                            android:textColor="@color/black"
+                            android:background="@null"
+                            android:inputType="textPersonName|textCapWords" />
+
+                        <ImageView
+                            android:id="@+id/iconEditarNombre"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/icon_ojo_negro"
+                            android:contentDescription="Editar nombre" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Email no editable -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Correo Electrónico"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvEmailPerfil"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="email@example.com"
+                        android:textColor="@color/black"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Botón Guardar Cambios -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGuardarCambios"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Guardar Cambios"
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="20dp"
+            android:backgroundTint="@color/selection_indicator"
+            android:textColor="@color/white" />
+
+        <!-- Botón Cambiar Contraseña -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCambiarPassword"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Cambiar Contraseña"
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="20dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <!-- Botón Cerrar Sesión -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSignOut"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Cerrar Sesión"
+            android:textSize="16sp"
+            app:cornerRadius="20dp"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
