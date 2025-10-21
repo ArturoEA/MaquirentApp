@@ -39,10 +39,9 @@ public class PerfilFragment extends Fragment {
     private ImageView imgFotoPerfil;
     private FloatingActionButton fabCambiarFoto;
     private EditText inputNombrePerfil;
-    private TextView tvNombrePerfil, tvEmailPerfil;
-    private ImageView iconEditarNombre;
-    private MaterialButton btnGuardarCambios, btnCambiarPassword, btnSignOut;
-
+    private TextView tvEmailPerfil;
+    private MaterialButton btnGuardarCambios;
+    private View btnCambiarPassword, btnSignOut;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
     private FirebaseStorage storage;
@@ -97,23 +96,23 @@ public class PerfilFragment extends Fragment {
         imgFotoPerfil = view.findViewById(R.id.imgFotoPerfil);
         fabCambiarFoto = view.findViewById(R.id.fabCambiarFoto);
         inputNombrePerfil = view.findViewById(R.id.inputNombrePerfil);
-        tvNombrePerfil = view.findViewById(R.id.tvNombrePerfil);
         tvEmailPerfil = view.findViewById(R.id.tvEmailPerfil);
-        iconEditarNombre = view.findViewById(R.id.iconEditarNombre);
         btnGuardarCambios = view.findViewById(R.id.btnGuardarCambios);
-        btnCambiarPassword = view.findViewById(R.id.btnCambiarPassword);
         btnSignOut = view.findViewById(R.id.btnSignOut);
+        btnCambiarPassword = view.findViewById(R.id.cambiar_contraseña);
+        ((TextView) btnCambiarPassword.findViewById(R.id.text_item_configuracion)).setText("Cambiar contraseña");
+        ((ImageView) btnCambiarPassword.findViewById(R.id.icon_item_configuracion))
+                .setImageResource(R.drawable.icon_password_negro);
 
-        // Desabilitar edición inicial del nombre
-        inputNombrePerfil.setEnabled(false);
+        ((TextView) btnSignOut.findViewById(R.id.text_item_configuracion)).setText("Cerrar sesión");
+        ((ImageView) btnSignOut.findViewById(R.id.icon_item_configuracion))
+                .setImageResource(R.drawable.icon_cerrar_sesion_negro);
+
     }
 
     private void setupListeners() {
         // Cambiar foto
         fabCambiarFoto.setOnClickListener(v -> abrirGaleria.launch("image/*"));
-
-        // Editar nombre
-        iconEditarNombre.setOnClickListener(v -> toggleEditarNombre());
 
         // Guardar cambios
         btnGuardarCambios.setOnClickListener(v -> guardarCambios());
@@ -149,7 +148,6 @@ public class PerfilFragment extends Fragment {
                                 android.util.Log.e("PerfilFragment", "Error obteniendo foto", e);
                             }
 
-                            tvNombrePerfil.setText(nombre);
                             tvEmailPerfil.setText(email);
                             inputNombrePerfil.setText(nombre);
 
@@ -170,22 +168,9 @@ public class PerfilFragment extends Fragment {
                     });
         }
     }
-
-    private void toggleEditarNombre() {
-        nombreModificado = !nombreModificado;
-        inputNombrePerfil.setEnabled(nombreModificado);
-
-        if (nombreModificado) {
-            inputNombrePerfil.requestFocus();
-            iconEditarNombre.setAlpha(1f);
-        } else {
-            iconEditarNombre.setAlpha(0.5f);
-        }
-    }
-
     private void resetButton() {
         btnGuardarCambios.setEnabled(true);
-        btnGuardarCambios.setText("Guardar Cambios");
+        btnGuardarCambios.setText("Guardar");
     }
 
     private void guardarCambios() {
@@ -286,20 +271,19 @@ public class PerfilFragment extends Fragment {
                             "Cambios guardados correctamente",
                             Toast.LENGTH_SHORT).show();
 
-                    tvNombrePerfil.setText(nuevoNombre);
                     nombreModificado = false;
                     inputNombrePerfil.setEnabled(false);
                     imagenSeleccionada = null;
 
                     btnGuardarCambios.setEnabled(true);
-                    btnGuardarCambios.setText("Guardar Cambios");
+                    btnGuardarCambios.setText("Guardar");
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(),
                             "Error al guardar cambios",
                             Toast.LENGTH_SHORT).show();
                     btnGuardarCambios.setEnabled(true);
-                    btnGuardarCambios.setText("Guardar Cambios");
+                    btnGuardarCambios.setText("Guardar");
                 });
     }
 
