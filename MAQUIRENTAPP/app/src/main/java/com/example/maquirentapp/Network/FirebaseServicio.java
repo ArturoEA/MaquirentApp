@@ -7,6 +7,7 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Usuario;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -124,30 +125,39 @@ public class FirebaseServicio {
     public void cerrarSesion() {
         auth.signOut();
     }
-    // Subir imagen y crear grupo
-    public void crearGrupoConImagen(String codigo, Uri imageUri, OnGrupoCreatedListener listener) {
-        if (imageUri == null) {
-            // Crear grupo sin imagen
-            crearGrupo(codigo, null, listener);
-            return;
-        }
+    public void crearGrupoConImagen(String codigo, Uri imagenUri, OnGrupoCreatedListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("gruposElectrogenos").document();
+        String idGenerado = docRef.getId();
 
-        // Subir imagen primero
-        String fileName = "grupos/" + codigo + "_" + System.currentTimeMillis() + ".jpg";
-        StorageReference storageRef = storage.getReference().child(fileName);
+        GrupoElectrogeno grupo = new GrupoElectrogeno();
+        grupo.setId(idGenerado);
+        grupo.setCodigo(codigo);
+        grupo.setEliminado(false);
 
-        storageRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    // Obtener URL de descarga
-                    storageRef.getDownloadUrl()
+        if (imagenUri != null) {
+            StorageReference storageRef = FirebaseStorage.getInstance()
+                    .getReference()
+                    .child("grupos/" + idGenerado + ".jpg");
+
+            storageRef.putFile(imagenUri)
+                    .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
                             .addOnSuccessListener(downloadUri -> {
-                                // Crear grupo con URL de imagen
-                                crearGrupo(codigo, downloadUri.toString(), listener);
+                                grupo.setFoto(downloadUri.toString());
+
+                                docRef.set(grupo)
+                                        .addOnSuccessListener(aVoid -> listener.onSuccess(grupo))
+                                        .addOnFailureListener(listener::onError);
                             })
-                            .addOnFailureListener(listener::onError);
-                })
-                .addOnFailureListener(listener::onError);
+                            .addOnFailureListener(listener::onError))
+                    .addOnFailureListener(listener::onError);
+        } else {
+            docRef.set(grupo)
+                    .addOnSuccessListener(aVoid -> listener.onSuccess(grupo))
+                    .addOnFailureListener(listener::onError);
+        }
     }
+
 
     private void crearGrupo(String codigo, String fotoUrl, OnGrupoCreatedListener listener) {
         GrupoElectrogeno grupo = new GrupoElectrogeno();
@@ -193,7 +203,7 @@ public class FirebaseServicio {
                         List<AlquilerMensual> alquileres = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             AlquilerMensual alquiler = document.toObject(AlquilerMensual.class);
-                            alquiler.setId(document.getId()); // Asignar el ID del documento
+                            alquiler.setId(document.getId());
                             alquileres.add(alquiler);
                         }
                         listener.onSuccess(alquileres);
@@ -205,6 +215,11 @@ public class FirebaseServicio {
 
     // Crear alquiler mensual
     public void crearAlquilerMensual(AlquilerMensual alquiler, OnAlquilerCreatedListener listener) {
+        if (alquiler.getIdGrupo() == null || alquiler.getIdGrupo().isEmpty()) {
+            listener.onError(new Exception("idGrupo no puede estar vacío"));
+            return;
+        }
+
         db.collection("alquileresMensuales")
                 .add(alquiler)
                 .addOnSuccessListener(documentReference -> {

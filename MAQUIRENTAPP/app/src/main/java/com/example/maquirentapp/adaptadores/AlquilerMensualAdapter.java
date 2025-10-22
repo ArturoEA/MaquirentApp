@@ -48,44 +48,52 @@ public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensual
         h.txtHorasInicio.setText(a.getHorometroInicial() + " horas");
         h.txtHorasFinal.setText(a.getHorometroFinal() + " horas");
 
-        String fechaIso = a.getFechaInicial(); // "2025-04-23T00:00:00"
-        String fechaFormateada;
-        try {
-            // 1) Parsear el ISO
-            SimpleDateFormat isoFormat =
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            Date date = isoFormat.parse(fechaIso);
+        String fechaIso = a.getFechaInicial(); // puede ser null
+        String fechaFormateada = "";
 
-            // 2) Formatear al nuevo estilo
-            SimpleDateFormat targetFormat =
-                    new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
-            fechaFormateada = targetFormat.format(date);
-        } catch (ParseException e) {
-            // si algo falla, muestro el original o una cadena vacía
-            fechaFormateada = fechaIso.substring(0, 10); // "2025-04-23"
-        } catch (java.text.ParseException e) {
-            throw new RuntimeException(e);
+        if (fechaIso != null && !fechaIso.isEmpty()) {
+            try {
+                SimpleDateFormat isoFormat =
+                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+                Date date = isoFormat.parse(fechaIso);
+
+                SimpleDateFormat targetFormat =
+                        new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
+                fechaFormateada = targetFormat.format(date);
+            } catch (java.text.ParseException e) {
+                // Si no se puede parsear, mostramos los primeros 10 caracteres si tiene formato
+                if (fechaIso.length() >= 10)
+                    fechaFormateada = fechaIso.substring(0, 10);
+                else
+                    fechaFormateada = fechaIso;
+            }
         }
-        h.txtFechaInicial.setText(fechaFormateada);
 
-        String fechaIso2 = a.getFechaInicial(); // "2025-04-23T00:00:00"
-        String fechaFormateada2;
-        try {
-            // 1) Parsear el ISO
-            SimpleDateFormat isoFormat =
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            Date date = isoFormat.parse(fechaIso2);
+        h.txtFechaInicial.setText(fechaFormateada.isEmpty() ? "-" : fechaFormateada);
 
-            // 2) Formatear al nuevo estilo
-            SimpleDateFormat targetFormat =
-                    new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
-            fechaFormateada2 = targetFormat.format(date);
-        } catch (ParseException e) {
-            fechaFormateada2 = fechaIso2.substring(0, 10); // "2025-04-23"
-        } catch (java.text.ParseException e) {
-            throw new RuntimeException(e);
+
+        String fechaIso2 = a.getFechaFinal();
+        String fechaFormateada2 = "";
+
+        if (fechaIso2 != null && !fechaIso2.isEmpty()) {
+            try {
+                SimpleDateFormat isoFormat =
+                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+                Date date = isoFormat.parse(fechaIso2);
+
+                SimpleDateFormat targetFormat =
+                        new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
+                fechaFormateada2 = targetFormat.format(date);
+            } catch (java.text.ParseException e) {
+                if (fechaIso2.length() >= 10)
+                    fechaFormateada2 = fechaIso2.substring(0, 10);
+                else
+                    fechaFormateada2 = fechaIso2;
+            }
         }
-        h.txtFechaFinal.setText(fechaFormateada2);
+
+        h.txtFechaFinal.setText(fechaFormateada2.isEmpty() ? "-" : fechaFormateada2);
+
 
         // Limpia los íconos anteriores
         h.contenedorAccesorios.removeAllViews();

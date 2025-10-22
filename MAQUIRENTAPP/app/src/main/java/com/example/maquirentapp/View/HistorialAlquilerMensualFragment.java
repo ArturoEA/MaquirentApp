@@ -3,7 +3,6 @@ package com.example.maquirentapp.View;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,44 +13,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.example.maquirentapp.Access.GrupoElectrogenoAdapter;
 import com.example.maquirentapp.Model.AlquilerMensual;
-import com.example.maquirentapp.Model.GrupoElectrogeno;
-import com.example.maquirentapp.Network.ApiServicio;
 import com.example.maquirentapp.Network.FirebaseServicio;
-import com.example.maquirentapp.Network.RetrofitCliente;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adaptadores.AlquilerMensualAdapter;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import androidx.core.content.ContextCompat;
 
 public class HistorialAlquilerMensualFragment extends Fragment {
     private RecyclerView recyclerView;
     private AlquilerMensualAdapter adapter;
     private FirebaseServicio firebaseServicio;
-    private String codigo;
-    public HistorialAlquilerMensualFragment() {
-        // Required empty public constructor
-    }
+    private String codigo, idGrupo;
+
+    public HistorialAlquilerMensualFragment() { }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             codigo = getArguments().getString("codigo");
+            idGrupo = getArguments().getString("idGrupo");
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_historial_alquiler_mensual, container, false);
     }
 
@@ -59,9 +49,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         firebaseServicio = new FirebaseServicio();
-        String codigo = getArguments().getString("codigo");
 
-        ExtendedFloatingActionButton btnAñadir = view.findViewById(R.id.btnAñadir);
         recyclerView = view.findViewById(R.id.recyclerAlquileres);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -69,20 +57,45 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         fetchAlquileresMensuales();
+    }
 
-        btnAñadir.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putString("codigo", codigo);
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
-        });
+    @Override
+    public void onResume() {
+        super.onResume();
+        configureGlobalFab();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Ocultar FAB cuando el fragment deja de ser visible
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        }
     }
 
     private void fetchAlquileresMensuales() {
         firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
-                adapter.setItems(alquileres);
+                List<AlquilerMensual> filtrados = new java.util.ArrayList<>();
+                if (idGrupo != null && !idGrupo.isEmpty()) {
+                    for (AlquilerMensual a : alquileres) {
+                        if (a.getIdGrupo() != null && a.getIdGrupo().equals(idGrupo)) {
+                            filtrados.add(a);
+                        }
+                    }
+                } else if (codigo != null && !codigo.isEmpty()) {
+                    for (AlquilerMensual a : alquileres) {
+                        if (a.getIdGrupo() != null && a.getIdGrupo().equals(codigo)) {
+                            filtrados.add(a);
+                        }
+                    }
+                }
+                adapter.setItems(filtrados);
             }
 
             @Override
@@ -92,5 +105,43 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void configureGlobalFab() {
+        View hostView = getView(); // usado para la navegación
+        if (hostView == null) return;
+
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+            main.showGlobalFab(
+                    "Añadir",
+                    R.drawable.icon_nuevo_blanco,
+                    v -> {
+                        Bundle args = new Bundle();
+                        if (codigo != null) args.putString("codigo", codigo);
+                        if (idGrupo != null) args.putString("idGrupo", idGrupo);
+                        Navigation.findNavController(hostView)
+                                .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
+                    }
+            );
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null && activityFab instanceof com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton) {
+                com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fab =
+                        (com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton) activityFab;
+                fab.setText("Añadir");
+                try {
+                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_nuevo_blanco));
+                } catch (Exception ignored) { }
+                fab.setOnClickListener(v -> {
+                    Bundle args = new Bundle();
+                    if (codigo != null) args.putString("codigo", codigo);
+                    if (idGrupo != null) args.putString("idGrupo", idGrupo);
+                    Navigation.findNavController(hostView)
+                            .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
+                });
+                fab.setVisibility(View.VISIBLE);
+            }
+        }
     }
 }

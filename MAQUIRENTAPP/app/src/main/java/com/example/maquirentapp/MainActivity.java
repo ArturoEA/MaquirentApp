@@ -582,6 +582,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
+
+        btnGlobal.animate().cancel();
+
         if (text != null) {
             btnGlobal.setText(text);
         }
@@ -593,22 +596,30 @@ public class MainActivity extends AppCompatActivity {
                 Log.w("MainActivity", "No se pudo establecer icono en btnGlobal: " + e.getMessage());
             }
         }
+
         btnGlobal.setOnClickListener(listener);
 
         if (btnGlobal.getVisibility() != View.VISIBLE) {
             btnGlobal.setAlpha(0f);
             btnGlobal.setVisibility(View.VISIBLE);
-            btnGlobal.animate().alpha(1f).setDuration(180).start();
+            btnGlobal.animate().alpha(1f).setDuration(70).setListener(null).start();
+        } else {
+            btnGlobal.setAlpha(1f);
         }
     }
+
     public void hideGlobalFab() {
         if (btnGlobal == null) {
             btnGlobal = findViewById(R.id.btnGlobal);
             if (btnGlobal == null) return;
         }
-        btnGlobal.setOnClickListener(null);
+
+        btnGlobal.animate().cancel();
+
         if (btnGlobal.getVisibility() == View.VISIBLE) {
-            btnGlobal.animate().alpha(0f).setDuration(120).withEndAction(() -> btnGlobal.setVisibility(View.GONE)).start();
+            btnGlobal.animate().alpha(0f).setDuration(70).withEndAction(() -> {
+                btnGlobal.setVisibility(View.GONE);
+            }).start();
         } else {
             btnGlobal.setVisibility(View.GONE);
         }
