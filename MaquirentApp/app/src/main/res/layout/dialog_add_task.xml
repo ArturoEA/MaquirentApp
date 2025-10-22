@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.textfield.TextInputLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/textInputLayoutTaskName"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/hint_nombre_tarea"
+    app:boxBackgroundMode="outline"
+    app:boxStrokeColor="@color/card_dark"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/editTextNombreTarea"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:imeOptions="actionDone"
+        android:inputType="textCapSentences"
+        android:maxLines="1" />
+
+</com.google.android.material.textfield.TextInputLayout>

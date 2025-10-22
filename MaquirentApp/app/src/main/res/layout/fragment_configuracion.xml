@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".View.ConfiguracionFragment"
+    android:theme="@style/Theme.TextMain">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- SECCIÓN PERFIL -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@drawable/icon_monedas_blanco"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/shape_circular"
+                />
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Perfil"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"/>
+
+                <TextView
+                    android:id="@+id/nombreUsuario"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre de usuario"
+                    android:textSize="14sp"
+                    android:textColor="#555555"/>
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/icon_flecha_abajo"
+                android:rotation="270"/>
+        </LinearLayout>
+
+        <!-- FINANZAS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Finanzas"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:textColor="#000000"/>
+
+        <!-- ITEM: Historial de ingresos -->
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_historial"
+            android:tag="Historial de ingresos"
+            />
+
+        <!-- ACCESORIOS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accesorios"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:textColor="#000000"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_accesorios_diario"
+            android:tag="Accesorios alquiler diario"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_accesorios_mensual"
+            android:tag="Accesorios alquiler mensual"/>
+
+        <!-- GRUPOS ELECTRÓGENOS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grupos electrógenos"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:textColor="#000000"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_mantenimientos"
+            android:tag="Mantenimientos"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_informacion_general"
+            android:tag="Datos Información General"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_lista_grupos"
+            android:tag="Lista de grupos electrógenos"/>
+
+        <!-- USUARIOS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Usuarios"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="6dp"
+            android:textColor="#000000"/>
+
+        <include layout="@layout/item_configuracion"
+            android:id="@+id/item_gestionar_usuarios"
+            android:tag="Gestionar usuarios"/>
+
+        <Button
+            android:id="@+id/btnSignOut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cerrar Sesión"
+            app:icon="@android:drawable/ic_lock_power_off"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+    </LinearLayout>
+
+</FrameLayout>

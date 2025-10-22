@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <ImageView
+        android:id="@+id/fullImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:padding="16dp"
+        android:src="@drawable/icon_pdf_blanco"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Cerrar" />
+
+</RelativeLayout>

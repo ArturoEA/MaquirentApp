@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="empresas_array">
+        <item>Empresa 1</item>
+        <item>Empresa 2</item>
+        <item>Empresa 3</item>
+        <item>Empresa 4</item>
+        <item>Empresa 5</item>
+    </string-array>
+</resources>
