@@ -336,6 +336,41 @@
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Gestionar usuarios");
                 }
+                else if(dest.getId() == R.id.perfilFragment){
+                    setHeaderIcon(R.drawable.icon_perfil_blanco);
+                    setHeaderTitle("Perfil");
+                }
+                else if(dest.getId() == R.id.historialIngresosFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_historial_ingresos);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Historial de ingresos");
+                }
+                else if(dest.getId() == R.id.accesoriosAlquilerDiarioFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_accesorios_diario);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Accesorios alquiler diario");
+                }
+                else if(dest.getId() == R.id.accesoriosAlquilerMensualFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_accesorios_mensual);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Accesorios alquiler mensual");
+                }
+                else if(dest.getId() == R.id.mantenimientosConfiguracionFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_mantenimientos);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Mantenimientos");
+                }
+                else if(dest.getId() == R.id.datosInformacionGeneralFragment){
+                    setHeaderIcon(R.drawable.icon_blanco_informacion_general);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Datos información general");
+                }
+                else if(dest.getId() == R.id.listaGruposElectrogenosFragment){
+                    setHeaderIcon(R.drawable.icon_generador);
+                    setHeaderTitle("Lista de grupos electrógenos");
+                }
+
+
 
                 previousDestinationId = dest.getId();
             });
