@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,8 +26,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ConfiguracionFragment extends Fragment {
-    private Button btnSignOut;
     private TextView tvNombreUsuario;
+    private ImageView imgFotoPerfil;
 
     public ConfiguracionFragment() {
         // Required empty public constructor
@@ -41,9 +42,6 @@ public class ConfiguracionFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_configuracion, container, false);
-
-        btnSignOut = view.findViewById(R.id.btnSignOut);
-        btnSignOut.setOnClickListener(v -> signOut());
 
         return view;
     }
@@ -61,6 +59,7 @@ public class ConfiguracionFragment extends Fragment {
 
     private void cargarDatosUsuario(View view) {
         TextView nombreUsuario = view.findViewById(R.id.nombreUsuario);
+        imgFotoPerfil = view.findViewById(R.id.imgFotoPerfil);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null) {
@@ -76,6 +75,25 @@ public class ConfiguracionFragment extends Fragment {
                     } else {
                         nombreUsuario.setText("Usuario sin nombre");
                     }
+
+                    // Obtener fotoPerfil de forma segura
+                    String fotoPerfil = "";
+                    try {
+                        Object fotoObj = documentSnapshot.get("fotoPerfil");
+                        if (fotoObj instanceof String) {
+                            fotoPerfil = (String) fotoObj;
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("PerfilFragment", "Error obteniendo foto", e);
+                    }
+
+                    // Cargar foto de perfil si existe
+                    if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                        Glide.with(this)
+                                .load(fotoPerfil)
+                                .circleCrop()
+                                .into(imgFotoPerfil);
+                    }
                 } else {
                     nombreUsuario.setText("Usuario no encontrado");
                 }
@@ -86,7 +104,6 @@ public class ConfiguracionFragment extends Fragment {
             nombreUsuario.setText("No hay sesión activa");
         }
     }
-
     private void configurarItems(View view) {
         // Item Historial
         View itemHistorial = view.findViewById(R.id.item_historial);
@@ -148,16 +165,5 @@ public class ConfiguracionFragment extends Fragment {
         itemInformacionGeneral.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_datos_informacion_general));
         itemListaGrupos.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_lista_grupos_electrogenos));
         itemGestionarUsuarios.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_gestionar_usuarios));
-    }
-
-    private void signOut() {
-        FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(getActivity(), MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-
-        if (getActivity() != null) {
-            getActivity().finish();
-        }
     }
 }

@@ -22,9 +22,10 @@
             android:paddingVertical="8dp">
 
             <ImageView
+                android:id="@+id/imgFotoPerfil"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:src="@drawable/icon_monedas_blanco"
+                android:src="@drawable/icon_perfil_blanco"
                 android:scaleType="centerCrop"
                 android:layout_marginEnd="12dp"
                 android:background="@drawable/shape_circular"
@@ -133,14 +134,6 @@
         <include layout="@layout/item_configuracion"
             android:id="@+id/item_gestionar_usuarios"
             android:tag="Gestionar usuarios"/>
-
-        <Button
-            android:id="@+id/btnSignOut"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cerrar Sesión"
-            app:icon="@android:drawable/ic_lock_power_off"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
     </LinearLayout>
 
 </FrameLayout>
