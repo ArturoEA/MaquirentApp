@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -40,7 +42,6 @@ public class PerfilFragment extends Fragment {
     private FloatingActionButton fabCambiarFoto;
     private EditText inputNombrePerfil;
     private TextView tvEmailPerfil;
-    private MaterialButton btnGuardarCambios;
     private View btnCambiarPassword, btnSignOut;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -90,14 +91,46 @@ public class PerfilFragment extends Fragment {
         initViews(view);
         setupListeners();
         cargarDatosUsuario();
+        configureGlobalFab();
     }
-
+    private void configureGlobalFab() {
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+            main.showGlobalFab(
+                    "Guardar",
+                    R.drawable.icon_guardar_blanco,
+                    v -> {
+                        guardarCambios();
+                    }
+            );
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null && activityFab instanceof ExtendedFloatingActionButton) {
+                ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
+                fab.setText("Añadir");
+                try {
+                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_nuevo_blanco));
+                } catch (Exception ignored) {}
+                fab.setOnClickListener(v -> guardarCambios());
+                fab.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        }
+    }
     private void initViews(View view) {
         imgFotoPerfil = view.findViewById(R.id.imgFotoPerfil);
         fabCambiarFoto = view.findViewById(R.id.fabCambiarFoto);
         inputNombrePerfil = view.findViewById(R.id.inputNombrePerfil);
         tvEmailPerfil = view.findViewById(R.id.tvEmailPerfil);
-        btnGuardarCambios = view.findViewById(R.id.btnGuardarCambios);
         btnSignOut = view.findViewById(R.id.btnSignOut);
         btnCambiarPassword = view.findViewById(R.id.cambiar_contraseña);
         ((TextView) btnCambiarPassword.findViewById(R.id.text_item_configuracion)).setText("Cambiar contraseña");
@@ -113,9 +146,6 @@ public class PerfilFragment extends Fragment {
     private void setupListeners() {
         // Cambiar foto
         fabCambiarFoto.setOnClickListener(v -> abrirGaleria.launch("image/*"));
-
-        // Guardar cambios
-        btnGuardarCambios.setOnClickListener(v -> guardarCambios());
 
         // Cambiar contraseña
         btnCambiarPassword.setOnClickListener(v -> mostrarDialogoCambiarPassword());
@@ -168,10 +198,6 @@ public class PerfilFragment extends Fragment {
                     });
         }
     }
-    private void resetButton() {
-        btnGuardarCambios.setEnabled(true);
-        btnGuardarCambios.setText("Guardar");
-    }
 
     private void guardarCambios() {
         FirebaseUser user = auth.getCurrentUser();
@@ -190,9 +216,6 @@ public class PerfilFragment extends Fragment {
             return;
         }
 
-        btnGuardarCambios.setEnabled(false);
-        btnGuardarCambios.setText("Guardando...");
-
         // Si hay foto nueva, subirla primero
         if (imagenSeleccionada != null) {
             android.util.Log.d("PerfilFragment", "Imagen seleccionada, procediendo a subir");
@@ -206,7 +229,6 @@ public class PerfilFragment extends Fragment {
     private void subirFotoPerfil(String userId, String nuevoNombre) {
         if (imagenSeleccionada == null) {
             Toast.makeText(getContext(), "No hay imagen seleccionada", Toast.LENGTH_SHORT).show();
-            resetButton();
             return;
         }
 
@@ -235,7 +257,6 @@ public class PerfilFragment extends Fragment {
                                 Toast.makeText(getContext(),
                                         "Error al obtener URL de foto: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
-                                resetButton();
                             });
                 })
                 .addOnFailureListener(e -> {
@@ -251,7 +272,6 @@ public class PerfilFragment extends Fragment {
                     Toast.makeText(getContext(),
                             "Error: " + mensaje,
                             Toast.LENGTH_SHORT).show();
-                    resetButton();
                 });
     }
 
@@ -275,15 +295,11 @@ public class PerfilFragment extends Fragment {
                     inputNombrePerfil.setEnabled(false);
                     imagenSeleccionada = null;
 
-                    btnGuardarCambios.setEnabled(true);
-                    btnGuardarCambios.setText("Guardar");
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(),
                             "Error al guardar cambios",
                             Toast.LENGTH_SHORT).show();
-                    btnGuardarCambios.setEnabled(true);
-                    btnGuardarCambios.setText("Guardar");
                 });
     }
 

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="15dp"
+    app:cardCornerRadius="12dp"
+    android:backgroundTint="@color/background_light"
+    app:strokeWidth="0dp"
+    android:theme="@style/Theme.TextMain">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Foto del grupo -->
+        <ImageView
+            android:id="@+id/imgGrupo"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_generador"
+            android:contentDescription="Foto del grupo electrógeno" />
+
+        <!-- Código del grupo -->
+        <TextView
+            android:id="@+id/tvCodigoGrupo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="GEP 45-106"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/black" />
+
+        <!-- Botón Editar -->
+        <ImageView
+            android:id="@+id/btnEditar"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:padding="8dp"
+            android:layout_marginEnd="5dp"
+            android:src="@drawable/icon_editar_blanco"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/black"
+            android:contentDescription="Editar grupo" />
+
+        <!-- Botón Eliminar -->
+        <ImageView
+            android:id="@+id/btnEliminar"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:padding="8dp"
+            android:src="@drawable/icon_eliminar_rojo"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Eliminar grupo" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

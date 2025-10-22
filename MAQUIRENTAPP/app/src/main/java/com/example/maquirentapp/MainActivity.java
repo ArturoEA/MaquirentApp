@@ -1,118 +1,123 @@
-    package com.example.maquirentapp;
+package com.example.maquirentapp;
 
-    import android.animation.ObjectAnimator;
-    import android.os.Bundle;
-    import android.util.Log;
-    import android.view.View;
-    import android.widget.ImageView;
-    import android.widget.LinearLayout;
-    import android.widget.TextView;
+import android.animation.ObjectAnimator;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-    import androidx.activity.EdgeToEdge;
-    import androidx.appcompat.app.AppCompatActivity;
-    import androidx.core.content.ContextCompat;
-    import androidx.core.graphics.Insets;
-    import androidx.core.view.ViewCompat;
-    import androidx.core.view.WindowInsetsCompat;
-    import androidx.core.widget.NestedScrollView;
-    import androidx.lifecycle.ViewModelProvider;
-    import androidx.navigation.NavController;
-    import androidx.navigation.NavOptions;
-    import androidx.navigation.fragment.NavHostFragment;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
 
-    import com.example.maquirentapp.Model.Usuario;
-    import com.example.maquirentapp.Network.FirebaseServicio;
-    import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
-    import com.google.android.material.floatingactionbutton.FloatingActionButton;
-    import com.google.firebase.appcheck.FirebaseAppCheck;
-    import com.google.firebase.auth.FirebaseAuth;
-    import com.google.firebase.firestore.FirebaseFirestore;
-    import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
-    import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
+import com.example.maquirentapp.Model.Usuario;
+import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.appcheck.FirebaseAppCheck;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 
-    public class MainActivity extends AppCompatActivity {
-        private LinearLayout navHome, navRent, navConfiguracion;
-        private TextView navHomeText, navRentText, navConfiguracionText;
-        private TextView headerTitle;
-        private ImageView headerIcon;
-        private NestedScrollView contentScrollView;
-        private ScrollStateViewModel scrollViewModel;
-        private FirebaseServicio firebaseServicio;
+import android.graphics.drawable.Drawable;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
-        private NavController navController;
-        // Datos del usuario
-        private String userRole;
-        private String userUid;
-        private String userName;
+public class MainActivity extends AppCompatActivity {
+    private ExtendedFloatingActionButton btnGlobal; // global FAB
+    private LinearLayout navHome, navRent, navConfiguracion;
+    private TextView navHomeText, navRentText, navConfiguracionText;
+    private TextView headerTitle;
+    private ImageView headerIcon;
+    private NestedScrollView contentScrollView;
+    private ScrollStateViewModel scrollViewModel;
+    private FirebaseServicio firebaseServicio;
 
-        // Para el indicador animado
-        private View currentSelectedIndicator;
-        private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: configuracion
-        private int previousDestinationId = R.id.homeFragment;
-        // Keys para identificar cada fragment
-        private static final String HOME_FRAGMENT_KEY = "home_fragment";
-        private static final String CGE_FRAGMENT_KEY = "cge_fragment";
-        private static final String CONFIGURACION_FRAGMENT_KEY = "configuracion_fragment";
-        private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
-        private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
+    private NavController navController;
+    // Datos del usuario
+    private String userRole;
+    private String userUid;
+    private String userName;
+
+    // Para el indicador animado
+    private View currentSelectedIndicator;
+    private int currentSelectedIndex = 0; // 0: home, 1: cge, 2: configuracion
+    private int previousDestinationId = R.id.homeFragment;
+    // Keys para identificar cada fragment
+    private static final String HOME_FRAGMENT_KEY = "home_fragment";
+    private static final String CGE_FRAGMENT_KEY = "cge_fragment";
+    private static final String CONFIGURACION_FRAGMENT_KEY = "configuracion_fragment";
+    private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
+    private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
 
 
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-            initializeAppCheck();
+        initializeAppCheck();
 
-            EdgeToEdge.enable(this);
-            setContentView(R.layout.activity_main);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
 
-            firebaseServicio = new FirebaseServicio();
-            scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
+        firebaseServicio = new FirebaseServicio();
+        scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            // Configurar window insets
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-                return insets;
-            });
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // Configurar window insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
-            testFirestoreConnection();
+        testFirestoreConnection();
 
-            // Inicializar vistas
-            initViews();
+        // Inicializar vistas
+        initViews();
 
-            // Configurar Navigation Component
-            setupNavigation();
-            verificarAutenticacion();
-            // Configurar estado inicial
-            //setupInitialState();
-        }
+        // Configurar Navigation Component
+        setupNavigation();
+        verificarAutenticacion();
+        // Configurar estado inicial
+        //setupInitialState();
+    }
 
-        private void initializeAppCheck() {
-            try {
-                FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
+    private void initializeAppCheck() {
+        try {
+            FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
 
-                // Detectar si es debug o release
-                if (isDebugBuild()) {
-                    // Modo debug: usar DebugAppCheckProviderFactory
-                    Log.d("AppCheck", "Usando Debug AppCheckProvider");
-                    firebaseAppCheck.installAppCheckProviderFactory(
-                            DebugAppCheckProviderFactory.getInstance());
-                } else {
-                    // Modo release: usar PlayIntegrityAppCheckProviderFactory
-                    Log.d("AppCheck", "Usando Play Integrity AppCheckProvider");
-                    firebaseAppCheck.installAppCheckProviderFactory(
-                            PlayIntegrityAppCheckProviderFactory.getInstance());
-                }
-            } catch (Exception e) {
-                Log.e("AppCheck", "Error inicializando App Check", e);
+            // Detectar si es debug o release
+            if (isDebugBuild()) {
+                // Modo debug: usar DebugAppCheckProviderFactory
+                Log.d("AppCheck", "Usando Debug AppCheckProvider");
+                firebaseAppCheck.installAppCheckProviderFactory(
+                        DebugAppCheckProviderFactory.getInstance());
+            } else {
+                // Modo release: usar PlayIntegrityAppCheckProviderFactory
+                Log.d("AppCheck", "Usando Play Integrity AppCheckProvider");
+                firebaseAppCheck.installAppCheckProviderFactory(
+                        PlayIntegrityAppCheckProviderFactory.getInstance());
             }
+        } catch (Exception e) {
+            Log.e("AppCheck", "Error inicializando App Check", e);
         }
+    }
 
-        private boolean isDebugBuild() {
-            return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        }
+    private boolean isDebugBuild() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
     private void testFirestoreConnection() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("gruposElectrogenos")
@@ -125,6 +130,7 @@
                     }
                 });
     }
+
     private void verificarAutenticacion() {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             mostrarAuthFragment();
@@ -170,6 +176,7 @@
             }
         });
     }
+
     private void mostrarAuthFragment() {
         configurarUIParaAuth();
 
@@ -180,11 +187,13 @@
             navController.navigate(R.id.authFragment);
         }
     }
+
     private void configurarUIParaAuth() {
         findViewById(R.id.menuFlotante).setVisibility(View.GONE);
         findViewById(R.id.headerLayout).setVisibility(View.GONE);
         findViewById(R.id.btn_back).setVisibility(View.GONE);
     }
+
     private void configurarUISegunRol() {
         findViewById(R.id.menuFlotante).setVisibility(View.VISIBLE);
         findViewById(R.id.headerLayout).setVisibility(View.VISIBLE);
@@ -196,18 +205,7 @@
             setupAdminUI();
         }
     }
-//    private void inicializarApp() {
-//        // Mostrar la navegación y header
-//        findViewById(R.id.menuFlotante).setVisibility(View.VISIBLE);
-//        findViewById(R.id.headerLayout).setVisibility(View.VISIBLE);
-//
-//        // Inicializar vistas
-//        initViews();
-//        // Configurar Navigation Component
-//        setupNavigation();
-//        // Configurar estado inicial
-//        setupInitialState();
-//    }
+
     private void navegarSegunRol() {
         if (navController != null) {
             NavOptions navOptions = new NavOptions.Builder()
@@ -221,6 +219,7 @@
             }
         }
     }
+
     private void setupEmpleadoUI() {
         navRent.setVisibility(View.GONE);
         navHomeText.setText("Tareas");
@@ -235,10 +234,12 @@
 //            }
 //        });
     }
+
     private void setupAdminUI() {
         navRent.setVisibility(View.VISIBLE);
         navHomeText.setText("Inicio");
     }
+
     private void initViews() {
         headerTitle = findViewById(R.id.header_title);
         headerIcon = findViewById(R.id.header_icon);
@@ -251,6 +252,9 @@
         navHomeText = findViewById(R.id.nav_home_text);
         navRentText = findViewById(R.id.nav_rent_text);
         navConfiguracionText = findViewById(R.id.nav_configuracion_text);
+
+        btnGlobal = findViewById(R.id.btnGlobal);
+        if (btnGlobal != null) btnGlobal.setVisibility(View.GONE);
 
         // Configurar estado inicial
         currentSelectedIndicator = navHome;
@@ -330,46 +334,37 @@
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Nuevo alquiler mensual\n" + codigo);
-                }
-                else if(dest.getId() == R.id.gestionarUsuariosFragment){
+                } else if (dest.getId() == R.id.gestionarUsuariosFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_gestionar_usuarios);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Gestionar usuarios");
-                }
-                else if(dest.getId() == R.id.perfilFragment){
+                } else if (dest.getId() == R.id.perfilFragment) {
                     setHeaderIcon(R.drawable.icon_perfil_blanco);
                     setHeaderTitle("Perfil");
-                }
-                else if(dest.getId() == R.id.historialIngresosFragment){
+                } else if (dest.getId() == R.id.historialIngresosFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_historial_ingresos);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Historial de ingresos");
-                }
-                else if(dest.getId() == R.id.accesoriosAlquilerDiarioFragment){
+                } else if (dest.getId() == R.id.accesoriosAlquilerDiarioFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_accesorios_diario);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Accesorios alquiler diario");
-                }
-                else if(dest.getId() == R.id.accesoriosAlquilerMensualFragment){
+                } else if (dest.getId() == R.id.accesoriosAlquilerMensualFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_accesorios_mensual);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Accesorios alquiler mensual");
-                }
-                else if(dest.getId() == R.id.mantenimientosConfiguracionFragment){
+                } else if (dest.getId() == R.id.mantenimientosConfiguracionFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_mantenimientos);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Mantenimientos");
-                }
-                else if(dest.getId() == R.id.datosInformacionGeneralFragment){
+                } else if (dest.getId() == R.id.datosInformacionGeneralFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_informacion_general);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Datos información general");
-                }
-                else if(dest.getId() == R.id.listaGruposElectrogenosFragment){
+                } else if (dest.getId() == R.id.listaGruposElectrogenosFragment) {
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Lista de grupos electrógenos");
                 }
-
 
 
                 previousDestinationId = dest.getId();
@@ -403,9 +398,17 @@
     }
 
     // Método público para que los fragments puedan acceder a los datos del usuario
-    public String getUserRole() { return userRole; }
-    public String getUserUid() { return userUid; }
-    public String getUserName() { return userName; }
+    public String getUserRole() {
+        return userRole;
+    }
+
+    public String getUserUid() {
+        return userUid;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
 
     private void saveScrollPositionForDestination(int destinationId) {
         if (contentScrollView != null) {
@@ -571,4 +574,44 @@
             headerTitle.setText(title);
         }
     }
+    public void showGlobalFab(String text, int iconResId, View.OnClickListener listener) {
+        if (btnGlobal == null) {
+            btnGlobal = findViewById(R.id.btnGlobal);
+            if (btnGlobal == null) {
+                Log.w("MainActivity", "showGlobalFab: btnGlobal es null en layout");
+                return;
+            }
+        }
+        if (text != null) {
+            btnGlobal.setText(text);
+        }
+        if (iconResId != 0) {
+            try {
+                Drawable icon = ContextCompat.getDrawable(this, iconResId);
+                btnGlobal.setIcon(icon);
+            } catch (Exception e) {
+                Log.w("MainActivity", "No se pudo establecer icono en btnGlobal: " + e.getMessage());
+            }
+        }
+        btnGlobal.setOnClickListener(listener);
+
+        if (btnGlobal.getVisibility() != View.VISIBLE) {
+            btnGlobal.setAlpha(0f);
+            btnGlobal.setVisibility(View.VISIBLE);
+            btnGlobal.animate().alpha(1f).setDuration(180).start();
+        }
+    }
+    public void hideGlobalFab() {
+        if (btnGlobal == null) {
+            btnGlobal = findViewById(R.id.btnGlobal);
+            if (btnGlobal == null) return;
+        }
+        btnGlobal.setOnClickListener(null);
+        if (btnGlobal.getVisibility() == View.VISIBLE) {
+            btnGlobal.animate().alpha(0f).setDuration(120).withEndAction(() -> btnGlobal.setVisibility(View.GONE)).start();
+        } else {
+            btnGlobal.setVisibility(View.GONE);
+        }
+    }
+
 }

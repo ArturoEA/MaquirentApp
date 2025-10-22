@@ -31,6 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -92,74 +93,26 @@ public class CGEFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        // Configurar botón de agregar grupo
-        CardView btnAgregar = view.findViewById(R.id.btnAgregarGrupo);
-        btnAgregar.setOnClickListener(v -> mostrarDialogoNuevoGrupo());
-
         fetchGruposElectrogenos();
 
     }
-    private void mostrarDialogoNuevoGrupo() {
-        Dialog dialog = new Dialog(requireContext());
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_nuevo_grupo, null);
-        dialog.setContentView(dialogView);
-
-        // Referencias a las vistas del diálogo
-        dialogImagePreview = dialogView.findViewById(R.id.imgPreview);
-        MaterialButton btnSeleccionarFoto = dialogView.findViewById(R.id.btnSeleccionarFoto);
-        TextInputEditText inputCodigo = dialogView.findViewById(R.id.inputCodigo);
-        MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelar);
-        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardar);
-
-        // Configurar listeners
-        btnSeleccionarFoto.setOnClickListener(v -> {
-            imagePickerLauncher.launch("image/*");
-        });
-
-        btnCancelar.setOnClickListener(v -> {
-            selectedImageUri = null;
-            dialog.dismiss();
-        });
-
-        btnGuardar.setOnClickListener(v -> {
-            String codigo = inputCodigo.getText().toString().trim();
-            if (codigo.isEmpty()) {
-                Toast.makeText(requireContext(), "Ingresa un código", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Deshabilitar botón mientras se guarda
-            btnGuardar.setEnabled(false);
-            btnGuardar.setText("Guardando");
-
-            firebaseServicio.crearGrupoConImagen(codigo, selectedImageUri,
-                    new FirebaseServicio.OnGrupoCreatedListener() {
-                        @Override
-                        public void onSuccess(GrupoElectrogeno grupo) {
-                            Toast.makeText(requireContext(), "Grupo creado exitosamente", Toast.LENGTH_SHORT).show();
-                            selectedImageUri = null;
-                            dialog.dismiss();
-                            fetchGruposElectrogenos(); // Recargar lista
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            btnGuardar.setEnabled(true);
-                            btnGuardar.setText("Guardar");
-                        }
-                    });
-        });
-
-        dialog.show();
-    }
-
     private void fetchGruposElectrogenos() {
         firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
-                adapter.setItems(grupos);
+                List<GrupoElectrogeno> filtrados = new ArrayList<>();
+                if (grupos != null) {
+                    for (GrupoElectrogeno g : grupos) {
+                        if (g != null && !g.isEliminado()) {
+                            filtrados.add(g);
+                        }
+                    }
+                }
+                if (getActivity() != null && recyclerView != null) {
+                    recyclerView.post(() -> adapter.setItems(filtrados));
+                } else {
+                    adapter.setItems(filtrados);
+                }
             }
 
             @Override

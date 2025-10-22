@@ -14,6 +14,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FirebaseServicio {
     private final FirebaseFirestore db;
@@ -160,6 +161,27 @@ public class FirebaseServicio {
                     listener.onSuccess(grupo);
                 })
                 .addOnFailureListener(listener::onError);
+    }
+    // Interface para callbacks simples
+    public interface OnSimpleCallback {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    // Método para actualizar código del grupo
+    public void actualizarCodigoGrupo(String grupoId, String nuevoCodigo, OnSimpleCallback callback) {
+        db.collection("gruposElectrogenos").document(grupoId)
+                .update("codigo", nuevoCodigo)
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
+    // Método para eliminación suave
+    public void eliminarGrupoSuave(String grupoId, Map<String, Object> updates, OnSimpleCallback callback) {
+        db.collection("gruposElectrogenos").document(grupoId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
     }
 
     // Obtener alquileres mensuales
