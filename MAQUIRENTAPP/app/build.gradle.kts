@@ -46,6 +46,9 @@ dependencies {
     implementation("com.google.firebase:firebase-appcheck-debug")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
+    //Firebase Functions
+    implementation ("com.google.firebase:firebase-functions:20.4.0")
+
     // Resto de dependencias
     implementation(libs.appcompat)
     implementation(libs.material)
