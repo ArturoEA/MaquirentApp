@@ -90,7 +90,22 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         initViews(view);
         setupRecyclerView();
         cargarGrupos();
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
         configureGlobalFab();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        }
     }
     private void configureGlobalFab() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {

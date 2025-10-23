@@ -68,7 +68,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        // Ocultar FAB cuando el fragment deja de ser visible
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
         } else {
@@ -108,7 +107,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void configureGlobalFab() {
-        View hostView = getView(); // usado para la navegación
+        View hostView = getView();
         if (hostView == null) return;
 
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
