@@ -31,6 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
@@ -347,6 +348,11 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         db.collection("gruposElectrogenos").document(grupo.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    FirebaseUser currentUser = auth.getCurrentUser();
+                    if (currentUser == null) {
+                        mostrarError("Debes iniciar sesión antes de eliminar un grupo.");
+                        return;
+                    }
                     // Enviar email mediante Cloud Function
                     enviarEmailVerificacion(codigo, grupo);
                     mostrarDialogoCodigoVerificacion(grupo);
