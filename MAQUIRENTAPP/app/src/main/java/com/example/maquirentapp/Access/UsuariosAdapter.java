@@ -147,7 +147,6 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                     .show();
         }
         private void mostrarDialogoConfirmarEnvio(Usuario usuario) {
-            // Prevención: no permitir eliminarte a ti mismo desde la app
             String currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
                     FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
             if (currentUid != null && currentUid.equals(usuario.getUid())) {
@@ -172,9 +171,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             functions.getHttpsCallable("enviarCodigoEliminacionUsuario")
                     .call(data)
                     .addOnSuccessListener((HttpsCallableResult result) -> {
-                        // La función devuelve { success: true } en nuestro index.js
                         Toast.makeText(context, "Código enviado al administrador. Revisa tu correo.", Toast.LENGTH_SHORT).show();
-                        // Mostrar diálogo para ingresar el código
                         mostrarDialogoIngresarCodigo(usuario);
                     })
                     .addOnFailureListener(e -> {
