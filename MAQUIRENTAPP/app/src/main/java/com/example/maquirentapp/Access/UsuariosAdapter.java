@@ -1,26 +1,37 @@
 package com.example.maquirentapp.Access;
 
 import android.content.Context;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.UsuarioViewHolder> {
     private List<Usuario> usuariosList;
     private Context context;
     private OnUsuarioActionListener listener;
     private FirebaseFirestore db;
+    private FirebaseFunctions functions;
 
     public interface OnUsuarioActionListener {
         void onUsuarioActualizado();
@@ -31,6 +42,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
         this.context = context;
         this.listener = listener;
         this.db = FirebaseFirestore.getInstance();
+        this.functions = FirebaseFunctions.getInstance();
     }
 
     @NonNull
@@ -73,16 +85,13 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             tvNombre.setText(usuario.getNombre());
             tvEmail.setText(usuario.getEmail());
 
-            // Mostrar rol
             String rolTexto = "admin".equals(usuario.getRol()) ? "Administrador" : "Empleado";
             tvRol.setText("Rol: " + rolTexto);
 
-            // Mostrar estado con color
             String estadoTexto = "pendiente".equals(usuario.getEstado()) ? "Pendiente" :
                     "inactivo".equals(usuario.getEstado()) ? "Inactivo" : "Activo";
             tvEstado.setText("Estado: " + estadoTexto);
 
-            // Cambiar color del estado
             int colorEstado = "pendiente".equals(usuario.getEstado()) ?
                     context.getColor(android.R.color.holo_orange_dark) :
                     "inactivo".equals(usuario.getEstado()) ?
@@ -90,12 +99,6 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                             context.getColor(android.R.color.holo_green_dark);
             tvEstado.setTextColor(colorEstado);
 
-            // Cambiar icono de estado
-//            int iconoEstado = "pendiente".equals(usuario.getEstado()) ?
-//                    R.drawable.icon_reloj :
-//                    "inactivo".equals(usuario.getEstado()) ?
-//                            R.drawable.icon_cancelado :
-//                            R.drawable.icon_check;
             int iconoEstado = "pendiente".equals(usuario.getEstado()) ?
                     R.drawable.icon_aceite_blanco :
                     "inactivo".equals(usuario.getEstado()) ?
@@ -103,14 +106,9 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                             R.drawable.icon_voltaje_blanco;
             iconEstado.setImageResource(iconoEstado);
 
-            // Cambiar rol
             btnCambiarRol.setOnClickListener(v -> mostrarDialogoRol(usuario));
-
-            // Cambiar estado
             btnCambiarEstado.setOnClickListener(v -> mostrarDialogoEstado(usuario));
-
-            // Eliminar usuario
-            btnEliminar.setOnClickListener(v -> mostrarDialogoEliminar(usuario));
+            btnEliminar.setOnClickListener(v -> mostrarDialogoConfirmarEnvio(usuario));
         }
 
         private void mostrarDialogoRol(Usuario usuario) {
@@ -148,18 +146,82 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                     .setNegativeButton("Cancelar", null)
                     .show();
         }
+        private void mostrarDialogoConfirmarEnvio(Usuario usuario) {
+            // Prevención: no permitir eliminarte a ti mismo desde la app
+            String currentUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+            if (currentUid != null && currentUid.equals(usuario.getUid())) {
+                Toast.makeText(context, "No puedes eliminar tu propia cuenta.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        private void mostrarDialogoEliminar(Usuario usuario) {
             new AlertDialog.Builder(context)
                     .setTitle("Eliminar Usuario")
-                    .setMessage("¿Estás seguro de que deseas eliminar a " + usuario.getNombre() + "? Esta acción no se puede deshacer.")
-                    .setPositiveButton("Eliminar", (dialog, which) -> {
-                        eliminarUsuario(usuario);
+                    .setMessage("Se enviará un código al administrador para confirmar la eliminación de " + usuario.getNombre() + ". ¿Continuar?")
+                    .setPositiveButton("Enviar código", (dialog, which) -> {
+                        enviarCodigoParaEliminarUsuario(usuario);
                     })
                     .setNegativeButton("Cancelar", null)
                     .show();
         }
+        private void enviarCodigoParaEliminarUsuario(Usuario usuario) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("usuarioId", usuario.getUid());
+            data.put("usuarioEmail", usuario.getEmail());
 
+            functions.getHttpsCallable("enviarCodigoEliminacionUsuario")
+                    .call(data)
+                    .addOnSuccessListener((HttpsCallableResult result) -> {
+                        // La función devuelve { success: true } en nuestro index.js
+                        Toast.makeText(context, "Código enviado al administrador. Revisa tu correo.", Toast.LENGTH_SHORT).show();
+                        // Mostrar diálogo para ingresar el código
+                        mostrarDialogoIngresarCodigo(usuario);
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Error al enviar código: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
+        private void mostrarDialogoIngresarCodigo(Usuario usuario) {
+            final EditText input = new EditText(context);
+            input.setHint("Código de 6 dígitos");
+            input.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+            new AlertDialog.Builder(context)
+                    .setTitle("Ingrese código de verificación")
+                    .setView(input)
+                    .setPositiveButton("Confirmar", (dialog, which) -> {
+                        String codigoIngresado = input.getText() != null ? input.getText().toString().trim() : "";
+                        if (codigoIngresado.isEmpty()) {
+                            Toast.makeText(context, "Ingresa el código", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        confirmarEliminacionUsuario(usuario, codigoIngresado);
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        }
+        private void confirmarEliminacionUsuario(Usuario usuario, String codigoIngresado) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("usuarioId", usuario.getUid());
+            data.put("codigoIngresado", codigoIngresado);
+
+            functions.getHttpsCallable("confirmarEliminacionUsuario")
+                    .call(data)
+                    .addOnSuccessListener((HttpsCallableResult result) -> {
+                        int pos = getAbsoluteAdapterPosition();
+                        if (pos >= 0 && pos < usuariosList.size()) {
+                            usuariosList.remove(pos);
+                            notifyItemRemoved(pos);
+                        } else {
+                            notifyDataSetChanged();
+                        }
+                        if (listener != null) listener.onUsuarioActualizado();
+                        Toast.makeText(context, "Usuario eliminado correctamente", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(context, "Error al confirmar eliminación: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
         private void cambiarRolUsuario(Usuario usuario, String nuevoRol) {
             db.collection("usuarios").document(usuario.getUid())
                     .update("rol", nuevoRol)
@@ -169,9 +231,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                         if (listener != null) listener.onUsuarioActualizado();
                     })
                     .addOnFailureListener(e -> {
-                        android.widget.Toast.makeText(context,
-                                "Error al cambiar rol",
-                                android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Error al cambiar rol", Toast.LENGTH_SHORT).show();
                     });
         }
 
@@ -184,28 +244,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                         if (listener != null) listener.onUsuarioActualizado();
                     })
                     .addOnFailureListener(e -> {
-                        android.widget.Toast.makeText(context,
-                                "Error al cambiar estado",
-                                android.widget.Toast.LENGTH_SHORT).show();
-                    });
-        }
-
-        private void eliminarUsuario(Usuario usuario) {
-            // Primero eliminar de Authentication
-            db.collection("usuarios").document(usuario.getUid())
-                    .delete()
-                    .addOnSuccessListener(aVoid -> {
-                        usuariosList.remove(getAbsoluteAdapterPosition());
-                        notifyItemRemoved(getAbsoluteAdapterPosition());
-                        if (listener != null) listener.onUsuarioActualizado();
-                        android.widget.Toast.makeText(context,
-                                "Usuario eliminado correctamente",
-                                android.widget.Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> {
-                        android.widget.Toast.makeText(context,
-                                "Error al eliminar usuario",
-                                android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Error al cambiar estado", Toast.LENGTH_SHORT).show();
                     });
         }
     }

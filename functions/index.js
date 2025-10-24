@@ -13,17 +13,17 @@ const EMAIL_PASS = defineSecret("EMAIL_PASS");
 const ADMIN_EMAIL = defineSecret("ADMIN_EMAIL");
 
 /**
- * Function HTTPS: Enviar código de verificación por email
+ * ============================================================
+ * Enviar código de verificación para eliminar un grupo
+ * ============================================================
  */
 exports.enviarCodigoEliminacion = onCall(
-  { secrets: [EMAIL_USER, EMAIL_PASS] }, // <--- importante
+  { secrets: [EMAIL_USER, EMAIL_PASS] },
   async (request) => {
     const { email, codigo, grupoNombre } = request.data;
     const uid = request.auth?.uid;
 
-    if (!uid) {
-      throw new Error("El usuario debe estar autenticado.");
-    }
+    if (!uid) throw new Error("El usuario debe estar autenticado.");
     if (!email || !codigo || !grupoNombre)
       throw new Error("Faltan datos requeridos.");
 
@@ -76,13 +76,15 @@ exports.enviarCodigoEliminacion = onCall(
 );
 
 /**
- * Function programada: Eliminar grupos expirados cada día a las 2:00 AM
+ * ============================================================
+ * FUNCIÓN PROGRAMADA: Eliminar grupos expirados cada día a las 2:00 AM
+ * ============================================================
  */
 exports.eliminarGruposExpirados = onSchedule(
   {
     schedule: "0 2 * * *",
     timeZone: "America/Lima",
-    secrets: [EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL], // también aquí
+    secrets: [EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL],
   },
   async () => {
     const db = admin.firestore();
@@ -130,6 +132,101 @@ exports.eliminarGruposExpirados = onSchedule(
   }
 );
 
+/**
+ * ============================================================
+ * Enviar código de verificación para eliminar un usuario
+ * ============================================================
+ */
+exports.enviarCodigoEliminacionUsuario = onCall(
+  { secrets: [EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL] },
+  async (request) => {
+    const { usuarioId, usuarioEmail } = request.data;
+    const uid = request.auth?.uid;
+
+    if (!uid) throw new Error("El usuario debe estar autenticado.");
+    if (!usuarioId || !usuarioEmail)
+      throw new Error("Faltan datos del usuario a eliminar.");
+
+    const db = admin.firestore();
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await db.collection("codigosEliminacionUsuarios").doc(usuarioId).set({
+      codigo,
+      usuarioEmail,
+      creado: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER.value(),
+        pass: EMAIL_PASS.value(),
+      },
+    });
+
+    const mailOptions = {
+      from: `MAQUIRENT <${EMAIL_USER.value()}>`,
+      to: ADMIN_EMAIL.value(),
+      subject: "Código de Verificación - Eliminación de Usuario",
+      html: `
+        <div style="font-family: Arial; background: #f9f9f9; padding: 20px;">
+          <h2>Confirmación de eliminación de usuario</h2>
+          <p>Se ha solicitado eliminar al usuario:</p>
+          <b>${usuarioEmail}</b>
+          <p>Introduce este código para confirmar:</p>
+          <div style="font-size: 32px; color: #e74c3c; text-align:center;">${codigo}</div>
+          <p>Este código expira en 15 minutos.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info(`Código enviado al admin para eliminar usuario ${usuarioEmail}`);
+    return { success: true };
+  }
+);
+
+/**
+ * ============================================================
+ * Confirmar eliminación de usuario con código
+ * ============================================================
+ */
+exports.confirmarEliminacionUsuario = onCall(
+  { secrets: [EMAIL_USER, EMAIL_PASS] },
+  async (request) => {
+    const { usuarioId, codigoIngresado } = request.data;
+
+    if (!usuarioId || !codigoIngresado)
+      throw new Error("Datos incompletos.");
+
+    const db = admin.firestore();
+    const docRef = db.collection("codigosEliminacionUsuarios").doc(usuarioId);
+    const doc = await docRef.get();
+
+    if (!doc.exists)
+      throw new Error("No se encontró un código para este usuario.");
+
+    const datos = doc.data();
+    if (datos.codigo !== codigoIngresado)
+      throw new Error("Código incorrecto.");
+
+    // Eliminar usuario de Authentication
+    await admin.auth().deleteUser(usuarioId);
+
+    // Eliminar su documento de Firestore (colección usuarios)
+    await db.collection("usuarios").doc(usuarioId).delete();
+
+    // Eliminar el código ya usado
+    await docRef.delete();
+
+    logger.info(`Usuario ${usuarioId} eliminado correctamente.`);
+    return { success: true, message: "Usuario eliminado correctamente." };
+  }
+);
+
+// ------------------------------------------------------------
+// FUNCIONES AUXILIARES
+// ------------------------------------------------------------
 async function eliminarFotoStorage(fotoUrl) {
   try {
     const bucket = admin.storage().bucket();
