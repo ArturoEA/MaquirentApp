@@ -332,6 +332,17 @@ public class AccesoriosAlquilerMensualFragment extends Fragment {
 
     private void subirIconoYActualizar(Accesorio accesorio, String nuevoNombre,
                                        Dialog dialog, MaterialButton btnGuardar) {
+        if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
+            try {
+                StorageReference oldIconRef = storage.getReferenceFromUrl(accesorio.getIcono());
+                oldIconRef.delete()
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Ícono anterior eliminado correctamente"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Error eliminando ícono anterior", e));
+            } catch (Exception e) {
+                Log.e(TAG, "Error procesando URL del ícono anterior", e);
+            }
+        }
+
         String fileName = "accesorios/" + TIPO_ACCESORIO + "/" + System.currentTimeMillis() + ".png";
         StorageReference storageRef = storage.getReference().child(fileName);
 
@@ -397,7 +408,6 @@ public class AccesoriosAlquilerMensualFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> {
                     mostrarExito("Accesorio eliminado");
 
-                    // Opcionalmente, eliminar ícono de Storage
                     if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
                         eliminarIconoStorage(accesorio.getIcono());
                     }

@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
-    tools:context=".View.AccesoriosAlquilerMensualFragment">
+    tools:context=".View.AccesoriosAlquilerMensualFragment"
+    android:theme="@style/Theme.TextMain">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewAccesorios"
