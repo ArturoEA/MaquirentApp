@@ -69,7 +69,6 @@ public class GestionarUsuariosFragment extends Fragment {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         usuariosList.clear();
-                        int cantidadUsuarios = task.getResult().size();
 
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Usuario usuario = new Usuario();

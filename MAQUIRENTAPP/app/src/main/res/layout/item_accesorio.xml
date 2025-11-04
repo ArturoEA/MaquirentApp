@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="23dp"
+    android:backgroundTint="#1E1E1E"
+    android:theme="@style/Theme.TextMain">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- Ícono del accesorio -->
+        <ImageView
+            android:id="@+id/imgIconoAccesorio"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/icon_extintor_blanco" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical">
+
+            <!-- Nombre del accesorio -->
+            <TextView
+                android:id="@+id/tvNombreAccesorio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Extintor de 9kg"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <!-- Botón Editar -->
+        <ImageView
+            android:id="@+id/btnEditarAccesorio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/icon_editar_blanco"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Editar accesorio" />
+
+        <!-- Botón Eliminar -->
+        <ImageView
+            android:id="@+id/btnEliminarAccesorio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/icon_eliminar_rojo"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Eliminar accesorio" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
