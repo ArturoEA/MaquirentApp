@@ -66,11 +66,11 @@ public class AccesorioSeleccionAdapter extends RecyclerView.Adapter<AccesorioSel
 
         // Cambiar el color del card según selección
         if (seleccionado) {
-            h.cardView.setCardBackgroundColor(h.itemView.getContext().getColor(R.color.black));
+            h.cardView.setCardBackgroundColor(h.itemView.getContext().getColor(R.color.background_dark));
             h.tvNombre.setTextColor(h.itemView.getContext().getColor(R.color.white));
         } else {
-            h.cardView.setCardBackgroundColor(h.itemView.getContext().getColor(android.R.color.darker_gray));
-            h.tvNombre.setTextColor(h.itemView.getContext().getColor(android.R.color.darker_gray));
+            h.cardView.setCardBackgroundColor(h.itemView.getContext().getColor(R.color.noseleccionado_accesorio));
+            h.tvNombre.setTextColor(h.itemView.getContext().getColor(R.color.white));
         }
 
         // Cargar ícono desde Firebase Storage

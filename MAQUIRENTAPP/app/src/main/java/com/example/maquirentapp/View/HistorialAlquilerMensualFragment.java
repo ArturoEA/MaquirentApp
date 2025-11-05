@@ -167,7 +167,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         if (codigo != null) args.putString("codigo", codigo);
         if (idGrupo != null) args.putString("idGrupo", idGrupo);
         args.putString("alquilerId", alquiler.getId());
-        args.putBoolean("modoSoloLectura", true); // Nuevo parámetro
+        args.putBoolean("modoSoloLectura", true);
 
         Navigation.findNavController(hostView)
                 .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
