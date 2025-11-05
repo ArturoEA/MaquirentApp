@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,6 +18,7 @@ import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adaptadores.AlquilerMensualAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     private AlquilerMensualAdapter adapter;
     private FirebaseServicio firebaseServicio;
     private String codigo, idGrupo;
+    private AlquilerMensual alquilerSeleccionado;
 
     public HistorialAlquilerMensualFragment() { }
 
@@ -54,14 +57,21 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new AlquilerMensualAdapter();
+        adapter.setOnItemClickListener(alquiler -> {
+            alquilerSeleccionado = alquiler;
+            configureGlobalFab();
+            mostrarDetallesAlquiler(alquiler);
+        });
         recyclerView.setAdapter(adapter);
 
+        configurarSwipeToDelete();
         fetchAlquileresMensuales();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        alquilerSeleccionado = null; // Reset al volver
         configureGlobalFab();
     }
 
@@ -106,10 +116,68 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         });
     }
 
+    private void configurarSwipeToDelete() {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                AlquilerMensual alquilerAEliminar = adapter.getItem(position);
+
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Eliminar alquiler")
+                        .setMessage("¿Estás seguro de que deseas eliminar este alquiler?")
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            firebaseServicio.eliminarAlquilerMensual(alquilerAEliminar.getId(), new FirebaseServicio.OnAlquilerDeletedListener() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(getContext(), "Alquiler eliminado correctamente", Toast.LENGTH_SHORT).show();
+                                    fetchAlquileresMensuales();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(getContext(), "Error al eliminar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    adapter.notifyItemChanged(position);
+                                }
+                            });
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> {
+                            adapter.notifyItemChanged(position);
+                        })
+                        .setOnCancelListener(dialog -> adapter.notifyItemChanged(position))
+                        .show();
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    private void mostrarDetallesAlquiler(AlquilerMensual alquiler) {
+        // Navegar directamente a la vista de detalle/edición en modo solo lectura
+        View hostView = getView();
+        if (hostView == null) return;
+
+        Bundle args = new Bundle();
+        if (codigo != null) args.putString("codigo", codigo);
+        if (idGrupo != null) args.putString("idGrupo", idGrupo);
+        args.putString("alquilerId", alquiler.getId());
+        args.putBoolean("modoSoloLectura", true); // Nuevo parámetro
+
+        Navigation.findNavController(hostView)
+                .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
+    }
+
     private void configureGlobalFab() {
         View hostView = getView();
         if (hostView == null) return;
 
+        // Solo mostrar botón "Añadir" ya que el click en item navega directamente
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
             main.showGlobalFab(
@@ -142,5 +210,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                 fab.setVisibility(View.VISIBLE);
             }
         }
+
     }
 }

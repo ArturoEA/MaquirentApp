@@ -2,6 +2,7 @@ package com.example.maquirentapp.Network;
 
 import android.net.Uri;
 
+import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Usuario;
@@ -9,11 +10,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -247,8 +250,129 @@ public class FirebaseServicio {
                     }
                 });
     }
+    //Métodos para accesorios
+    public void getAccesorios(String tipo, OnAccesoriosLoadedListener listener) {
+        db.collection("accesorios")
+                .whereEqualTo("tipo", tipo)
+                .orderBy("fechaCreacion", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Accesorio> accesorios = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Accesorio accesorio = doc.toObject(Accesorio.class);
+                        accesorio.setId(doc.getId());
+                        accesorios.add(accesorio);
+                    }
+                    listener.onSuccess(accesorios);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getAccesorioPorId(String id, OnAccesorioLoadedListener listener) {
+        db.collection("accesorios")
+                .document(id)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Accesorio accesorio = documentSnapshot.toObject(Accesorio.class);
+                        if (accesorio != null) {
+                            accesorio.setId(documentSnapshot.getId());
+                            listener.onSuccess(accesorio);
+                        } else {
+                            listener.onError(new Exception("Accesorio no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("Accesorio no existe"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    //Métodos para alquileres mensuales
+    public void getAlquilerMensualPorId(String id, OnAlquilerMensualLoadedListener listener) {
+        db.collection("alquileresMensuales")
+                .document(id)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        AlquilerMensual alquiler = documentSnapshot.toObject(AlquilerMensual.class);
+                        if (alquiler != null) {
+                            alquiler.setId(documentSnapshot.getId());
+                            listener.onSuccess(alquiler);
+                        } else {
+                            listener.onError(new Exception("Alquiler no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("Alquiler no existe"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void actualizarAlquilerMensual(AlquilerMensual alquiler, OnAlquilerUpdatedListener listener) {
+        if (alquiler.getId() == null || alquiler.getId().isEmpty()) {
+            listener.onError(new Exception("ID de alquiler inválido"));
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("nombreCliente", alquiler.getNombreCliente());
+        updates.put("ubicacion", alquiler.getUbicacion());
+        updates.put("fechaInicial", alquiler.getFechaInicial());
+        updates.put("fechaFinal", alquiler.getFechaFinal());
+        updates.put("horometroInicial", alquiler.getHorometroInicial());
+        updates.put("horometroFinal", alquiler.getHorometroFinal());
+        updates.put("precioAlquiler", alquiler.getPrecioAlquiler());
+        updates.put("horasMinimas", alquiler.getHorasMinimas());
+        updates.put("precioHoraExtra", alquiler.getPrecioHoraExtra());
+        updates.put("idGrupo", alquiler.getIdGrupo());
+        updates.put("accesoriosIds", alquiler.getAccesoriosIds());
+
+        db.collection("alquileresMensuales")
+                .document(alquiler.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void eliminarAlquilerMensual(String id, OnAlquilerDeletedListener listener) {
+        if (id == null || id.isEmpty()) {
+            listener.onError(new Exception("ID de alquiler inválido"));
+            return;
+        }
+
+        db.collection("alquileresMensuales")
+                .document(id)
+                .delete()
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
 
     // Interfaces para callbacks
+    public interface OnAccesoriosLoadedListener {
+        void onSuccess(List<Accesorio> accesorios);
+        void onError(Exception e);
+    }
+
+    public interface OnAccesorioLoadedListener {
+        void onSuccess(Accesorio accesorio);
+        void onError(Exception e);
+    }
+
+    public interface OnAlquilerMensualLoadedListener {
+        void onSuccess(AlquilerMensual alquiler);
+        void onError(Exception e);
+    }
+
+    public interface OnAlquilerUpdatedListener {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    public interface OnAlquilerDeletedListener {
+        void onSuccess();
+        void onError(Exception e);
+    }
     public interface OnAuthListener {
         void onLoginExitoso(Usuario usuario);
         void onRegistroExitoso(Usuario usuario);

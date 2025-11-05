@@ -7,32 +7,39 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.Toast;
 
+import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
-import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 public class NuevoAlquilerMensualFragment extends Fragment {
-    private String idGrupo;
+    private String idGrupo, alquilerId;
+    private boolean modoEdicion = false;
+    private boolean modoSoloLectura = false;
+    private boolean editandoActualmente = false;
+
     private TextInputEditText inputEmpresa, inputUbicacion, inputFechaInicial, inputFechaFinal,
-            inputHorometroInicial, inputHorometroFinal, inputPrecioAlquiler, inputHorasMinimas;
-    private CheckBox chkExtintor9kg, chkExtintor6kg, chkVarilla, chkBandeja, chkKit, chkCable, chkTablero, chkCarreta;
-    private List<GrupoElectrogeno> listaDeGrupos = new ArrayList<>();
+            inputHorometroInicial, inputHorometroFinal, inputPrecioAlquiler, inputHorasMinimas, inputPrecioHoraExtra;
+
+    private RecyclerView recyclerAccesorios;
+    private AccesorioSeleccionAdapter adapterAccesorios;
+    private FirebaseServicio firebaseServicio;
 
     public NuevoAlquilerMensualFragment() { }
 
@@ -41,6 +48,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
+            alquilerId = getArguments().getString("alquilerId");
+            modoSoloLectura = getArguments().getBoolean("modoSoloLectura", false);
+            modoEdicion = alquilerId != null;
         }
     }
 
@@ -53,6 +63,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        firebaseServicio = new FirebaseServicio();
+
         inputEmpresa = view.findViewById(R.id.inputEmpresa);
         inputUbicacion = view.findViewById(R.id.inputUbicacion);
         inputFechaInicial = view.findViewById(R.id.inputFechaInicial);
@@ -61,17 +74,44 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         inputHorometroFinal = view.findViewById(R.id.inputHorometroFinal);
         inputPrecioAlquiler = view.findViewById(R.id.inputPrecioAlquiler);
         inputHorasMinimas = view.findViewById(R.id.inputHorasMinimas);
+        inputPrecioHoraExtra = view.findViewById(R.id.inputPrecioHoraExtra);
 
-        chkExtintor9kg = view.findViewById(R.id.chkExtintor9kg);
-        chkExtintor6kg = view.findViewById(R.id.chkExtintor6kg);
-        chkVarilla = view.findViewById(R.id.chkVarilla);
-        chkBandeja = view.findViewById(R.id.chkBandeja);
-        chkKit = view.findViewById(R.id.chkKit);
-        chkCable = view.findViewById(R.id.chkCable);
-        chkTablero = view.findViewById(R.id.chkTablero);
-        chkCarreta = view.findViewById(R.id.chkCarreta);
+        recyclerAccesorios = view.findViewById(R.id.recyclerAccesorios);
+        recyclerAccesorios.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapterAccesorios = new AccesorioSeleccionAdapter();
+        recyclerAccesorios.setAdapter(adapterAccesorios);
 
-        // No mostramos el FAB aquí: lo haremos en onResume()
+        configurarDatePickers();
+        cargarAccesoriosMensuales();
+
+        if (modoEdicion) {
+            cargarDatosAlquiler();
+        }
+
+        // Si está en modo solo lectura, deshabilitar todos los campos
+        if (modoSoloLectura) {
+            deshabilitarCampos();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        configureGlobalFab();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        }
+    }
+
+    private void configurarDatePickers() {
         inputFechaInicial.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             DatePickerDialog datePickerDialog = new DatePickerDialog(
@@ -109,60 +149,131 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             );
             datePickerDialog.show();
         });
+    }
 
-        FirebaseServicio firebaseServicio = new FirebaseServicio();
-        firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
+    private void cargarAccesoriosMensuales() {
+        firebaseServicio.getAccesorios("mensual", new FirebaseServicio.OnAccesoriosLoadedListener() {
             @Override
-            public void onSuccess(List<GrupoElectrogeno> grupos) {
-                listaDeGrupos.clear();
-                listaDeGrupos.addAll(grupos);
+            public void onSuccess(List<Accesorio> accesorios) {
+                adapterAccesorios.setItems(accesorios);
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(requireContext(), "Error al cargar grupos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        configureGlobalFab();
+    private void cargarDatosAlquiler() {
+        firebaseServicio.getAlquilerMensualPorId(alquilerId, new FirebaseServicio.OnAlquilerMensualLoadedListener() {
+            @Override
+            public void onSuccess(AlquilerMensual alquiler) {
+                inputEmpresa.setText(alquiler.getNombreCliente());
+                inputUbicacion.setText(alquiler.getUbicacion());
+                inputFechaInicial.setText(alquiler.getFechaInicial());
+                inputFechaFinal.setText(alquiler.getFechaFinal());
+                inputHorometroInicial.setText(String.valueOf(alquiler.getHorometroInicial()));
+                inputHorometroFinal.setText(String.valueOf(alquiler.getHorometroFinal()));
+                inputPrecioAlquiler.setText(String.valueOf(alquiler.getPrecioAlquiler()));
+                inputHorasMinimas.setText(String.valueOf(alquiler.getHorasMinimas()));
+                inputPrecioHoraExtra.setText(String.valueOf(alquiler.getPrecioHoraExtra()));
+
+                if (alquiler.getAccesoriosIds() != null) {
+                    adapterAccesorios.setAccesoriosSeleccionados(alquiler.getAccesoriosIds());
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar datos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null) activityFab.setVisibility(View.GONE);
-        }
+    private void deshabilitarCampos() {
+        inputEmpresa.setEnabled(false);
+        inputUbicacion.setEnabled(false);
+        inputFechaInicial.setEnabled(false);
+        inputFechaFinal.setEnabled(false);
+        inputHorometroInicial.setEnabled(false);
+        inputHorometroFinal.setEnabled(false);
+        inputPrecioAlquiler.setEnabled(false);
+        inputHorasMinimas.setEnabled(false);
+        inputPrecioHoraExtra.setEnabled(false);
+
+        // Deshabilitar el recycler de accesorios
+        adapterAccesorios.setClickEnabled(false);
+    }
+
+    private void habilitarCampos() {
+        inputEmpresa.setEnabled(true);
+        inputUbicacion.setEnabled(true);
+        inputFechaInicial.setEnabled(true);
+        inputFechaFinal.setEnabled(true);
+        inputHorometroInicial.setEnabled(true);
+        inputHorometroFinal.setEnabled(true);
+        inputPrecioAlquiler.setEnabled(true);
+        inputHorasMinimas.setEnabled(true);
+        inputPrecioHoraExtra.setEnabled(true);
+
+        // Habilitar el recycler de accesorios
+        adapterAccesorios.setClickEnabled(true);
     }
 
     private void configureGlobalFab() {
         View hostView = getView();
         if (hostView == null) return;
 
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
-            main.showGlobalFab(
-                    "Guardar",
-                    R.drawable.icon_guardar_blanco,
-                    v -> guardarAlquilerMensual()
-            );
+        // Si está en modo solo lectura, mostrar botón "Editar"
+        if (modoSoloLectura && !editandoActualmente) {
+            if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+                com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+                main.showGlobalFab(
+                        "Editar",
+                        R.drawable.icon_editar_blanco,
+                        v -> {
+                            editandoActualmente = true;
+                            habilitarCampos();
+                            configureGlobalFab(); // Actualizar FAB
+                        }
+                );
+            } else {
+                View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+                if (activityFab != null && activityFab instanceof ExtendedFloatingActionButton) {
+                    ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
+                    fab.setText("Editar");
+                    try {
+                        fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_editar_blanco));
+                    } catch (Exception ignored) {}
+                    fab.setOnClickListener(v -> {
+                        editandoActualmente = true;
+                        habilitarCampos();
+                        configureGlobalFab(); // Actualizar FAB
+                    });
+                    fab.setVisibility(View.VISIBLE);
+                }
+            }
         } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null && activityFab instanceof ExtendedFloatingActionButton) {
-                ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
-                fab.setText("Guardar");
-                try {
-                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_guardar_blanco));
-                } catch (Exception ignored) {}
-                fab.setOnClickListener(v -> guardarAlquilerMensual());
-                fab.setVisibility(View.VISIBLE);
+            // Modo normal o editando: mostrar botón "Guardar"
+            if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+                com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+                main.showGlobalFab(
+                        "Guardar",
+                        R.drawable.icon_guardar_blanco,
+                        v -> guardarAlquilerMensual()
+                );
+            } else {
+                View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+                if (activityFab != null && activityFab instanceof ExtendedFloatingActionButton) {
+                    ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
+                    fab.setText("Guardar");
+                    try {
+                        fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_guardar_blanco));
+                    } catch (Exception ignored) {}
+                    fab.setOnClickListener(v -> guardarAlquilerMensual());
+                    fab.setVisibility(View.VISIBLE);
+                }
             }
         }
     }
@@ -176,6 +287,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         String hFinStr = inputHorometroFinal.getText().toString().trim();
         String precioStr = inputPrecioAlquiler.getText().toString().trim();
         String horasMinStr = inputHorasMinimas.getText().toString().trim();
+        String precioHoraExtraStr = inputPrecioHoraExtra.getText().toString().trim();
 
         if (empresa.isEmpty() || ubicacion.isEmpty() || fechaInicial.isEmpty() || fechaFinal.isEmpty()
                 || hIniStr.isEmpty() || hFinStr.isEmpty() || precioStr.isEmpty() || horasMinStr.isEmpty()) {
@@ -183,7 +295,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             return;
         }
 
-        double horometroInicial, horometroFinal, precioAlquiler;
+        double horometroInicial, horometroFinal, precioAlquiler, precioHoraExtra = 0;
         int horasMinimas;
 
         try {
@@ -191,12 +303,19 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             horometroFinal = Double.parseDouble(hFinStr);
             precioAlquiler = Double.parseDouble(precioStr);
             horasMinimas = Integer.parseInt(horasMinStr);
+            if (!precioHoraExtraStr.isEmpty()) {
+                precioHoraExtra = Double.parseDouble(precioHoraExtraStr);
+            }
         } catch (NumberFormatException e) {
             Toast.makeText(getContext(), "Verifica que los campos numéricos sean válidos", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        AlquilerMensual alquiler = new AlquilerMensual();
+        AlquilerMensual alquiler = modoEdicion ? new AlquilerMensual() : new AlquilerMensual();
+        if (modoEdicion) {
+            alquiler.setId(alquilerId);
+        }
+
         alquiler.setNombreCliente(empresa);
         alquiler.setUbicacion(ubicacion);
         alquiler.setFechaInicial(fechaInicial);
@@ -205,34 +324,36 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setHorometroFinal(horometroFinal);
         alquiler.setPrecioAlquiler(precioAlquiler);
         alquiler.setHorasMinimas(horasMinimas);
-
-        alquiler.setExtintor9kg(chkExtintor9kg.isChecked());
-        alquiler.setExtintor6kg(chkExtintor6kg.isChecked());
-        alquiler.setVarillaTierra(chkVarilla.isChecked());
-        alquiler.setBandejaAntiderrame(chkBandeja.isChecked());
-        alquiler.setKitAntiderrame(chkKit.isChecked());
-        alquiler.setCableElectrico(chkCable.isChecked());
-        alquiler.setTableroDistribucion(chkTablero.isChecked());
-        alquiler.setCarreta(chkCarreta.isChecked());
-
-        if (idGrupo == null || idGrupo.isEmpty()) {
-            Toast.makeText(getContext(), "Error: no se pudo identificar el grupo", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        alquiler.setPrecioHoraExtra(precioHoraExtra);
         alquiler.setIdGrupo(idGrupo);
+        alquiler.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
 
-        FirebaseServicio firebaseServicio = new FirebaseServicio();
-        firebaseServicio.crearAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerCreatedListener() {
-            @Override
-            public void onSuccess(AlquilerMensual alquilerCreado) {
-                Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
-                requireActivity().onBackPressed();
-            }
+        if (modoEdicion) {
+            firebaseServicio.actualizarAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerUpdatedListener() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(getContext(), "Alquiler actualizado correctamente", Toast.LENGTH_SHORT).show();
+                    requireActivity().onBackPressed();
+                }
 
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            firebaseServicio.crearAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerCreatedListener() {
+                @Override
+                public void onSuccess(AlquilerMensual alquilerCreado) {
+                    Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
+                    requireActivity().onBackPressed();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(getContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        }
     }
 }

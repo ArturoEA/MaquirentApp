@@ -1,5 +1,8 @@
 package com.example.maquirentapp.Model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AlquilerMensual {
     private String id;
     private String idGrupo;
@@ -11,72 +14,11 @@ public class AlquilerMensual {
     private String fechaFinal;
     private double precioAlquiler;
     private int horasMinimas;
-    private boolean extintor9kg;
-    private boolean extintor6kg;
-    private boolean varillaTierra;
-    private boolean bandejaAntiderrame;
-    private boolean kitAntiderrame;
-    private boolean cableElectrico;
-    private boolean tableroDistribucion;
-    private boolean carreta;
+    private double precioHoraExtra;
+    private List<String> accesoriosIds;
 
     public AlquilerMensual() {
-    }
-
-    public boolean isCarreta() {
-        return carreta;
-    }
-
-    public void setCarreta(boolean carreta) {
-        this.carreta = carreta;
-    }
-
-    public boolean isKitAntiderrame() {
-        return kitAntiderrame;
-    }
-
-    public void setKitAntiderrame(boolean kitAntiderrame) {
-        this.kitAntiderrame = kitAntiderrame;
-    }
-
-    public boolean isTableroDistribucion() {
-        return tableroDistribucion;
-    }
-
-    public void setTableroDistribucion(boolean tableroDistribucion) {
-        this.tableroDistribucion = tableroDistribucion;
-    }
-
-    public boolean isCableElectrico() {
-        return cableElectrico;
-    }
-
-    public void setCableElectrico(boolean cableElectrico) {
-        this.cableElectrico = cableElectrico;
-    }
-
-    public boolean isBandejaAntiderrame() {
-        return bandejaAntiderrame;
-    }
-
-    public void setBandejaAntiderrame(boolean bandejaAntiderrame) {
-        this.bandejaAntiderrame = bandejaAntiderrame;
-    }
-
-    public boolean isVarillaTierra() {
-        return varillaTierra;
-    }
-
-    public void setVarillaTierra(boolean varilla) {
-        this.varillaTierra = varilla;
-    }
-
-    public boolean isExtintor9kg() {
-        return extintor9kg;
-    }
-
-    public void setExtintor9kg(boolean extintor9kg) {
-        this.extintor9kg = extintor9kg;
+        this.accesoriosIds = new ArrayList<>();
     }
     public int getHorasMinimas() {
         return horasMinimas;
@@ -157,12 +99,18 @@ public class AlquilerMensual {
     public void setHorometroInicial(double horometroInicial) {
         this.horometroInicial = horometroInicial;
     }
-
-    public boolean isExtintor6kg() {
-        return extintor6kg;
+    public double getPrecioHoraExtra() {
+        return precioHoraExtra;
     }
 
-    public void setExtintor6kg(boolean extintor6kg) {
-        this.extintor6kg = extintor6kg;
+    public void setPrecioHoraExtra(double precioHoraExtra) {
+        this.precioHoraExtra = precioHoraExtra;
+    }
+    public List<String> getAccesoriosIds() {
+        return accesoriosIds;
+    }
+
+    public void setAccesoriosIds(List<String> accesoriosIds) {
+        this.accesoriosIds = accesoriosIds;
     }
 }

@@ -8,10 +8,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.net.ParseException;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 
 import java.text.SimpleDateFormat;
@@ -22,11 +24,24 @@ import java.util.Locale;
 
 public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensualAdapter.VH>{
     private final List<AlquilerMensual> items = new ArrayList<>();
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(AlquilerMensual alquiler);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public void setItems(List<AlquilerMensual> nuevos) {
         items.clear();
         items.addAll(nuevos);
         notifyDataSetChanged();
+    }
+
+    public AlquilerMensual getItem(int position) {
+        return items.get(position);
     }
 
     @NonNull
@@ -43,14 +58,37 @@ public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensual
 
         h.txtEmpresa.setText(a.getNombreCliente());
         h.txtUbicacion.setText(a.getUbicacion());
-//        h.txtFechaInicial.setText(a.getFechaInicial());
-//        h.txtFechaFinal.setText(a.getFechaFinal());
         h.txtHorasInicio.setText(a.getHorometroInicial() + " horas");
         h.txtHorasFinal.setText(a.getHorometroFinal() + " horas");
 
-        String fechaIso = a.getFechaInicial(); // puede ser null
-        String fechaFormateada = "";
+        // Formatear fecha inicial
+        String fechaIso = a.getFechaInicial();
+        String fechaFormateada = formatearFecha(fechaIso);
+        h.txtFechaInicial.setText(fechaFormateada.isEmpty() ? "-" : fechaFormateada);
 
+        // Formatear fecha final
+        String fechaIso2 = a.getFechaFinal();
+        String fechaFormateada2 = formatearFecha(fechaIso2);
+        h.txtFechaFinal.setText(fechaFormateada2.isEmpty() ? "-" : fechaFormateada2);
+
+        // Limpia los íconos anteriores
+        h.contenedorAccesorios.removeAllViews();
+
+        // Cargar accesorios desde Firebase si existen IDs
+        if (a.getAccesoriosIds() != null && !a.getAccesoriosIds().isEmpty()) {
+            cargarAccesorios(h, a.getAccesoriosIds());
+        }
+
+        // Click en el item
+        h.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(a);
+            }
+        });
+    }
+
+    private String formatearFecha(String fechaIso) {
+        String fechaFormateada = "";
         if (fechaIso != null && !fechaIso.isEmpty()) {
             try {
                 SimpleDateFormat isoFormat =
@@ -61,78 +99,45 @@ public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensual
                         new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
                 fechaFormateada = targetFormat.format(date);
             } catch (java.text.ParseException e) {
-                // Si no se puede parsear, mostramos los primeros 10 caracteres si tiene formato
                 if (fechaIso.length() >= 10)
                     fechaFormateada = fechaIso.substring(0, 10);
                 else
                     fechaFormateada = fechaIso;
             }
         }
+        return fechaFormateada;
+    }
 
-        h.txtFechaInicial.setText(fechaFormateada.isEmpty() ? "-" : fechaFormateada);
+    private void cargarAccesorios(VH h, List<String> accesoriosIds) {
+        FirebaseServicio firebaseServicio = new FirebaseServicio();
 
+        for (String accesorioId : accesoriosIds) {
+            firebaseServicio.getAccesorioPorId(accesorioId, new FirebaseServicio.OnAccesorioLoadedListener() {
+                @Override
+                public void onSuccess(Accesorio accesorio) {
+                    ImageView icon = new ImageView(h.itemView.getContext());
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(110, 110);
+                    params.setMargins(0, 0, 15, 0);
+                    icon.setLayoutParams(params);
 
-        String fechaIso2 = a.getFechaFinal();
-        String fechaFormateada2 = "";
+                    if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
+                        Glide.with(h.itemView.getContext())
+                                .load(accesorio.getIcono())
+                                .placeholder(R.drawable.icon_extintor_blanco)
+                                .error(R.drawable.icon_extintor_blanco)
+                                .into(icon);
+                    } else {
+                        icon.setImageResource(R.drawable.icon_extintor_blanco);
+                    }
 
-        if (fechaIso2 != null && !fechaIso2.isEmpty()) {
-            try {
-                SimpleDateFormat isoFormat =
-                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-                Date date = isoFormat.parse(fechaIso2);
+                    h.contenedorAccesorios.addView(icon);
+                }
 
-                SimpleDateFormat targetFormat =
-                        new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
-                fechaFormateada2 = targetFormat.format(date);
-            } catch (java.text.ParseException e) {
-                if (fechaIso2.length() >= 10)
-                    fechaFormateada2 = fechaIso2.substring(0, 10);
-                else
-                    fechaFormateada2 = fechaIso2;
-            }
-        }
-
-        h.txtFechaFinal.setText(fechaFormateada2.isEmpty() ? "-" : fechaFormateada2);
-
-
-        // Limpia los íconos anteriores
-        h.contenedorAccesorios.removeAllViews();
-
-        // Lógica para añadir accesorios si están en true (máximo 6)
-        int maxIcons = 6;
-        int count = 0;
-
-        if (a.isExtintor9kg() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_extintor_blanco));
-            count++;
-        }
-        if (a.isExtintor6kg() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_extintor_blanco));
-            count++;
-        }
-        if (a.isVarillaTierra() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_varilla_blanco));
-            count++;
-        }
-        if (a.isBandejaAntiderrame() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_bandeja_blanco));
-            count++;
-        }
-        if (a.isKitAntiderrame() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_kit_blanco));
-            count++;
-        }
-        if (a.isCableElectrico() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_cable_blanco));
-            count++;
-        }
-        if (a.isTableroDistribucion() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_tablero_blanco));
-            count++;
-        }
-        if (a.isCarreta() && count < maxIcons) {
-            h.contenedorAccesorios.addView(crearIcono(h, R.drawable.icon_remolque_blanco));
-            count++;
+                @Override
+                public void onError(Exception e) {
+                    // Silenciar error
+                }
+            });
         }
     }
 
@@ -162,5 +167,4 @@ public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensual
         icon.setImageResource(drawableId);
         return icon;
     }
-
 }

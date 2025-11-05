@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,7 +8,7 @@
     android:theme="@style/Theme.TextMain">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
@@ -32,18 +32,20 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_marginEnd="20dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:hint="Horómetro inicial">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputHorometroInicial"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal"
                     android:hint="Horómetro inicial"
@@ -52,15 +54,16 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:hint="Fecha inicial">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputFechaInicial"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:clickable="true"
-                    android:inputType="date"
                     android:hint="Fecha inicial"
                     android:textColor="@color/black"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -78,20 +81,21 @@
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_marginEnd="20dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:hint="Horómetro final">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputHorometroFinal"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Horómetro final"
                     android:inputType="numberDecimal"
@@ -100,33 +104,36 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:hint="Fecha final">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputFechaFinal"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:clickable="true"
-                    android:inputType="date"
                     android:hint="Fecha final"
                     android:textColor="@color/black"/>
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_marginEnd="7dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:hint="Precio de alquiler">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputPrecioAlquiler"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Precio de alquiler"
                     android:inputType="numberDecimal"
@@ -134,14 +141,16 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/CustomTextInputLayout">
+                style="@style/CustomTextInputLayout"
+                android:layout_width="0dp"
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputHorasMinimas"
-                    android:layout_width="150dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Horas mínimas"
-                    android:inputType="numberDecimal"
+                    android:inputType="number"
                     android:textColor="@color/black"/>
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
@@ -152,357 +161,31 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputPrecioHoraExtra"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Precio por hora extra"
                 android:inputType="numberDecimal"
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.cardview.widget.CardView
+        <!-- Título de accesorios -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:text="Selecciona los accesorios incluidos"/>
+
+        <!-- RecyclerView de accesorios -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerAccesorios"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
+            android:layout_marginBottom="80dp"
+            android:nestedScrollingEnabled="false" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_extintor_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Extintor de 9kg"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkExtintor9kg"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_extintor_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Extintor de 6kg"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkExtintor6kg"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_varilla_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Varilla puesta a tierra"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkVarilla"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_bandeja_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Bandeja antiderrame"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkBandeja"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                        android:src="@drawable/icon_kit_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Kit antiderrame"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkKit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_cable_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Cable eléctrico"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkCable"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_tablero_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tablero de distribución"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkTablero"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="23dp"
-            android:backgroundTint="#1E1E1E">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@drawable/icon_remolque_blanco" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Carreta"
-                        android:textColor="@color/white"
-                        android:layout_weight="1"
-                        android:textSize="16sp" />
-                    <CheckBox
-                        android:id="@+id/chkCarreta"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:scaleX="2"
-                        android:scaleY="2" />
-                </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
     </LinearLayout>
-</FrameLayout>
+</ScrollView>
