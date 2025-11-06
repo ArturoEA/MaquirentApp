@@ -1,39 +1,46 @@
 package com.example.maquirentapp.ViewModel;
 
-
+import android.app.Application;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
-import android.provider.OpenableColumns;
+import android.os.Environment;
+import android.webkit.MimeTypeMap;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-
 
 import com.example.maquirentapp.Model.FichaTecnica;
-import com.example.maquirentapp.adaptadores.PdfManager;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-public class FichaTecnicaViewModel extends ViewModel {
+public class FichaTecnicaViewModel extends AndroidViewModel {
     private MutableLiveData<List<FichaTecnica>> fichasLiveData = new MutableLiveData<>();
     private MutableLiveData<String> operacionStatus = new MutableLiveData<>();
-    private String fichaIdParaPdf;
+    private MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
 
-    public FichaTecnicaViewModel() {
-        cargarDatosIniciales();
-    }
+    private FirebaseStorage storage;
+    private StorageReference fichasTecnicasRef;
+    private static final String CARPETA_STORAGE = "fichas_tecnicas/";
 
-    public void cargarDatosIniciales() {
-        List<FichaTecnica> fichas = new ArrayList<>();
-        fichas.add(new FichaTecnica("1", "Generador Diesel", null, null, 0, null, false));
-        fichas.add(new FichaTecnica("2", "Transformador 220V", null, null, 0, null, false));
-        fichasLiveData.setValue(fichas);
+    public FichaTecnicaViewModel(@NonNull Application application) {
+        super(application);
+        storage = FirebaseStorage.getInstance();
+        fichasTecnicasRef = storage.getReference().child(CARPETA_STORAGE);
     }
 
     public LiveData<List<FichaTecnica>> getFichasLiveData() {
@@ -44,108 +51,217 @@ public class FichaTecnicaViewModel extends ViewModel {
         return operacionStatus;
     }
 
-    public void prepararParaSubirPdf(String fichaId) {
-        this.fichaIdParaPdf = fichaId;
+    public LiveData<Boolean> getIsLoading() {
+        return isLoading;
     }
 
-    public void procesarPdfSeleccionado(Context context, Uri pdfUri) {
-        if (fichaIdParaPdf == null) {
-            operacionStatus.setValue("No se ha seleccionado ninguna ficha");
+    // Cargar todas las fichas desde Firebase Storage
+    public void cargarFichasTecnicas() {
+        isLoading.setValue(true);
+
+        fichasTecnicasRef.listAll()
+                .addOnSuccessListener(listResult -> {
+                    List<FichaTecnica> fichas = new ArrayList<>();
+                    int totalArchivos = listResult.getItems().size();
+
+                    if (totalArchivos == 0) {
+                        fichasLiveData.setValue(new ArrayList<>());
+                        isLoading.setValue(false);
+                        return;
+                    }
+
+                    final int[] procesados = {0};
+
+                    for (StorageReference item : listResult.getItems()) {
+                        item.getDownloadUrl().addOnSuccessListener(uri -> {
+                            item.getMetadata().addOnSuccessListener(metadata -> {
+                                FichaTecnica ficha = new FichaTecnica();
+                                ficha.setId(item.getName());
+                                ficha.setNombreArchivo(item.getName());
+                                ficha.setUrlPdf(uri.toString());
+                                ficha.setTamanio(metadata.getSizeBytes());
+
+                                // Formatear fecha
+                                long timeCreated = metadata.getCreationTimeMillis();
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+                                ficha.setFechaSubida(sdf.format(new Date(timeCreated)));
+
+                                fichas.add(ficha);
+                                procesados[0]++;
+
+                                if (procesados[0] == totalArchivos) {
+                                    fichasLiveData.setValue(fichas);
+                                    isLoading.setValue(false);
+                                }
+                            });
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    operacionStatus.setValue("Error al cargar fichas: " + e.getMessage());
+                    isLoading.setValue(false);
+                });
+    }
+
+    // Subir un nuevo PDF
+    public void subirPdf(Context context, Uri pdfUri) {
+        if (pdfUri == null) {
+            operacionStatus.setValue("Error: archivo no válido");
             return;
         }
 
-        new Thread(() -> {
-            try {
-                String localPath = PdfManager.guardarPdfLocal(context, pdfUri);
-                String nombreArchivo = obtenerNombreArchivo(context, pdfUri);
-                long tamanioArchivo = obtenerTamanioArchivo(context, pdfUri);
-
-                List<FichaTecnica> fichasActuales = fichasLiveData.getValue();
-                if (fichasActuales != null) {
-                    List<FichaTecnica> nuevasFichas = new ArrayList<>();
-
-                    for (FichaTecnica ficha : fichasActuales) {
-                        if (ficha.getId().equals(fichaIdParaPdf)) {
-                            // Crear nueva ficha con los datos actualizados
-                            FichaTecnica fichaActualizada = new FichaTecnica(
-                                    ficha.getId(),
-                                    ficha.getNombre(),
-                                    localPath,
-                                    nombreArchivo,
-                                    tamanioArchivo,
-                                    new Date(),
-                                    true
-                            );
-                            nuevasFichas.add(fichaActualizada);
-                        } else {
-                            nuevasFichas.add(ficha);
-                        }
-                    }
-
-                    fichasLiveData.postValue(nuevasFichas);
-                    operacionStatus.postValue("PDF guardado correctamente");
-                }
-            } catch (IOException e) {
-                operacionStatus.postValue("Error al guardar PDF: " + e.getMessage());
-            }
-        }).start();
-    }
-
-    private String obtenerNombreArchivo(Context context, Uri uri) {
-        String nombreArchivo = "documento.pdf";
-
-        if (uri.getScheme().equals("content")) {
-            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                    if (nameIndex != -1) {
-                        nombreArchivo = cursor.getString(nameIndex);
-                    }
-                }
-            } catch (Exception e) {
-                operacionStatus.postValue("Error al obtener nombre del archivo");
-            }
-        }
-        return nombreArchivo;
-    }
-
-    private long obtenerTamanioArchivo(Context context, Uri uri) {
-        long tamanio = 0;
-
-        if (uri.getScheme().equals("content")) {
-            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
-                    if (sizeIndex != -1) {
-                        tamanio = cursor.getLong(sizeIndex);
-                    }
-                }
-            } catch (Exception e) {
-                operacionStatus.postValue("Error al obtener tamaño del archivo");
-            }
-        }
-        return tamanio;
-    }
-
-    public void abrirPdf(Context context, FichaTecnica ficha) {
-        if (ficha == null || !ficha.tienePdf() || !ficha.isPdfLocal()) {
-            operacionStatus.setValue("No hay PDF disponible para abrir");
-            return;
-        }
+        isLoading.setValue(true);
 
         try {
-            Uri pdfUri = PdfManager.getPdfUri(context, ficha.getPdfUrl());
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(pdfUri, "application/pdf");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            // Obtener nombre del archivo
+            String nombreArchivo = obtenerNombreArchivo(context, pdfUri);
 
-            if (intent.resolveActivity(context.getPackageManager()) != null) {
-                context.startActivity(intent);
-            } else {
-                operacionStatus.setValue("No hay aplicación para ver PDFs");
+            // Validar que sea PDF
+            if (!nombreArchivo.toLowerCase().endsWith(".pdf")) {
+                operacionStatus.setValue("Error: solo se permiten archivos PDF");
+                isLoading.setValue(false);
+                return;
             }
+
+            // Crear referencia única
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            String nombreUnico = timestamp + "_" + nombreArchivo;
+            StorageReference fileRef = fichasTecnicasRef.child(nombreUnico);
+
+            // Subir archivo
+            UploadTask uploadTask = fileRef.putFile(pdfUri);
+
+            uploadTask.addOnProgressListener(snapshot -> {
+                double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
+                operacionStatus.setValue("Subiendo: " + (int) progress + "%");
+            }).addOnSuccessListener(taskSnapshot -> {
+                operacionStatus.setValue("Archivo subido correctamente");
+                isLoading.setValue(false);
+                cargarFichasTecnicas(); // Recargar lista
+            }).addOnFailureListener(e -> {
+                operacionStatus.setValue("Error al subir: " + e.getMessage());
+                isLoading.setValue(false);
+            });
+
         } catch (Exception e) {
-            operacionStatus.setValue("Error al abrir PDF: " + e.getMessage());
+            operacionStatus.setValue("Error: " + e.getMessage());
+            isLoading.setValue(false);
         }
+    }
+
+    // Abrir PDF en visor integrado
+    public void abrirPdf(Context context, FichaTecnica ficha) {
+        Intent intent = com.example.maquirentapp.View.PdfViewerActivity.newIntent(
+                context,
+                ficha.getUrlPdf(),
+                ficha.getNombreArchivo()
+        );
+        context.startActivity(intent);
+    }
+
+    // Compartir PDF
+    public void compartirPdf(Context context, FichaTecnica ficha) {
+        isLoading.setValue(true);
+
+        // Descargar el archivo temporalmente
+        descargarPdfTemporal(context, ficha, file -> {
+            Uri fileUri = FileProvider.getUriForFile(context,
+                    context.getPackageName() + ".provider", file);
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("application/pdf");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, ficha.getNombreArchivo());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Te comparto esta ficha técnica");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            Intent chooser = Intent.createChooser(shareIntent, "Compartir PDF");
+            chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            context.startActivity(chooser);
+            isLoading.setValue(false);
+            operacionStatus.setValue("Compartiendo archivo...");
+        });
+    }
+
+    // Descargar PDF a la carpeta de Descargas
+    public void descargarPdf(Context context, FichaTecnica ficha) {
+        isLoading.setValue(true);
+        operacionStatus.setValue("Descargando...");
+
+        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File destFile = new File(downloadsDir, ficha.getNombreArchivo());
+
+        StorageReference fileRef = storage.getReferenceFromUrl(ficha.getUrlPdf());
+
+        fileRef.getFile(destFile)
+                .addOnSuccessListener(taskSnapshot -> {
+                    operacionStatus.setValue("Descargado en: " + destFile.getAbsolutePath());
+                    isLoading.setValue(false);
+                })
+                .addOnFailureListener(e -> {
+                    operacionStatus.setValue("Error al descargar: " + e.getMessage());
+                    isLoading.setValue(false);
+                });
+    }
+
+    // Eliminar PDF
+    public void eliminarPdf(FichaTecnica ficha) {
+        isLoading.setValue(true);
+
+        StorageReference fileRef = storage.getReferenceFromUrl(ficha.getUrlPdf());
+
+        fileRef.delete()
+                .addOnSuccessListener(aVoid -> {
+                    operacionStatus.setValue("Archivo eliminado");
+                    isLoading.setValue(false);
+                    cargarFichasTecnicas(); // Recargar lista
+                })
+                .addOnFailureListener(e -> {
+                    operacionStatus.setValue("Error al eliminar: " + e.getMessage());
+                    isLoading.setValue(false);
+                });
+    }
+
+    // Método auxiliar para descargar PDF temporal
+    private void descargarPdfTemporal(Context context, FichaTecnica ficha, OnFileDownloadedListener listener) {
+        try {
+            File tempFile = new File(context.getCacheDir(), ficha.getNombreArchivo());
+            StorageReference fileRef = storage.getReferenceFromUrl(ficha.getUrlPdf());
+
+            fileRef.getFile(tempFile)
+                    .addOnSuccessListener(taskSnapshot -> listener.onFileDownloaded(tempFile))
+                    .addOnFailureListener(e -> {
+                        operacionStatus.setValue("Error al preparar archivo: " + e.getMessage());
+                        isLoading.setValue(false);
+                    });
+        } catch (Exception e) {
+            operacionStatus.setValue("Error: " + e.getMessage());
+            isLoading.setValue(false);
+        }
+    }
+
+    // Método auxiliar para obtener nombre del archivo
+    private String obtenerNombreArchivo(Context context, Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (android.database.Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) {
+                        result = cursor.getString(index);
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getLastPathSegment();
+        }
+        return result;
+    }
+
+    // Interface para callback de descarga
+    private interface OnFileDownloadedListener {
+        void onFileDownloaded(File file);
     }
 }

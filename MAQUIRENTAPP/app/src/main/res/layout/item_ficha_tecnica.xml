@@ -1,46 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card_ficha_tecnica"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:backgroundTint="@color/card_dark"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp">
+    android:layout_margin="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    android:theme="@style/Theme.TextMain">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="@color/black">
 
-        <ImageView
-            android:id="@+id/img_icono_ficha"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_centerHorizontal="true"
-            android:src="@drawable/icon_voltaje_blanco"
-            android:contentDescription="Icono Ficha"/>
+        <!-- Contenedor para la vista previa del PDF -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="@android:color/white">
 
+            <!-- Imagen de vista previa -->
+            <ImageView
+                android:id="@+id/iv_pdf_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="@android:color/white" />
+
+            <!-- Icono de PDF por defecto -->
+            <ImageView
+                android:id="@+id/iv_pdf_icon"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                app:tint="@android:color/holo_red_dark" />
+
+            <!-- ProgressBar mientras carga -->
+            <ProgressBar
+                android:id="@+id/progress_preview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/black"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <!-- Nombre del archivo -->
         <TextView
-            android:id="@+id/txt_nombre_ficha"
+            android:id="@+id/tv_nombre_archivo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/img_icono_ficha"
             android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"/>
+            android:text="ficha_tecnica.pdf"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/white" />
 
-        <ImageView
-            android:id="@+id/img_pdf_status"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentTop="true"
-            android:src="@drawable/icon_pdf_blanco"
-            android:visibility="gone"
-            android:contentDescription="Pdf Adjunto"/>
-    </RelativeLayout>
-</androidx.cardview.widget.CardView>
+        <!-- Fecha de subida -->
+        <TextView
+            android:id="@+id/tv_fecha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="01/01/2025"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray" />
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <!-- Botón compartir -->
+            <ImageButton
+                android:id="@+id/btn_compartir"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_share"
+                android:contentDescription="Compartir"
+                app:tint="@color/white" />
+
+            <!-- Botón descargar -->
+            <ImageButton
+                android:id="@+id/btn_descargar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/stat_sys_download"
+                android:contentDescription="Descargar"
+                app:tint="@color/white" />
+
+            <!-- Botón eliminar -->
+            <ImageButton
+                android:id="@+id/btn_eliminar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/icon_eliminar_rojo"
+                android:contentDescription="Eliminar" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

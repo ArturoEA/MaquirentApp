@@ -1,28 +1,25 @@
 package com.example.maquirentapp.Model;
 
-import java.util.Date;
-
 public class FichaTecnica {
     private String id;
-    private String nombre;
-    private String pdfUrl;  // URL o path local
-    private String pdfNombre;
-    private long pdfSize;
-    private Date fechaSubida;
-    private boolean pdfLocal;
+    private String nombreArchivo;
+    private String urlPdf;
+    private String fechaSubida;
+    private long tamanio; // en bytes
 
-    public FichaTecnica(String id, String nombre, String pdfUrl, String pdfNombre, long pdfSize, Date fechaSubida, boolean pdfLocal) {
-        this.id = id;
-        this.nombre = nombre;
-        this.pdfUrl = pdfUrl;
-        this.pdfNombre = pdfNombre;
-        this.pdfSize = pdfSize;
-        this.fechaSubida = fechaSubida;
-        this.pdfLocal = pdfLocal;
+    public FichaTecnica() {
+        // Constructor vacío requerido por Firebase
     }
 
+    public FichaTecnica(String id, String nombreArchivo, String urlPdf, String fechaSubida, long tamanio) {
+        this.id = id;
+        this.nombreArchivo = nombreArchivo;
+        this.urlPdf = urlPdf;
+        this.fechaSubida = fechaSubida;
+        this.tamanio = tamanio;
+    }
 
-
+    // Getters y Setters
     public String getId() {
         return id;
     }
@@ -31,55 +28,46 @@ public class FichaTecnica {
         this.id = id;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getNombreArchivo() {
+        return nombreArchivo;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setNombreArchivo(String nombreArchivo) {
+        this.nombreArchivo = nombreArchivo;
     }
 
-    public String getPdfUrl() {
-        return pdfUrl;
+    public String getUrlPdf() {
+        return urlPdf;
     }
 
-    public void setPdfUrl(String pdfUrl) {
-        this.pdfUrl = pdfUrl;
+    public void setUrlPdf(String urlPdf) {
+        this.urlPdf = urlPdf;
     }
 
-    public String getPdfNombre() {
-        return pdfNombre;
-    }
-
-    public void setPdfNombre(String pdfNombre) {
-        this.pdfNombre = pdfNombre;
-    }
-
-    public long getPdfSize() {
-        return pdfSize;
-    }
-
-    public void setPdfSize(long pdfSize) {
-        this.pdfSize = pdfSize;
-    }
-
-    public Date getFechaSubida() {
+    public String getFechaSubida() {
         return fechaSubida;
     }
 
-    public void setFechaSubida(Date fechaSubida) {
+    public void setFechaSubida(String fechaSubida) {
         this.fechaSubida = fechaSubida;
     }
 
-    public boolean isPdfLocal() {
-        return pdfLocal;
+    public long getTamanio() {
+        return tamanio;
     }
 
-    public void setPdfLocal(boolean pdfLocal) {
-        this.pdfLocal = pdfLocal;
+    public void setTamanio(long tamanio) {
+        this.tamanio = tamanio;
     }
 
     public boolean tienePdf() {
-        return pdfUrl != null && !pdfUrl.isEmpty();
+        return urlPdf != null && !urlPdf.isEmpty();
+    }
+
+    // Método para obtener el tamaño formateado
+    public String getTamanioFormateado() {
+        if (tamanio < 1024) return tamanio + " B";
+        if (tamanio < 1024 * 1024) return String.format("%.2f KB", tamanio / 1024.0);
+        return String.format("%.2f MB", tamanio / (1024.0 * 1024.0));
     }
 }
