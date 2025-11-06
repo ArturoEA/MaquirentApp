@@ -289,8 +289,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         String horasMinStr = inputHorasMinimas.getText().toString().trim();
         String precioHoraExtraStr = inputPrecioHoraExtra.getText().toString().trim();
 
-        if (empresa.isEmpty() || ubicacion.isEmpty() || fechaInicial.isEmpty() || fechaFinal.isEmpty()
-                || hIniStr.isEmpty() || hFinStr.isEmpty() || precioStr.isEmpty() || horasMinStr.isEmpty()) {
+        if (empresa.isEmpty() || ubicacion.isEmpty() || fechaInicial.isEmpty() || hIniStr.isEmpty() || precioStr.isEmpty() || horasMinStr.isEmpty()) {
             Toast.makeText(getContext(), "Por favor completa todos los campos obligatorios", Toast.LENGTH_SHORT).show();
             return;
         }

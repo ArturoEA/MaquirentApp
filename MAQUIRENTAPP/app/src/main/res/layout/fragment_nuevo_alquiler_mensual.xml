@@ -12,14 +12,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:layout_marginBottom="10dp"
-            android:text="Completa estos datos para registrar un nuevo alquiler"/>
-
         <com.google.android.material.textfield.TextInputLayout
             style="@style/CustomTextInputLayout">
 
