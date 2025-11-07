@@ -11,7 +11,7 @@
         android:id="@+id/tvTituloDialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nuevo Accesorio"
+        android:text="Nuevo Item Mantenimiento"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/black"
@@ -24,13 +24,12 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_gravity="center"
-        android:src="@drawable/icon_kit_blanco"
+        android:src="@drawable/icon_mantenimiento_blanco"
         android:background="@drawable/shape_circular"
         android:backgroundTint="@color/black"
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Botón para seleccionar ícono -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSeleccionarIcono"
         android:layout_width="match_parent"
@@ -44,16 +43,15 @@
         android:layout_marginBottom="16dp"
         style="@style/Widget.Material3.Button.OutlinedButton" />
 
-    <!-- Campo para el nombre -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre del accesorio"
+        android:hint="Nombre del mantenimiento"
         style="@style/CustomTextInputLayout"
         android:layout_marginBottom="16dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/inputNombreAccesorio"
+            android:id="@+id/inputNombreMantenimientoConfiguracion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/black" />
