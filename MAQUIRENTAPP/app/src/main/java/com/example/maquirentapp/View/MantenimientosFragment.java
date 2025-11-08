@@ -140,7 +140,7 @@ public class MantenimientosFragment extends Fragment {
                 View itemView = viewHolder.itemView;
 
                 if (deleteIcon == null) {
-                    deleteIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_delete);
+                    deleteIcon = ContextCompat.getDrawable(requireContext(), R.drawable.icon_eliminar_rojo);
                     if (deleteIcon != null) {
                         deleteIcon.setTint(Color.WHITE);
                     }
@@ -227,12 +227,11 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void abrirDetalleMantenimiento(Mantenimiento mantenimiento) {
-        // Navegar al fragmento de detalle/edición
         NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, mantenimiento.getId());
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
-                .addToBackStack(null)
+                .addToBackStack("detalle_mantenimiento")
                 .commit();
     }
 
@@ -300,7 +299,7 @@ public class MantenimientosFragment extends Fragment {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
-                .addToBackStack(null)
+                .addToBackStack("nuevo_mantenimiento")
                 .commit();
     }
 }

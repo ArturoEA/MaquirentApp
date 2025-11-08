@@ -1,12 +1,25 @@
 package com.example.maquirentapp.View;
 
 import android.app.DatePickerDialog;
+import android.app.DownloadManager;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -17,6 +30,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,6 +47,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -118,9 +138,9 @@ public class NuevoMantenimientoFragment extends Fragment {
         } else {
             modoLectura = false;
             aplicarModoEdicion();
+            mostrarFotos();
         }
     }
-
     private void initializeFirebase() {
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -325,21 +345,180 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void mostrarFotoGrande(String urlOrUri, boolean esUrl) {
+        // Crear diálogo
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_foto_grande, null);
-        ImageView ivFoto = dialogView.findViewById(R.id.ivFotoGrande);
+        builder.setView(dialogView);
 
-        if (esUrl) {
-            Glide.with(requireContext()).load(urlOrUri).into(ivFoto);
-        } else {
-            Glide.with(requireContext()).load(Uri.parse(urlOrUri)).into(ivFoto);
+        AlertDialog dialog = builder.create();
+
+        ImageView ivFoto = dialogView.findViewById(R.id.ivFotoGrande);
+        Button btnDescargar = dialogView.findViewById(R.id.btnDescargar);
+        Button btnCompartir = dialogView.findViewById(R.id.btnCompartir);
+        Button btnCerrar = dialogView.findViewById(R.id.btnCerrar);
+
+        // Cargar imagen
+        try {
+            if (esUrl) {
+                Glide.with(requireContext())
+                        .load(urlOrUri)
+                        .error(R.drawable.icon_mantenimiento_blanco)
+                        .into(ivFoto);
+            } else {
+                Glide.with(requireContext())
+                        .load(Uri.parse(urlOrUri))
+                        .error(R.drawable.icon_mantenimiento_blanco)
+                        .into(ivFoto);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error cargando imagen en visor", e);
+            ivFoto.setImageResource(R.drawable.icon_mantenimiento_blanco);
         }
 
-        new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .setPositiveButton("Cerrar", null)
-                .show();
+        // Configurar botones
+        btnDescargar.setOnClickListener(v -> {
+            descargarFoto(urlOrUri, esUrl);
+            dialog.dismiss();
+        });
+
+        btnCompartir.setOnClickListener(v -> {
+            compartirFoto(urlOrUri, esUrl);
+            // No cerrar el diálogo inmediatamente, dejar que el usuario vea que se está preparando
+        });
+
+        btnCerrar.setOnClickListener(v -> dialog.dismiss());
+
+        // Click en la imagen para cerrar
+        ivFoto.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+    private void descargarFoto(String urlOrUri, boolean esUrl) {
+        try {
+            if (esUrl) {
+                // Descargar desde URL de Firebase
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urlOrUri));
+                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
+                request.setTitle("Foto de mantenimiento");
+                request.setDescription("Descargando imagen del mantenimiento");
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                        "mantenimiento_" + System.currentTimeMillis() + ".jpg");
+
+                DownloadManager downloadManager = (DownloadManager) requireContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                if (downloadManager != null) {
+                    downloadManager.enqueue(request);
+                    Toast.makeText(getContext(), "Descarga iniciada", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Para URIs locales - método alternativo
+                try {
+                    // Usar MediaStore para guardar la imagen
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DISPLAY_NAME, "mantenimiento_" + System.currentTimeMillis() + ".jpg");
+                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                    values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
+
+                    Uri uri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (uri != null) {
+                        OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+                        InputStream inputStream = requireContext().getContentResolver().openInputStream(Uri.parse(urlOrUri));
+
+                        if (inputStream != null && outputStream != null) {
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = inputStream.read(buffer)) > 0) {
+                                outputStream.write(buffer, 0, length);
+                            }
+                            outputStream.close();
+                            inputStream.close();
+
+                            Toast.makeText(getContext(), "Foto guardada en Galería", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, "Error guardando foto", e);
+                    Toast.makeText(getContext(), "Error al guardar foto", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error en descarga", e);
+            Toast.makeText(getContext(), "Error al descargar", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void compartirFoto(String urlOrUri, boolean esUrl) {
+        try {
+            if (esUrl) {
+                // Para fotos de Firebase: descargar temporalmente y luego compartir
+                descargarTemporalmenteYCompartir(urlOrUri);
+            } else {
+                // Para fotos locales: usar directamente
+                Uri localUri = Uri.parse(urlOrUri);
+                compartirArchivoDirecto(localUri);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error compartiendo foto", e);
+            Toast.makeText(getContext(), "Error al compartir foto", Toast.LENGTH_SHORT).show();
+        }
     }
 
+    private void descargarTemporalmenteYCompartir(String imageUrl) {
+        // Mostrar mensaje de preparación
+        Toast.makeText(getContext(), "Preparando foto para compartir...", Toast.LENGTH_SHORT).show();
+
+        // Crear archivo temporal
+        File tempFile = new File(requireContext().getCacheDir(), "temp_share_" + System.currentTimeMillis() + ".jpg");
+
+        // Descargar la imagen
+        StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
+
+        storageRef.getFile(tempFile)
+                .addOnSuccessListener(taskSnapshot -> {
+                    // Archivo descargado, ahora compartir
+                    Uri tempUri = FileProvider.getUriForFile(
+                            requireContext(),
+                            requireContext().getPackageName() + ".provider",
+                            tempFile
+                    );
+                    compartirArchivoDirecto(tempUri);
+
+                    // Programar eliminación del archivo temporal después de 5 minutos
+                    new Handler().postDelayed(() -> {
+                        if (tempFile.exists()) {
+                            tempFile.delete();
+                        }
+                    }, 5 * 60 * 1000); // 5 minutos
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error descargando foto para compartir", e);
+                    Toast.makeText(getContext(), "Error al preparar foto", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void compartirArchivoDirecto(Uri imageUri) {
+        try {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/jpeg");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            // Crear chooser con título específico
+            Intent chooser = Intent.createChooser(shareIntent, "Compartir foto del mantenimiento");
+
+            // Asegurar que las apps puedan leer el archivo
+            List<ResolveInfo> resInfoList = requireContext().getPackageManager().queryIntentActivities(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo resolveInfo : resInfoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                requireContext().grantUriPermission(packageName, imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+
+            startActivity(chooser);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error en compartirArchivoDirecto", e);
+            Toast.makeText(getContext(), "No se pudo compartir la foto", Toast.LENGTH_SHORT).show();
+        }
+    }
     private void confirmarEliminarFoto(int index, boolean esUrl) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Eliminar foto")

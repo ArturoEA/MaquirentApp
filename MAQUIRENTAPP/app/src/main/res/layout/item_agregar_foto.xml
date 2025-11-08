@@ -6,30 +6,30 @@
     android:layout_height="100dp"
     android:layout_margin="4dp"
     app:cardCornerRadius="8dp"
+    android:theme="@style/Theme.TextMain"
     app:cardElevation="4dp">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/noseleccionado_accesorio"
+        android:gravity="center"
+        android:orientation="vertical">
 
         <ImageView
-            android:id="@+id/ivFotoMantenimiento"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop" />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/icon_ojo_negro"
+            app:tint="@color/white" />
 
-        <!-- Botón eliminar -->
-        <ImageView
-            android:id="@+id/btnEliminarFoto"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="4dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:background="@android:color/white"
-            android:padding="2dp"
-            app:tint="@android:color/holo_red_dark" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Agregar"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
 
-    </FrameLayout>
+    </LinearLayout>
 
 </androidx.cardview.widget.CardView>
