@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAdapter.ViewHolder> {
     private List<Mantenimiento> mantenimientos;
-    private Map<String, MantenimientoConfiguracion> itemsConfigMap; // ID -> MantenimientoConfiguracion
+    private Map<String, MantenimientoConfiguracion> itemsConfigMap;
     private Context context;
     private OnMantenimientoClickListener listener;
 
@@ -83,7 +83,6 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
     public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView tvEmpresa, tvFechaHoras, tvComentarios;
         private LinearLayout layoutIconos;
-        private ImageView ivVerFotos;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -91,7 +90,6 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
             tvFechaHoras = itemView.findViewById(R.id.tvFechaHoras);
             tvComentarios = itemView.findViewById(R.id.tvComentarios);
             layoutIconos = itemView.findViewById(R.id.layoutIconos);
-            ivVerFotos = itemView.findViewById(R.id.ivVerFotos);
         }
 
         public void bind(Mantenimiento mantenimiento) {
@@ -104,13 +102,6 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
                 tvComentarios.setVisibility(View.VISIBLE);
             } else {
                 tvComentarios.setVisibility(View.GONE);
-            }
-
-            // Mostrar ícono de fotos solo si hay fotos
-            if (mantenimiento.tieneFotos()) {
-                ivVerFotos.setVisibility(View.VISIBLE);
-            } else {
-                ivVerFotos.setVisibility(View.GONE);
             }
 
             // Limpiar íconos anteriores

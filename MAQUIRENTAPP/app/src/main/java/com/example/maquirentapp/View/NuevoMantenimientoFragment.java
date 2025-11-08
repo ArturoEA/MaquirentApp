@@ -45,8 +45,8 @@ public class NuevoMantenimientoFragment extends Fragment {
     private static final int MAX_FOTOS = 4;
 
     private String codigoGrupo;
-    private String mantenimientoId; // null = nuevo, no-null = editar
-    private boolean modoLectura = true; // Inicia en modo lectura si es edición
+    private String mantenimientoId;
+    private boolean modoLectura = true;
 
     // Views
     private TextInputEditText inputEmpresa, inputHorometro, inputFecha, inputComentarios;
@@ -57,8 +57,8 @@ public class NuevoMantenimientoFragment extends Fragment {
     // Adapters y datos
     private ItemsMantenimientoSeleccionablesAdapter itemsAdapter;
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
-    private List<Uri> fotosUriList = new ArrayList<>(); // URIs locales para nuevas fotos
-    private List<String> fotosUrlList = new ArrayList<>(); // URLs de fotos ya subidas
+    private List<Uri> fotosUriList = new ArrayList<>();
+    private List<String> fotosUrlList = new ArrayList<>();
 
     // Firebase
     private FirebaseFirestore db;
@@ -85,7 +85,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         if (getArguments() != null) {
             codigoGrupo = getArguments().getString(ARG_CODIGO);
             mantenimientoId = getArguments().getString(ARG_MANTENIMIENTO_ID);
-            modoLectura = mantenimientoId != null; // Si hay ID, inicia en modo lectura
+            modoLectura = mantenimientoId != null;
         }
 
         // Configurar launcher de imágenes
@@ -137,7 +137,7 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void setupRecyclerItems() {
-        recyclerItems.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        recyclerItems.setLayoutManager(new GridLayoutManager(getContext(), 1));
         itemsAdapter = new ItemsMantenimientoSeleccionablesAdapter(getContext(), itemsConfigList);
         recyclerItems.setAdapter(itemsAdapter);
     }
@@ -379,10 +379,6 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
 
         List<String> itemsSeleccionados = itemsAdapter.getItemsSeleccionados();
-        if (itemsSeleccionados.isEmpty()) {
-            Toast.makeText(getContext(), "Selecciona al menos un item realizado", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         progressBar.setVisibility(View.VISIBLE);
 

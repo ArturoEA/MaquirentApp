@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,18 +17,20 @@ import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapter<ItemsMantenimientoSeleccionablesAdapter.ViewHolder> {
     private List<MantenimientoConfiguracion> items;
-    private List<String> itemsSeleccionados; // IDs de items seleccionados
+    private Set<String> itemsSeleccionados;
     private Context context;
     private boolean modoLectura = false;
 
     public ItemsMantenimientoSeleccionablesAdapter(Context context, List<MantenimientoConfiguracion> items) {
         this.context = context;
         this.items = items != null ? items : new ArrayList<>();
-        this.itemsSeleccionados = new ArrayList<>();
+        this.itemsSeleccionados = new HashSet<>();
     }
 
     public void setModoLectura(boolean modoLectura) {
@@ -36,7 +39,10 @@ public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapte
     }
 
     public void setItemsSeleccionados(List<String> ids) {
-        this.itemsSeleccionados = ids != null ? new ArrayList<>(ids) : new ArrayList<>();
+        this.itemsSeleccionados.clear();
+        if (ids != null) {
+            this.itemsSeleccionados.addAll(ids);
+        }
         notifyDataSetChanged();
     }
 
@@ -67,12 +73,14 @@ public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapte
         private CardView cardView;
         private ImageView ivIcono;
         private TextView tvNombre;
+        private CheckBox checkBox;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.cardItemSeleccionable);
             ivIcono = itemView.findViewById(R.id.ivIconoItemSeleccionable);
             tvNombre = itemView.findViewById(R.id.tvNombreItemSeleccionable);
+            checkBox = itemView.findViewById(R.id.checkboxAccesorio);
         }
 
         public void bind(MantenimientoConfiguracion item) {
@@ -89,19 +97,18 @@ public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapte
                 ivIcono.setImageResource(R.drawable.icon_mantenimiento_blanco);
             }
 
-            // Verificar si está seleccionado
             boolean seleccionado = itemsSeleccionados.contains(item.getId());
 
-            // Aplicar estilo según selección
+            checkBox.setChecked(seleccionado);
+
             if (seleccionado) {
-                cardView.setCardBackgroundColor(context.getResources().getColor(android.R.color.black));
-                tvNombre.setTextColor(context.getResources().getColor(android.R.color.white));
+                cardView.setCardBackgroundColor(context.getResources().getColor(R.color.background_dark));
+                tvNombre.setTextColor(context.getResources().getColor(R.color.white));
             } else {
-                cardView.setCardBackgroundColor(context.getResources().getColor(android.R.color.white));
-                tvNombre.setTextColor(context.getResources().getColor(android.R.color.black));
+                cardView.setCardBackgroundColor(context.getResources().getColor(R.color.noseleccionado_accesorio));
+                tvNombre.setTextColor(context.getResources().getColor(R.color.white));
             }
 
-            // Click solo si no está en modo lectura
             if (!modoLectura) {
                 itemView.setOnClickListener(v -> {
                     if (itemsSeleccionados.contains(item.getId())) {
@@ -111,8 +118,22 @@ public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapte
                     }
                     notifyItemChanged(getAdapterPosition());
                 });
+
+                // AÑADIDO: También manejar click en el CheckBox
+                checkBox.setOnClickListener(v -> {
+                    if (itemsSeleccionados.contains(item.getId())) {
+                        itemsSeleccionados.remove(item.getId());
+                    } else {
+                        itemsSeleccionados.add(item.getId());
+                    }
+                    notifyItemChanged(getAdapterPosition());
+                });
             } else {
                 itemView.setOnClickListener(null);
+                checkBox.setOnClickListener(null);
+
+                itemView.setAlpha(0.7f);
+                checkBox.setAlpha(0.7f);
             }
         }
     }
