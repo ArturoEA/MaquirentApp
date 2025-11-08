@@ -345,19 +345,21 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void mostrarFotoGrande(String urlOrUri, boolean esUrl) {
-        // Crear diálogo
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), android.R.style.Theme_Translucent_NoTitleBar);
         View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_foto_grande, null);
         builder.setView(dialogView);
 
         AlertDialog dialog = builder.create();
+
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC000000")));
+
+        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogFadeAnimation;
 
         ImageView ivFoto = dialogView.findViewById(R.id.ivFotoGrande);
         Button btnDescargar = dialogView.findViewById(R.id.btnDescargar);
         Button btnCompartir = dialogView.findViewById(R.id.btnCompartir);
         Button btnCerrar = dialogView.findViewById(R.id.btnCerrar);
 
-        // Cargar imagen
         try {
             if (esUrl) {
                 Glide.with(requireContext())
@@ -375,20 +377,13 @@ public class NuevoMantenimientoFragment extends Fragment {
             ivFoto.setImageResource(R.drawable.icon_mantenimiento_blanco);
         }
 
-        // Configurar botones
         btnDescargar.setOnClickListener(v -> {
             descargarFoto(urlOrUri, esUrl);
             dialog.dismiss();
         });
 
-        btnCompartir.setOnClickListener(v -> {
-            compartirFoto(urlOrUri, esUrl);
-            // No cerrar el diálogo inmediatamente, dejar que el usuario vea que se está preparando
-        });
-
+        btnCompartir.setOnClickListener(v -> compartirFoto(urlOrUri, esUrl));
         btnCerrar.setOnClickListener(v -> dialog.dismiss());
-
-        // Click en la imagen para cerrar
         ivFoto.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
@@ -396,7 +391,6 @@ public class NuevoMantenimientoFragment extends Fragment {
     private void descargarFoto(String urlOrUri, boolean esUrl) {
         try {
             if (esUrl) {
-                // Descargar desde URL de Firebase
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urlOrUri));
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
                 request.setTitle("Foto de mantenimiento");
@@ -411,9 +405,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                     Toast.makeText(getContext(), "Descarga iniciada", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                // Para URIs locales - método alternativo
                 try {
-                    // Usar MediaStore para guardar la imagen
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Images.Media.DISPLAY_NAME, "mantenimiento_" + System.currentTimeMillis() + ".jpg");
                     values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
@@ -449,10 +441,8 @@ public class NuevoMantenimientoFragment extends Fragment {
     private void compartirFoto(String urlOrUri, boolean esUrl) {
         try {
             if (esUrl) {
-                // Para fotos de Firebase: descargar temporalmente y luego compartir
                 descargarTemporalmenteYCompartir(urlOrUri);
             } else {
-                // Para fotos locales: usar directamente
                 Uri localUri = Uri.parse(urlOrUri);
                 compartirArchivoDirecto(localUri);
             }
@@ -463,18 +453,14 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void descargarTemporalmenteYCompartir(String imageUrl) {
-        // Mostrar mensaje de preparación
         Toast.makeText(getContext(), "Preparando foto para compartir...", Toast.LENGTH_SHORT).show();
 
-        // Crear archivo temporal
         File tempFile = new File(requireContext().getCacheDir(), "temp_share_" + System.currentTimeMillis() + ".jpg");
 
-        // Descargar la imagen
         StorageReference storageRef = storage.getReferenceFromUrl(imageUrl);
 
         storageRef.getFile(tempFile)
                 .addOnSuccessListener(taskSnapshot -> {
-                    // Archivo descargado, ahora compartir
                     Uri tempUri = FileProvider.getUriForFile(
                             requireContext(),
                             requireContext().getPackageName() + ".provider",
@@ -482,7 +468,6 @@ public class NuevoMantenimientoFragment extends Fragment {
                     );
                     compartirArchivoDirecto(tempUri);
 
-                    // Programar eliminación del archivo temporal después de 5 minutos
                     new Handler().postDelayed(() -> {
                         if (tempFile.exists()) {
                             tempFile.delete();
@@ -502,10 +487,8 @@ public class NuevoMantenimientoFragment extends Fragment {
             shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-            // Crear chooser con título específico
             Intent chooser = Intent.createChooser(shareIntent, "Compartir foto del mantenimiento");
 
-            // Asegurar que las apps puedan leer el archivo
             List<ResolveInfo> resInfoList = requireContext().getPackageManager().queryIntentActivities(shareIntent, PackageManager.MATCH_DEFAULT_ONLY);
             for (ResolveInfo resolveInfo : resInfoList) {
                 String packageName = resolveInfo.activityInfo.packageName;
@@ -536,7 +519,6 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void guardarMantenimiento() {
-        // Validar campos
         String empresa = inputEmpresa.getText() != null ? inputEmpresa.getText().toString().trim() : "";
         String horometro = inputHorometro.getText() != null ? inputHorometro.getText().toString().trim() : "";
         String fecha = inputFecha.getText() != null ? inputFecha.getText().toString().trim() : "";
@@ -561,13 +543,10 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        // Subir fotos nuevas primero
         subirFotosNuevas(fotosSubidas -> {
-            // Combinar URLs existentes con nuevas
             List<String> todasLasFotos = new ArrayList<>(fotosUrlList);
             todasLasFotos.addAll(fotosSubidas);
 
-            // Crear o actualizar mantenimiento
             Mantenimiento mantenimiento = new Mantenimiento(
                     codigoGrupo,
                     empresa,
@@ -584,7 +563,6 @@ public class NuevoMantenimientoFragment extends Fragment {
                 mantenimiento.setFechaCreacion(mantenimientoActual.getFechaCreacion());
                 actualizarMantenimiento(mantenimiento);
             } else {
-                // Crear nuevo
                 crearMantenimiento(mantenimiento);
             }
         });
@@ -646,7 +624,6 @@ public class NuevoMantenimientoFragment extends Fragment {
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Mantenimiento actualizado", Toast.LENGTH_SHORT).show();
 
-                    // Eliminar fotos removidas de Storage
                     eliminarFotosRemovidasDeStorage();
 
                     requireActivity().getSupportFragmentManager().popBackStack();
@@ -698,15 +675,13 @@ public class NuevoMantenimientoFragment extends Fragment {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
 
             if (modoLectura) {
-                // Modo lectura: FAB dice "Editar"
                 main.showGlobalFab("Editar", R.drawable.icon_editar_blanco, v -> {
                     modoLectura = false;
                     aplicarModoEdicion();
                     mostrarFotos();
-                    configureGlobalFab(); // Actualizar FAB
+                    configureGlobalFab();
                 });
             } else {
-                // Modo edición: FAB dice "Guardar"
                 main.showGlobalFab("Guardar", R.drawable.icon_guardar_blanco, v -> guardarMantenimiento());
             }
         }

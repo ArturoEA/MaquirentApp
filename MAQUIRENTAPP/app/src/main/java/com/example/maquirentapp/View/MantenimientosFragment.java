@@ -140,7 +140,7 @@ public class MantenimientosFragment extends Fragment {
                 View itemView = viewHolder.itemView;
 
                 if (deleteIcon == null) {
-                    deleteIcon = ContextCompat.getDrawable(requireContext(), R.drawable.icon_eliminar_rojo);
+                    deleteIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_delete);
                     if (deleteIcon != null) {
                         deleteIcon.setTint(Color.WHITE);
                     }
@@ -227,11 +227,12 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void abrirDetalleMantenimiento(Mantenimiento mantenimiento) {
+        // Navegar al fragmento de detalle/edición
         NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, mantenimiento.getId());
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
-                .addToBackStack("detalle_mantenimiento")
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -265,8 +266,15 @@ public class MantenimientosFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        // Restaurar título del header
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+            main.updateHeaderTitle(codigo);
+        }
+
         configureGlobalFab();
-        cargarMantenimientos(); // Recargar al volver
+        cargarMantenimientos();
     }
 
     @Override
@@ -299,7 +307,7 @@ public class MantenimientosFragment extends Fragment {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
-                .addToBackStack("nuevo_mantenimiento")
+                .addToBackStack(null)
                 .commit();
     }
 }

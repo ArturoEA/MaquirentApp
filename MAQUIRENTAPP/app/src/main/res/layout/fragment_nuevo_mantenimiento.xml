@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:theme="@style/Theme.TextMain"
+    android:layout_marginBottom="10dp"
     tools:context=".View.NuevoMantenimientoFragment">
 
     <LinearLayout
@@ -101,32 +102,20 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Fotos del Mantenimiento"
-            android:textColor="@android:color/black"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:fillViewport="true"
+            android:layout_marginBottom="55dp"
+            android:scrollbars="none">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Máximo 4 fotos"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="14sp" />
+            <LinearLayout
+                android:id="@+id/layoutFotos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
-        <!-- Layout Fotos -->
-        <LinearLayout
-            android:id="@+id/layoutFotos"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal" />
-
-        <!-- ProgressBar -->
         <ProgressBar
             android:id="@+id/progressBarMantenimiento"
             android:layout_width="wrap_content"

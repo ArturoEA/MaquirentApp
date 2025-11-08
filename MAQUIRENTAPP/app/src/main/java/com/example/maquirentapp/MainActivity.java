@@ -9,15 +9,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.maquirentapp.Model.Usuario;
@@ -35,6 +38,7 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 
 public class MainActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton btnGlobal; // global FAB
+    private FloatingActionButton btnBack;
     private LinearLayout navHome, navRent, navConfiguracion;
     private TextView navHomeText, navRentText, navConfiguracionText;
     private TextView headerTitle;
@@ -91,8 +95,51 @@ public class MainActivity extends AppCompatActivity {
         verificarAutenticacion();
         // Configurar estado inicial
         //setupInitialState();
+        setupBackPressedDispatcher();
+    }
+    private void setupBackPressedDispatcher() {
+        // Manejar el botón físico/gesture de back
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Verificar si hay fragmentos en el back stack manual
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                } else {
+                    // Si no hay más fragmentos, dejar que el sistema maneje (salir de la app)
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
+        // Configurar el botón flotante de retroceso
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                } else {
+                    // Comportamiento por defecto del Navigation Component
+                    NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+                    if (!navController.navigateUp()) {
+                        finish();
+                    }
+                }
+            });
+        }
     }
 
+    public void updateHeaderTitle(String title) {
+        if (headerTitle != null) {
+            headerTitle.setText(title);
+        }
+    }
+
+    public void updateHeaderIcon(int iconResId) {
+        if (headerIcon != null) {
+            headerIcon.setImageResource(iconResId);
+        }
+    }
     private void initializeAppCheck() {
         try {
             FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
@@ -252,6 +299,7 @@ public class MainActivity extends AppCompatActivity {
         navHomeText = findViewById(R.id.nav_home_text);
         navRentText = findViewById(R.id.nav_rent_text);
         navConfiguracionText = findViewById(R.id.nav_configuracion_text);
+        btnBack = findViewById(R.id.btn_back);
 
         btnGlobal = findViewById(R.id.btnGlobal);
         if (btnGlobal != null) btnGlobal.setVisibility(View.GONE);
@@ -388,7 +436,7 @@ public class MainActivity extends AppCompatActivity {
             });
 
             // Configurar botón de retroceso
-            FloatingActionButton btnBack = findViewById(R.id.btn_back);
+            btnBack = findViewById(R.id.btn_back);
             btnBack.setOnClickListener(v -> {
                 if (!navController.popBackStack()) {
                     finish();

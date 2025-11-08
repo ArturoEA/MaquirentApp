@@ -32,5 +32,11 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="DialogFadeAnimation">
+        <item name="android:windowEnterAnimation">@anim/fade_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_out</item>
+    </style>
+
+
 
 </resources>
