@@ -220,10 +220,15 @@ public class MantenimientosFragment extends Fragment {
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
     private void actualizarTextoMes() {
-        SimpleDateFormat formato = new SimpleDateFormat("MMMM yyyy", new Locale("es", "ES"));
-        String textoMes = formato.format(calendarioActual.getTime());
-        tvMes.setText(textoMes.substring(0, 1).toUpperCase() + textoMes.substring(1));
+        SimpleDateFormat formatoMes = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
+        SimpleDateFormat formatoAño = new SimpleDateFormat("yyyy", new Locale("es", "ES"));
+
+        String mes = formatoMes.format(calendarioActual.getTime());
+        String año = formatoAño.format(calendarioActual.getTime());
+        mes = mes.substring(0,1).toUpperCase() + mes.substring(1);
+        tvMes.setText(mes + "\n" + año);
     }
+
 
     private void mostrarSelectorDeMes() {
         final String[] meses = {"Enero","Febrero","Marzo","Abril","Mayo","Junio",
