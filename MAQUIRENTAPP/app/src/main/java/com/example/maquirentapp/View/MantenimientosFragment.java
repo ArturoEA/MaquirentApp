@@ -1,5 +1,6 @@
 package com.example.maquirentapp.View;
 
+import android.app.DatePickerDialog;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -9,9 +10,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -25,14 +29,20 @@ import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.MantenimientosAdapter;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointForward;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MantenimientosFragment extends Fragment {
     private static final String TAG = "MantenimientosFragment";
@@ -43,7 +53,9 @@ public class MantenimientosFragment extends Fragment {
     private MantenimientosAdapter adapter;
     private FirebaseFirestore db;
     private FirebaseStorage storage;
-
+    private Calendar calendarioActual;
+    private TextView tvMes;
+    private ImageButton btnAnterior, btnSiguiente;
     private List<Mantenimiento> mantenimientosList = new ArrayList<>();
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
 
@@ -83,6 +95,38 @@ public class MantenimientosFragment extends Fragment {
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewMantenimientos);
         emptyState = view.findViewById(R.id.emptyStateMantenimientos);
+
+        tvMes = view.findViewById(R.id.tvMes);
+        btnAnterior = view.findViewById(R.id.btnAnterior);
+        btnSiguiente = view.findViewById(R.id.btnSiguiente);
+
+        calendarioActual = Calendar.getInstance();
+        actualizarTextoMes();
+
+        cargarMantenimientosDelMes(
+                calendarioActual.get(Calendar.YEAR),
+                calendarioActual.get(Calendar.MONTH)
+        );
+
+        btnAnterior.setOnClickListener(v -> {
+            calendarioActual.add(Calendar.MONTH, -1);
+            actualizarTextoMes();
+
+            int año = calendarioActual.get(Calendar.YEAR);
+            int mes = calendarioActual.get(Calendar.MONTH);
+            cargarMantenimientosDelMes(año, mes);
+        });
+
+        btnSiguiente.setOnClickListener(v -> {
+            calendarioActual.add(Calendar.MONTH, 1);
+            actualizarTextoMes();
+
+            int año = calendarioActual.get(Calendar.YEAR);
+            int mes = calendarioActual.get(Calendar.MONTH);
+            cargarMantenimientosDelMes(año, mes);
+        });
+
+        tvMes.setOnClickListener(v -> mostrarSelectorDeMes());
     }
 
     private void setupRecyclerView() {
@@ -175,44 +219,91 @@ public class MantenimientosFragment extends Fragment {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+    private void actualizarTextoMes() {
+        SimpleDateFormat formato = new SimpleDateFormat("MMMM yyyy", new Locale("es", "ES"));
+        String textoMes = formato.format(calendarioActual.getTime());
+        tvMes.setText(textoMes.substring(0, 1).toUpperCase() + textoMes.substring(1));
+    }
+
+    private void mostrarSelectorDeMes() {
+        final String[] meses = {"Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                "Julio","Agosto","Setiembre","Octubre","Noviembre","Diciembre"};
+
+        Calendar calendario = Calendar.getInstance();
+        int añoActual = calendario.get(Calendar.YEAR);
+        int mesActual = calendario.get(Calendar.MONTH);
+
+        NumberPicker yearPicker = new NumberPicker(requireContext());
+        yearPicker.setMinValue(añoActual - 30);
+        yearPicker.setMaxValue(añoActual + 30);
+        yearPicker.setValue(añoActual);
+
+        NumberPicker monthPicker = new NumberPicker(requireContext());
+        monthPicker.setMinValue(0);
+        monthPicker.setMaxValue(meses.length - 1);
+        monthPicker.setDisplayedValues(meses);
+        monthPicker.setValue(mesActual);
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+        layout.addView(yearPicker);
+        layout.addView(monthPicker);
+        layout.setPadding(250, 30, 100, 10);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Seleccionar mes y año")
+                .setView(layout)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+                    calendarioActual.set(Calendar.YEAR, yearPicker.getValue());
+                    calendarioActual.set(Calendar.MONTH, monthPicker.getValue());
+                    actualizarTextoMes();
+                    cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void cargarMantenimientosDelMes(int añoSeleccionado, int mesSeleccionado) {
+        Calendar inicioMes = Calendar.getInstance();
+        inicioMes.set(añoSeleccionado, mesSeleccionado, 1, 0, 0, 0);
+        inicioMes.set(Calendar.MILLISECOND, 0);
+        long inicio = inicioMes.getTimeInMillis();
+
+        Calendar finMes = Calendar.getInstance();
+        finMes.set(añoSeleccionado, mesSeleccionado, finMes.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+        finMes.set(Calendar.MILLISECOND, 999);
+        long fin = finMes.getTimeInMillis();
+
+        db.collection("mantenimientos")
+                .whereEqualTo("codigoGrupo", codigo)
+                .whereGreaterThanOrEqualTo("fechaCreacion", inicio)
+                .whereLessThanOrEqualTo("fechaCreacion", fin)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    mantenimientosList.clear();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        Mantenimiento m = doc.toObject(Mantenimiento.class);
+                        m.setId(doc.getId());
+                        mantenimientosList.add(m);
+                    }
+                    actualizarUI();
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error cargando mantenimientos del mes", e));
+    }
 
     private void cargarItemsConfiguracion() {
         db.collection("mantenimientos_configuracion")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     itemsConfigList.clear();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
-                        item.setId(document.getId());
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        MantenimientoConfiguracion item = doc.toObject(MantenimientoConfiguracion.class);
+                        item.setId(doc.getId());
                         itemsConfigList.add(item);
                     }
                     adapter.actualizarItemsConfig(itemsConfigList);
-                    cargarMantenimientos();
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error cargando items configuración", e);
-                    cargarMantenimientos(); // Cargar mantenimientos de todas formas
-                });
-    }
-
-    private void cargarMantenimientos() {
-        db.collection("mantenimientos")
-                .whereEqualTo("codigoGrupo", codigo)
-                .orderBy("fechaCreacion", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    mantenimientosList.clear();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Mantenimiento mantenimiento = document.toObject(Mantenimiento.class);
-                        mantenimiento.setId(document.getId());
-                        mantenimientosList.add(mantenimiento);
-                    }
-                    actualizarUI();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error cargando mantenimientos", e);
-                    Toast.makeText(getContext(), "Error al cargar mantenimientos", Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e -> Log.e(TAG, "Error cargando items configuración", e));
     }
 
     private void actualizarUI() {
@@ -227,7 +318,6 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void abrirDetalleMantenimiento(Mantenimiento mantenimiento) {
-        // Navegar al fragmento de detalle/edición
         NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, mantenimiento.getId());
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
@@ -237,7 +327,6 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void eliminarMantenimientoFirestore(Mantenimiento mantenimiento) {
-        // Eliminar fotos de Storage
         if (mantenimiento.getFotos() != null && !mantenimiento.getFotos().isEmpty()) {
             for (String fotoUrl : mantenimiento.getFotos()) {
                 try {
@@ -251,15 +340,12 @@ public class MantenimientosFragment extends Fragment {
             }
         }
 
-        // Eliminar documento de Firestore
         db.collection("mantenimientos").document(mantenimiento.getId())
                 .delete()
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Mantenimiento eliminado de Firestore"))
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error eliminando de Firestore", e);
                     Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
-                    // Recargar para mostrar el estado real
-                    cargarMantenimientos();
                 });
     }
 
@@ -267,14 +353,13 @@ public class MantenimientosFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        // Restaurar título del header
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
             main.updateHeaderTitle(codigo);
         }
 
         configureGlobalFab();
-        cargarMantenimientos();
+        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
     }
 
     @Override
