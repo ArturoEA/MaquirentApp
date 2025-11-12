@@ -5,6 +5,8 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".View.NuevoAlquilerMensualFragment"
+    android:background="@color/background_light"
+    android:layout_marginBottom="50dp"
     android:theme="@style/Theme.TextMain">
 
     <LinearLayout
@@ -160,24 +162,70 @@
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Título de accesorios -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="10dp"
-            android:text="Selecciona los accesorios incluidos"/>
-
-        <!-- RecyclerView de accesorios -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerAccesorios"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAccesorios"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="80dp"
-            android:nestedScrollingEnabled="false" />
+            android:layout_marginTop="5dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/black"
+            android:backgroundTint="@color/background_light"
+            app:strokeWidth="2dp"
+            app:cardCornerRadius="20dp"
+            android:clickable="false"
+            android:focusable="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:id="@+id/llAccesoriosHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp">
+
+                    <TextView
+                        android:id="@+id/tvAccesoriosTitle"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Accesorios"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"/>
+
+                    <ImageView
+                        android:id="@+id/ivAccChevron"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="toggle"
+                        android:src="@drawable/icon_flecha_abajo"
+                        android:rotation="0"/>
+                </LinearLayout>
+
+                <FrameLayout
+                    android:id="@+id/accBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="visible">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerAccesorios"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:nestedScrollingEnabled="false" />
+
+                </FrameLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>

@@ -74,7 +74,6 @@ public class NuevoMantenimientoFragment extends Fragment {
     private LinearLayout layoutFotos;
     private ProgressBar progressBar;
 
-    // Adapters y datos
     private ItemsMantenimientoSeleccionablesAdapter itemsAdapter;
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
     private List<Uri> fotosUriList = new ArrayList<>();
@@ -84,10 +83,8 @@ public class NuevoMantenimientoFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseStorage storage;
 
-    // Launcher para seleccionar fotos
     private ActivityResultLauncher<String> imagePickerLauncher;
 
-    // Datos del mantenimiento actual
     private Mantenimiento mantenimientoActual;
 
     public static NuevoMantenimientoFragment newInstance(String codigo, String mantenimientoId) {
@@ -108,7 +105,6 @@ public class NuevoMantenimientoFragment extends Fragment {
             modoLectura = mantenimientoId != null;
         }
 
-        // Configurar launcher de imágenes
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {

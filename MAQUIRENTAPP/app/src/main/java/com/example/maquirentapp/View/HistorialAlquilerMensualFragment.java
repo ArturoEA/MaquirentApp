@@ -1,6 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.net.ParseException;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -24,9 +26,15 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.adaptadores.AlquilerMensualAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import androidx.core.content.ContextCompat;
 
@@ -161,38 +169,45 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         }
         return años;
     }
-
     private int extraerAñoDeFecha(String fecha) {
         try {
             if (fecha == null || fecha.isEmpty()) {
                 return -1;
             }
 
-            // Probar formato "dd/MM/yyyy"
+            fecha = fecha.trim();
+
             if (fecha.contains("/")) {
                 String[] partes = fecha.split("/");
                 if (partes.length == 3) {
                     return Integer.parseInt(partes[2]);
                 }
             }
-            // Probar formato "yyyy-MM-dd"
             else if (fecha.contains("-")) {
                 String[] partes = fecha.split("-");
                 if (partes.length == 3) {
+                    if (partes[0].length() == 4) {
+                        return Integer.parseInt(partes[0]);
+                    } else if (partes[2].length() == 4) {
+                        return Integer.parseInt(partes[2]);
+                    }
+                }
+            }
+            else if (fecha.contains("T")) {
+                String[] partes = fecha.split("-");
+                if (partes.length >= 1) {
                     return Integer.parseInt(partes[0]);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("FechaError", "Error al extraer año de: '" + fecha + "'", e);
         }
         return -1;
     }
-
     private void fetchAlquileresMensuales() {
         firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
-                // Primero filtrar por grupo/código
                 List<AlquilerMensual> filtradosPorGrupo = new ArrayList<>();
                 if (idGrupo != null && !idGrupo.isEmpty()) {
                     for (AlquilerMensual a : alquileres) {
@@ -214,6 +229,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                Log.e("FetchAlquileres", "Error: " + e.getMessage());
                 Toast.makeText(getContext(),
                         "Error al cargar alquileres: " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
@@ -221,13 +237,14 @@ public class HistorialAlquilerMensualFragment extends Fragment {
             }
         });
     }
-
     private void filtrarAlquileresPorAnio() {
         List<AlquilerMensual> alquileresFiltrados = new ArrayList<>();
         int añoSeleccionado = calendarioActual.get(Calendar.YEAR);
 
         for (AlquilerMensual alquiler : todosLosAlquileres) {
-            int añoAlquiler = extraerAñoDeFecha(alquiler.getFechaInicial());
+            String fecha = alquiler.getFechaInicial();
+            int añoAlquiler = extraerAñoDeFecha(fecha);
+
             if (añoAlquiler == añoSeleccionado) {
                 alquileresFiltrados.add(alquiler);
             }
@@ -235,7 +252,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
         actualizarUI(alquileresFiltrados);
     }
-
     private void actualizarUI(List<AlquilerMensual> alquileres) {
         adapter.setItems(alquileres);
 

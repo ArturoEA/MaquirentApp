@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.maquirentapp.Model.Accesorio;
@@ -33,13 +34,15 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private boolean modoEdicion = false;
     private boolean modoSoloLectura = false;
     private boolean editandoActualmente = false;
-
     private TextInputEditText inputEmpresa, inputUbicacion, inputFechaInicial, inputFechaFinal,
             inputHorometroInicial, inputHorometroFinal, inputPrecioAlquiler, inputHorasMinimas, inputPrecioHoraExtra;
-
     private RecyclerView recyclerAccesorios;
     private AccesorioSeleccionAdapter adapterAccesorios;
     private FirebaseServicio firebaseServicio;
+    private View llAccesoriosHeader;
+    private ImageView ivAccChevron;
+    private View accBody;
+    private boolean accesoriosExpanded = true; // por defecto expandido en creación
 
     public NuevoAlquilerMensualFragment() { }
 
@@ -81,6 +84,23 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         adapterAccesorios = new AccesorioSeleccionAdapter();
         recyclerAccesorios.setAdapter(adapterAccesorios);
 
+        llAccesoriosHeader = view.findViewById(R.id.llAccesoriosHeader);
+        ivAccChevron = view.findViewById(R.id.ivAccChevron);
+        accBody = view.findViewById(R.id.accBody);
+
+        if (modoEdicion) {
+            accesoriosExpanded = false;
+        } else {
+            accesoriosExpanded = true;
+        }
+        setAccesoriosExpanded(accesoriosExpanded, false);
+
+        llAccesoriosHeader.setOnClickListener(v -> {
+            accesoriosExpanded = !accesoriosExpanded;
+            setAccesoriosExpanded(accesoriosExpanded, true);
+        });
+
+
         configurarDatePickers();
         cargarAccesoriosMensuales();
 
@@ -110,7 +130,29 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             if (activityFab != null) activityFab.setVisibility(View.GONE);
         }
     }
+    private void setAccesoriosExpanded(boolean expand, boolean animate) {
+        if (accBody == null || ivAccChevron == null) return;
 
+        if (expand) {
+            if (animate) {
+                accBody.setAlpha(0f);
+                accBody.setVisibility(View.VISIBLE);
+                accBody.animate().alpha(1f).setDuration(180).start();
+            } else {
+                accBody.setVisibility(View.VISIBLE);
+            }
+            if (animate) ivAccChevron.animate().rotation(180f).setDuration(180).start();
+            else ivAccChevron.setRotation(180f);
+        } else {
+            if (animate) {
+                accBody.animate().alpha(0f).setDuration(160).withEndAction(() -> accBody.setVisibility(View.GONE)).start();
+            } else {
+                accBody.setVisibility(View.GONE);
+            }
+            if (animate) ivAccChevron.animate().rotation(0f).setDuration(180).start();
+            else ivAccChevron.setRotation(0f);
+        }
+    }
     private void configurarDatePickers() {
         inputFechaInicial.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
@@ -120,7 +162,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                         Calendar chosen = Calendar.getInstance();
                         chosen.set(year, month, dayOfMonth, 0, 0, 0);
                         SimpleDateFormat isoFormat =
-                                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+                                new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
                         String fechaIso = isoFormat.format(chosen.getTime());
                         inputFechaInicial.setText(fechaIso);
                     },
@@ -139,7 +181,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                         Calendar chosen2 = Calendar.getInstance();
                         chosen2.set(year, month, dayOfMonth, 0, 0, 0);
                         SimpleDateFormat isoFormat =
-                                new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+                                new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
                         String fechaIso2 = isoFormat.format(chosen2.getTime());
                         inputFechaFinal.setText(fechaIso2);
                     },
@@ -164,15 +206,16 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
         });
     }
-
     private void cargarDatosAlquiler() {
         firebaseServicio.getAlquilerMensualPorId(alquilerId, new FirebaseServicio.OnAlquilerMensualLoadedListener() {
             @Override
             public void onSuccess(AlquilerMensual alquiler) {
                 inputEmpresa.setText(alquiler.getNombreCliente());
                 inputUbicacion.setText(alquiler.getUbicacion());
-                inputFechaInicial.setText(alquiler.getFechaInicial());
-                inputFechaFinal.setText(alquiler.getFechaFinal());
+
+                inputFechaInicial.setText(formatearFecha(alquiler.getFechaInicial()));
+                inputFechaFinal.setText(formatearFecha(alquiler.getFechaFinal()));
+
                 inputHorometroInicial.setText(String.valueOf(alquiler.getHorometroInicial()));
                 inputHorometroFinal.setText(String.valueOf(alquiler.getHorometroFinal()));
                 inputPrecioAlquiler.setText(String.valueOf(alquiler.getPrecioAlquiler()));
@@ -190,7 +233,17 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
         });
     }
+    private String formatearFecha(String fechaOriginal) {
+        if (fechaOriginal == null || fechaOriginal.isEmpty()) return "";
 
+        try {
+            SimpleDateFormat formatoEntrada = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+            SimpleDateFormat formatoSalida = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "ES"));
+            return formatoSalida.format(formatoEntrada.parse(fechaOriginal));
+        } catch (Exception e) {
+            return fechaOriginal;
+        }
+    }
     private void deshabilitarCampos() {
         inputEmpresa.setEnabled(false);
         inputUbicacion.setEnabled(false);
