@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardDetalleMes"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    android:backgroundTint="@android:color/transparent"
+    android:theme="@style/Theme.TextMain"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/franjaColor"
+            android:layout_width="15dp"
+            android:layout_height="match_parent"
+            android:background="@color/red_accent"
+            android:layout_gravity="center_vertical" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@color/black">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvTituloPeriodo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Agosto - Setiembre"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"/>
+
+                <ImageView
+                    android:id="@+id/btnExpandir"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/icon_flecha_abajo"
+                    app:tint="@android:color/white" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutContenido"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputHorometro"
+                    style="@style/DetalleMesTextInputLayout"
+                    app:boxStrokeColor="@color/white"
+                    app:boxStrokeWidth="2dp"
+                    android:hint="Horómetro al 25/09/2025">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputHorometro"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/DetalleMesTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_weight="0.8"
+                        android:layout_marginEnd="10dp"
+                        android:hint="Horas extras">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputHorasExtras"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="136"
+                            android:textColor="@color/white"
+                            android:inputType="number" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/DetalleMesTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_weight="1.2"
+                        android:hint="Precio de HE">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputPrecioHE"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="S/. 1940.04"
+                            android:textColor="@color/white"
+                            android:inputType="numberDecimal" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnConfirmarPagoMes"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:text="Confirmar pago de mes"
+                    android:textAllCaps="false"
+                    android:layout_marginTop="10dp"
+                    android:backgroundTint="@color/selection_indicator"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/btnConfirmarPagoHE"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:text="Confirmar pago de HE"
+                    android:textAllCaps="false"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/selection_indicator"
+                    android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/btnValorizacion"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:text="Valorización"
+                    android:textAllCaps="false"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/selection_indicator"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

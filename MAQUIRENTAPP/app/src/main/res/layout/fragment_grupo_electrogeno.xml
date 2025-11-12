@@ -14,6 +14,104 @@
         android:padding="16dp"
         android:background="@color/background_light">
 
+        <!-- Card de totales mensuales -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="8dp"
+            android:backgroundTint="@color/background_dark">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Totales del mes"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerMeses"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/input_border"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total SOL"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/tvTotalSOL"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="S/. 0.00"
+                            android:textColor="#4CAF50"
+                            android:textSize="20sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:background="#FFFFFF"
+                        android:alpha="0.3"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total USD"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:id="@+id/tvTotalUSD"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="$ 0.00"
+                            android:textColor="#4CAF50"
+                            android:textSize="20sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Card 1: Mantenimientos -->
         <androidx.cardview.widget.CardView
@@ -52,13 +150,11 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:visibility="visible" />
-
-
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Card 2: Historial de alquiler -->
+        <!-- Card 2: Historial de alquiler mensual -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardHistorialAlquilerMensual"
             android:layout_width="match_parent"
@@ -95,8 +191,6 @@
                         android:textColor="#FFFFFF"
                         android:textSize="18sp"
                         android:textStyle="bold" />
-
-
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -138,11 +232,11 @@
                         android:textColor="#FFFFFF"
                         android:textSize="18sp"
                         android:textStyle="bold" />
-
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Card 4: Historial de alquiler diario -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardHistorialAlquilerDiario"
             android:layout_width="match_parent"
@@ -178,7 +272,6 @@
                         android:textColor="#FFFFFF"
                         android:textSize="18sp"
                         android:textStyle="bold" />
-
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>

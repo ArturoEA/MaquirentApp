@@ -4,6 +4,7 @@ import android.net.Uri;
 
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
+import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Usuario;
 import com.google.firebase.auth.FirebaseAuth;
@@ -323,10 +324,12 @@ public class FirebaseServicio {
         updates.put("horometroInicial", alquiler.getHorometroInicial());
         updates.put("horometroFinal", alquiler.getHorometroFinal());
         updates.put("precioAlquiler", alquiler.getPrecioAlquiler());
+        updates.put("moneda", alquiler.getMoneda());
         updates.put("horasMinimas", alquiler.getHorasMinimas());
         updates.put("precioHoraExtra", alquiler.getPrecioHoraExtra());
         updates.put("idGrupo", alquiler.getIdGrupo());
         updates.put("accesoriosIds", alquiler.getAccesoriosIds());
+        updates.put("finalizado", alquiler.isFinalizado());
 
         db.collection("alquileresMensuales")
                 .document(alquiler.getId())
@@ -347,8 +350,200 @@ public class FirebaseServicio {
                 .addOnSuccessListener(aVoid -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
+    // Métodos para DetalleMes
+    public void crearDetalleMes(DetalleMes detalle, OnDetalleMesCreatedListener listener) {
+        if (detalle.getIdAlquilerMensual() == null || detalle.getIdAlquilerMensual().isEmpty()) {
+            listener.onError(new Exception("idAlquilerMensual no puede estar vacío"));
+            return;
+        }
+
+        db.collection("detallesMes")
+                .add(detalle)
+                .addOnSuccessListener(documentReference -> {
+                    detalle.setId(documentReference.getId());
+                    listener.onSuccess(detalle);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getDetallesMesPorAlquiler(String idAlquilerMensual, OnDetallesMesLoadedListener listener) {
+        db.collection("detallesMes")
+                .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
+                .orderBy("numeroMes", Query.Direction.ASCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<DetalleMes> detalles = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        DetalleMes detalle = doc.toObject(DetalleMes.class);
+                        detalle.setId(doc.getId());
+                        detalles.add(detalle);
+                    }
+                    listener.onSuccess(detalles);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getDetalleMesPorId(String id, OnDetalleMesLoadedListener listener) {
+        db.collection("detallesMes")
+                .document(id)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        DetalleMes detalle = documentSnapshot.toObject(DetalleMes.class);
+                        if (detalle != null) {
+                            detalle.setId(documentSnapshot.getId());
+                            listener.onSuccess(detalle);
+                        } else {
+                            listener.onError(new Exception("Detalle no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("Detalle no existe"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void actualizarDetalleMes(DetalleMes detalle, OnDetalleMesUpdatedListener listener) {
+        if (detalle.getId() == null || detalle.getId().isEmpty()) {
+            listener.onError(new Exception("ID de detalle inválido"));
+            return;
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("tituloPeriodo", detalle.getTituloPeriodo());
+        updates.put("fechaInicio", detalle.getFechaInicio());
+        updates.put("fechaFin", detalle.getFechaFin());
+        updates.put("horometro", detalle.getHorometro());
+        updates.put("horasExtras", detalle.getHorasExtras());
+        updates.put("precioHorasExtras", detalle.getPrecioHorasExtras());
+        updates.put("pagoMesConfirmado", detalle.isPagoMesConfirmado());
+        updates.put("pagoHEConfirmado", detalle.isPagoHEConfirmado());
+        updates.put("numeroMes", detalle.getNumeroMes());
+
+        db.collection("detallesMes")
+                .document(detalle.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void eliminarDetalleMes(String id, OnDetalleMesDeletedListener listener) {
+        if (id == null || id.isEmpty()) {
+            listener.onError(new Exception("ID de detalle inválido"));
+            return;
+        }
+
+        db.collection("detallesMes")
+                .document(id)
+                .delete()
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Obtener el último DetalleMes de un alquiler
+    public void getUltimoDetalleMes(String idAlquilerMensual, OnDetalleMesLoadedListener listener) {
+        db.collection("detallesMes")
+                .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
+                .orderBy("numeroMes", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        DetalleMes detalle = queryDocumentSnapshots.getDocuments().get(0).toObject(DetalleMes.class);
+                        if (detalle != null) {
+                            detalle.setId(queryDocumentSnapshots.getDocuments().get(0).getId());
+                            listener.onSuccess(detalle);
+                        } else {
+                            listener.onError(new Exception("Detalle no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("No hay detalles de mes"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Obtener DetalleMes por número de mes
+    public void getDetalleMesPorNumero(String idAlquilerMensual, int numeroMes, OnDetalleMesLoadedListener listener) {
+        db.collection("detallesMes")
+                .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
+                .whereEqualTo("numeroMes", numeroMes)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        DetalleMes detalle = queryDocumentSnapshots.getDocuments().get(0).toObject(DetalleMes.class);
+                        if (detalle != null) {
+                            detalle.setId(queryDocumentSnapshots.getDocuments().get(0).getId());
+                            listener.onSuccess(detalle);
+                        } else {
+                            listener.onError(new Exception("Detalle no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("No existe detalle para ese mes"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Obtener alquileres mensuales por grupo y mes
+    public void getAlquileresMensualesPorGrupoYMes(String idGrupo, int mes, int anio, OnAlquileresActivosListener listener) {
+        db.collection("alquileresMensuales")
+                .whereEqualTo("idGrupo", idGrupo)
+                .whereEqualTo("finalizado", false)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<AlquilerMensual> alquileres = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        AlquilerMensual alquiler = doc.toObject(AlquilerMensual.class);
+                        alquiler.setId(doc.getId());
+
+                        // Filtrar por mes y año
+                        if (alquilerEnMes(alquiler, mes, anio)) {
+                            alquileres.add(alquiler);
+                        }
+                    }
+                    listener.onSuccess(alquileres);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    private boolean alquilerEnMes(AlquilerMensual alquiler, int mes, int anio) {
+        // Lógica para verificar si un alquiler está activo en un mes específico
+        // Esto requeriría parsear las fechas y verificar
+        return true; // Implementar lógica completa
+    }
 
     // Interfaces para callbacks
+    public interface OnDetalleMesCreatedListener {
+        void onSuccess(DetalleMes detalle);
+        void onError(Exception e);
+    }
+
+    public interface OnDetallesMesLoadedListener {
+        void onSuccess(List<DetalleMes> detalles);
+        void onError(Exception e);
+    }
+
+    public interface OnDetalleMesLoadedListener {
+        void onSuccess(DetalleMes detalle);
+        void onError(Exception e);
+    }
+
+    public interface OnDetalleMesUpdatedListener {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    public interface OnDetalleMesDeletedListener {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    public interface OnAlquileresActivosListener {
+        void onSuccess(List<AlquilerMensual> alquileres);
+        void onError(Exception e);
+    }
     public interface OnAccesoriosLoadedListener {
         void onSuccess(List<Accesorio> accesorios);
         void onError(Exception e);

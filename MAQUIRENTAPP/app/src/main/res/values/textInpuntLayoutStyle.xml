@@ -15,4 +15,20 @@
         <item name="android:textColorHint">@color/colorHints</item>
         <item name="cursorColor">@color/black</item>
     </style>
+
+    <style name="DetalleMesTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="boxBackgroundMode">outline</item>
+        <item name="boxStrokeWidth">2dp</item>
+        <item name="boxCornerRadiusTopStart">22dp</item>
+        <item name="boxCornerRadiusTopEnd">22dp</item>
+        <item name="boxCornerRadiusBottomStart">22dp</item>
+        <item name="boxCornerRadiusBottomEnd">22dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="boxStrokeColor">@color/white</item>
+        <item name="hintTextColor">@color/white</item>
+        <item name="android:textColorHint">@color/colorHintsDetalleMes</item>
+        <item name="cursorColor">@color/white</item>
+    </style>
 </resources>

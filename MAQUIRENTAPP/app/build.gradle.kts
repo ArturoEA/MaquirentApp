@@ -72,5 +72,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.github.bumptech.glide:glide:4.15.1")
+    implementation ("androidx.work:work-runtime:2.8.1")
+    implementation ("com.google.guava:guava:31.1-android")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 }

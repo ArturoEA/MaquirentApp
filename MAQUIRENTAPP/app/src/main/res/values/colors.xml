@@ -18,10 +18,12 @@
     <!-- Colores de acento -->
     <color name="red_accent">#F65D5D</color>
     <color name="yellow_accent">#F6B65D</color>
+    <color name="green_accent">#5DF692</color>
 
     <!-- Colores adicionales -->
     <color name="black">#1E1E1E</color>
     <color name="colorHints">#626262</color>
+    <color name="colorHintsDetalleMes">#AAAAAA</color>
     <color name="gray_light">#E0E0E0</color>
     <color name="gray_dark">#424242</color>
     <color name="selection_indicator">#9DB2CE</color>
