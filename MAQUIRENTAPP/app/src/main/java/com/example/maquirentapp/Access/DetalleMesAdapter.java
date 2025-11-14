@@ -1,10 +1,10 @@
 package com.example.maquirentapp.Access;
 
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -19,8 +19,11 @@ import com.example.maquirentapp.R;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.ViewHolder> {
     private final List<DetalleMes> items = new ArrayList<>();
@@ -29,8 +32,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
     public interface OnDetalleMesListener {
         void onHorometroChanged(DetalleMes detalle, double nuevoHorometro);
-        void onPagoMesConfirmado(DetalleMes detalle);
-        void onPagoHEConfirmado(DetalleMes detalle);
+        void onPagoMesConfirmado(DetalleMes detalle, int position);
+        void onPagoHEConfirmado(DetalleMes detalle, int position);
         void onGenerarValorizacion(DetalleMes detalle);
     }
 
@@ -69,23 +72,15 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             holder.textInputHorometro.setHint("Horómetro al " + detalle.getFechaFin());
         }
 
-        if (detalle.getHorometro() > 0) {
-            holder.inputHorometro.setText(String.valueOf(detalle.getHorometro()));
-        } else {
-            holder.inputHorometro.setText("");
-        }
+        holder.inputHorometro.setText(detalle.getHorometro() > 0 ?
+                String.valueOf(detalle.getHorometro()) : "");
 
-        if (detalle.getHorasExtras() > 0) {
-            holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
-        } else {
-            holder.inputHorasExtras.setText("0");
-        }
+        holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
 
-        if (detalle.getPrecioHorasExtras() > 0) {
-            holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
-        } else {
-            holder.inputPrecioHE.setText("0.00");
-        }
+        holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
+
+        // NUEVO: Configurar visibilidad de las confirmaciones
+        configurarConfirmaciones(holder, detalle);
 
         actualizarEstadoBotones(holder, detalle);
         actualizarColorFranja(holder, detalle);
@@ -93,47 +88,143 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.btnExpandir.setRotation(detalle.isExpandido() ? 180f : 0f);
         holder.layoutContenido.setVisibility(detalle.isExpandido() ? View.VISIBLE : View.GONE);
 
+        // Manejo seguro del click del ítem
         holder.itemView.setOnClickListener(v -> {
-            detalle.setExpandido(!detalle.isExpandido());
-            notifyItemChanged(position);
+            ocultarTeclado(v);
+            quitarFocoDeInputs(holder);
+
+            v.postDelayed(() -> {
+                detalle.setExpandido(!detalle.isExpandido());
+                notifyItemChanged(position);
+            }, 50);
         });
 
-        if (!modoSoloLectura) {
-            configurarListeners(holder, detalle);
-        } else {
+        if (modoSoloLectura) {
             deshabilitarCampos(holder);
+        } else {
+            // Verificar si algún pago está confirmado para deshabilitar edición
+            if (detalle.isPagoMesConfirmado() || detalle.isPagoHEConfirmado()) {
+                deshabilitarInputHorometro(holder);
+            } else {
+                habilitarCamposEdicion(holder);
+                configurarListeners(holder, detalle, position);
+            }
         }
     }
 
-    private void configurarListeners(ViewHolder holder, DetalleMes detalle) {
-        holder.inputHorometro.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    // NUEVO MÉTODO: Configurar visibilidad de textos de confirmación
+    private void configurarConfirmaciones(ViewHolder holder, DetalleMes detalle) {
+        // Confirmación de pago de mes
+        if (detalle.isPagoMesConfirmado() && detalle.getFechaConfirmacionPagoMes() != null) {
+            holder.tvConfirmacionPagoMes.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoMes());
+            holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvConfirmacionPagoMes.setVisibility(View.GONE);
+        }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        // Confirmación de pago de HE
+        if (detalle.isPagoHEConfirmado() && detalle.getFechaConfirmacionPagoHE() != null) {
+            holder.tvConfirmacionPagoHE.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoHE());
+            holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvConfirmacionPagoHE.setVisibility(View.GONE);
+        }
+    }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (listener != null && s.toString().trim().length() > 0) {
-                    try {
-                        double horometro = Double.parseDouble(s.toString().trim());
-                        listener.onHorometroChanged(detalle, horometro);
-                    } catch (NumberFormatException e) {
-                    }
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty()) {
+            for (Object payload : payloads) {
+                if (payload.equals("CALCULATED_FIELDS")) {
+                    DetalleMes detalle = items.get(position);
+
+                    holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
+                    holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
+
+                    actualizarEstadoBotones(holder, detalle);
+                    actualizarColorFranja(holder, detalle);
+                    return;
                 }
+            }
+        }
+        super.onBindViewHolder(holder, position, payloads);
+    }
+
+    private void configurarListeners(ViewHolder holder, DetalleMes detalle, int position) {
+        holder.inputHorometro.setOnFocusChangeListener(null);
+        holder.inputHorometro.setOnEditorActionListener(null);
+
+        // Listener para el botón "Done" del teclado
+        holder.inputHorometro.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                ocultarTeclado(v);
+                quitarFocoDeInputs(holder);
+                procesarYActualizarHorometro(holder, detalle, position);
+                return true;
+            }
+            return false;
+        });
+
+        // FocusChangeListener
+        holder.inputHorometro.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                procesarYActualizarHorometro(holder, detalle, position);
             }
         });
 
         holder.btnConfirmarPagoMes.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onPagoMesConfirmado(detalle);
+                new android.app.AlertDialog.Builder(v.getContext())
+                        .setTitle("Confirmar Pago")
+                        .setMessage("¿Estás seguro de confirmar el pago del mes?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            // NUEVO: Obtener fecha actual
+                            String fechaActual = obtenerFechaActual();
+
+                            detalle.setPagoMesConfirmado(true);
+                            detalle.setFechaConfirmacionPagoMes(fechaActual); // Guardar fecha
+
+                            actualizarEstadoBotones(holder, detalle);
+                            actualizarColorFranja(holder, detalle);
+
+                            // NUEVO: Mostrar confirmación inmediatamente
+                            holder.tvConfirmacionPagoMes.setText("Pago realizado el " + fechaActual);
+                            holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
+
+                            deshabilitarInputHorometro(holder);
+
+                            listener.onPagoMesConfirmado(detalle, position);
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
             }
         });
 
         holder.btnConfirmarPagoHE.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onPagoHEConfirmado(detalle);
+                new android.app.AlertDialog.Builder(v.getContext())
+                        .setTitle("Confirmar Pago")
+                        .setMessage("¿Estás seguro de confirmar el pago de horas extras?")
+                        .setPositiveButton("Sí", (dialog, which) -> {
+                            // NUEVO: Obtener fecha actual
+                            String fechaActual = obtenerFechaActual();
+
+                            detalle.setPagoHEConfirmado(true);
+                            detalle.setFechaConfirmacionPagoHE(fechaActual); // Guardar fecha
+
+                            actualizarEstadoBotones(holder, detalle);
+                            actualizarColorFranja(holder, detalle);
+
+                            // NUEVO: Mostrar confirmación inmediatamente
+                            holder.tvConfirmacionPagoHE.setText("Pago realizado el " + fechaActual);
+                            holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
+
+                            deshabilitarInputHorometro(holder);
+
+                            listener.onPagoHEConfirmado(detalle, position);
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
             }
         });
 
@@ -144,17 +235,110 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         });
     }
 
+    // NUEVO MÉTODO: Obtener fecha actual en formato dd/MM/yyyy
+    private String obtenerFechaActual() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        return sdf.format(new Date());
+    }
+
+    // NUEVO MÉTODO: Deshabilitar solo el inputHorometro
+    private void deshabilitarInputHorometro(ViewHolder holder) {
+        holder.inputHorometro.setEnabled(false);
+        holder.inputHorometro.setFocusable(false);
+        holder.inputHorometro.setFocusableInTouchMode(false);
+
+        // Limpiar listeners para evitar ediciones futuras
+        holder.inputHorometro.setOnFocusChangeListener(null);
+        holder.inputHorometro.setOnEditorActionListener(null);
+    }
+
+    private void procesarYActualizarHorometro(ViewHolder holder, DetalleMes detalle, int position) {
+        String nuevoValor = holder.inputHorometro.getText().toString().trim();
+        if (!nuevoValor.isEmpty() && listener != null) {
+            try {
+                double horometro = Double.parseDouble(nuevoValor);
+                if (detalle.getHorometro() != horometro) {
+                    detalle.setHorometro(horometro);
+
+                    listener.onHorometroChanged(detalle, horometro);
+
+                    holder.itemView.postDelayed(() -> {
+                        notifyItemChanged(position, "CALCULATED_FIELDS");
+                    }, 100);
+                }
+            } catch (NumberFormatException e) {
+                holder.inputHorometro.setError("Número inválido");
+            }
+        }
+    }
+
+    private void habilitarCamposEdicion(ViewHolder holder) {
+        holder.inputHorometro.setEnabled(true);
+        holder.inputHorometro.setFocusable(true);
+        holder.inputHorometro.setFocusableInTouchMode(true);
+
+        holder.inputHorometro.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+
+        // Estos campos son SOLO LECTURA incluso en modo edición
+        holder.inputHorasExtras.setEnabled(false);
+        holder.inputHorasExtras.setFocusable(false);
+        holder.inputHorasExtras.setFocusableInTouchMode(false);
+
+        holder.inputPrecioHE.setEnabled(false);
+        holder.inputPrecioHE.setFocusable(false);
+        holder.inputPrecioHE.setFocusableInTouchMode(false);
+    }
+
+    private void ocultarTeclado(View view) {
+        InputMethodManager imm = (InputMethodManager) view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    private void quitarFocoDeInputs(ViewHolder holder) {
+        holder.inputHorometro.clearFocus();
+        holder.inputHorasExtras.clearFocus();
+        holder.inputPrecioHE.clearFocus();
+    }
+
+    private void deshabilitarCampos(ViewHolder holder) {
+        holder.inputHorometro.setEnabled(false);
+        holder.inputHorometro.setFocusable(false);
+        holder.inputHorometro.setFocusableInTouchMode(false);
+
+        holder.inputHorasExtras.setEnabled(false);
+        holder.inputHorasExtras.setFocusable(false);
+        holder.inputHorasExtras.setFocusableInTouchMode(false);
+
+        holder.inputPrecioHE.setEnabled(false);
+        holder.inputPrecioHE.setFocusable(false);
+        holder.inputPrecioHE.setFocusableInTouchMode(false);
+
+        holder.btnConfirmarPagoMes.setEnabled(false);
+        holder.btnConfirmarPagoHE.setEnabled(false);
+        holder.btnValorizacion.setEnabled(false);
+    }
+
+    public List<DetalleMes> getItems() {
+        return new ArrayList<>(items);
+    }
+
     private void actualizarEstadoBotones(ViewHolder holder, DetalleMes detalle) {
+        boolean habilitarBotones = !modoSoloLectura;
+
         if (detalle.getHorasExtras() <= 0) {
             holder.btnConfirmarPagoHE.setEnabled(false);
             holder.btnConfirmarPagoHE.setAlpha(0.5f);
         } else {
-            holder.btnConfirmarPagoHE.setEnabled(!detalle.isPagoHEConfirmado());
+            holder.btnConfirmarPagoHE.setEnabled(habilitarBotones && !detalle.isPagoHEConfirmado());
             holder.btnConfirmarPagoHE.setAlpha(detalle.isPagoHEConfirmado() ? 0.5f : 1f);
         }
 
-        holder.btnConfirmarPagoMes.setEnabled(!detalle.isPagoMesConfirmado());
+        holder.btnConfirmarPagoMes.setEnabled(habilitarBotones && !detalle.isPagoMesConfirmado());
         holder.btnConfirmarPagoMes.setAlpha(detalle.isPagoMesConfirmado() ? 0.5f : 1f);
+
+        holder.btnValorizacion.setEnabled(habilitarBotones);
     }
 
     private void actualizarColorFranja(ViewHolder holder, DetalleMes detalle) {
@@ -179,13 +363,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.franjaColor.setBackgroundColor(color);
     }
 
-    private void deshabilitarCampos(ViewHolder holder) {
-        holder.inputHorometro.setEnabled(false);
-        holder.btnConfirmarPagoMes.setEnabled(false);
-        holder.btnConfirmarPagoHE.setEnabled(false);
-        holder.btnValorizacion.setEnabled(false);
-    }
-
     @Override
     public int getItemCount() {
         return items.size();
@@ -199,6 +376,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         TextInputLayout textInputHorometro;
         TextInputEditText inputHorometro, inputHorasExtras, inputPrecioHE;
         Button btnConfirmarPagoMes, btnConfirmarPagoHE, btnValorizacion;
+        TextView tvConfirmacionPagoMes, tvConfirmacionPagoHE;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -213,6 +391,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             btnConfirmarPagoMes = itemView.findViewById(R.id.btnConfirmarPagoMes);
             btnConfirmarPagoHE = itemView.findViewById(R.id.btnConfirmarPagoHE);
             btnValorizacion = itemView.findViewById(R.id.btnValorizacion);
+            tvConfirmacionPagoMes = itemView.findViewById(R.id.tvConfirmacionPagoMes);
+            tvConfirmacionPagoHE = itemView.findViewById(R.id.tvConfirmacionPagoHE);
         }
     }
 }

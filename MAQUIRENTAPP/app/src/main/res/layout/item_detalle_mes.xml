@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
     android:backgroundTint="@android:color/transparent"
     android:theme="@style/Theme.TextMain"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
@@ -20,22 +20,22 @@
             android:id="@+id/franjaColor"
             android:layout_width="15dp"
             android:layout_height="match_parent"
-            android:background="@color/red_accent"
-            android:layout_gravity="center_vertical" />
+            android:layout_gravity="center_vertical"
+            android:background="@color/red_accent" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@color/black"
             android:orientation="vertical"
-            android:padding="12dp"
-            android:background="@color/black">
+            android:padding="12dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingBottom="8dp">
 
                 <TextView
@@ -45,7 +45,7 @@
                     android:layout_weight="1"
                     android:text="Agosto - Setiembre"
                     android:textColor="@android:color/white"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
                 <ImageView
                     android:id="@+id/btnExpandir"
@@ -66,16 +66,17 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/textInputHorometro"
                     style="@style/DetalleMesTextInputLayout"
+                    android:hint="Horómetro al 25/09/2025"
                     app:boxStrokeColor="@color/white"
-                    app:boxStrokeWidth="2dp"
-                    android:hint="Horómetro al 25/09/2025">
+                    app:boxStrokeWidth="2dp">
 
                     <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/inputHorometro"
+                        android:id="@+id/inputHorometro"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/white"
-                        android:inputType="text" />
+                        android:inputType="number"
+                        android:imeOptions="actionDone"
+                        android:textColor="@color/white" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
@@ -86,17 +87,17 @@
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/DetalleMesTextInputLayout"
                         android:layout_width="0dp"
-                        android:layout_weight="0.8"
                         android:layout_marginEnd="10dp"
+                        android:layout_weight="0.8"
                         android:hint="Horas extras">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputHorasExtras"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:inputType="number"
                             android:text="136"
-                            android:textColor="@color/white"
-                            android:inputType="number" />
+                            android:textColor="@color/white" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -109,9 +110,9 @@
                             android:id="@+id/inputPrecioHE"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
                             android:text="S/. 1940.04"
-                            android:textColor="@color/white"
-                            android:inputType="numberDecimal" />
+                            android:textColor="@color/white" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
@@ -119,30 +120,48 @@
                     android:id="@+id/btnConfirmarPagoMes"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:text="Confirmar pago de mes"
-                    android:textAllCaps="false"
                     android:layout_marginTop="10dp"
                     android:backgroundTint="@color/selection_indicator"
+                    android:text="Confirmar pago de mes"
+                    android:textAllCaps="false"
                     android:textColor="@color/white" />
+                <TextView
+                    android:id="@+id/tvConfirmacionPagoMes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="25dp"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/white"
+                    android:text="Pago realizado el 25/12/2025"
+                    android:visibility="gone"/>
 
                 <Button
                     android:id="@+id/btnConfirmarPagoHE"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:text="Confirmar pago de HE"
-                    android:textAllCaps="false"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/selection_indicator"
+                    android:text="Confirmar pago de HE"
+                    android:textAllCaps="false"
                     android:textColor="@color/white" />
+                <TextView
+                    android:id="@+id/tvConfirmacionPagoHE"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="25dp"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="@color/white"
+                    android:text="Pago realizado el 25/12/2025"
+                    android:visibility="gone"/>
 
                 <Button
                     android:id="@+id/btnValorizacion"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:text="Valorización"
-                    android:textAllCaps="false"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/selection_indicator"
+                    android:text="Valorización"
+                    android:textAllCaps="false"
                     android:textColor="@color/white" />
             </LinearLayout>
         </LinearLayout>

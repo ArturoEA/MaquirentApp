@@ -1,5 +1,4 @@
 package com.example.maquirentapp.Model;
-
 public class DetalleMes {
     private String id;
     private String idAlquilerMensual;
@@ -13,6 +12,8 @@ public class DetalleMes {
     private boolean pagoHEConfirmado;
     private int numeroMes;
     private boolean expandido;
+    private String fechaConfirmacionPagoMes;
+    private String fechaConfirmacionPagoHE;
 
     public DetalleMes() {
         this.pagoMesConfirmado = false;
@@ -23,7 +24,7 @@ public class DetalleMes {
         this.precioHorasExtras = 0;
     }
 
-    // Getters y Setters
+    // Getters y Setters existentes...
     public String getId() {
         return id;
     }
@@ -118,5 +119,20 @@ public class DetalleMes {
 
     public void setExpandido(boolean expandido) {
         this.expandido = expandido;
+    }
+    public String getFechaConfirmacionPagoMes() {
+        return fechaConfirmacionPagoMes;
+    }
+
+    public void setFechaConfirmacionPagoMes(String fechaConfirmacionPagoMes) {
+        this.fechaConfirmacionPagoMes = fechaConfirmacionPagoMes;
+    }
+
+    public String getFechaConfirmacionPagoHE() {
+        return fechaConfirmacionPagoHE;
+    }
+
+    public void setFechaConfirmacionPagoHE(String fechaConfirmacionPagoHE) {
+        this.fechaConfirmacionPagoHE = fechaConfirmacionPagoHE;
     }
 }

@@ -1,9 +1,13 @@
 package com.example.maquirentapp.View;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -117,11 +122,13 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         recyclerAccesorios = view.findViewById(R.id.recyclerAccesorios);
         recyclerAccesorios.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerAccesorios.setNestedScrollingEnabled(false);
         adapterAccesorios = new AccesorioSeleccionAdapter();
         recyclerAccesorios.setAdapter(adapterAccesorios);
 
         recyclerDetallesMes = view.findViewById(R.id.recyclerDetallesMes);
         recyclerDetallesMes.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerDetallesMes.setNestedScrollingEnabled(false);
         adapterDetallesMes = new DetalleMesAdapter();
         recyclerDetallesMes.setAdapter(adapterDetallesMes);
 
@@ -137,7 +144,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             setAccesoriosExpanded(accesoriosExpanded, true);
         });
 
-        // Configurar visibilidad inicial
         if (modoEdicion) {
             recyclerDetallesMes.setVisibility(View.VISIBLE);
             btnFinalizarAlquiler.setVisibility(View.VISIBLE);
@@ -163,7 +169,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 monedaSeleccionada = monedas.get(position);
                 tvSimboloMoneda.setText(monedaSeleccionada.equals("USD") ? "$" : "S/.");
 
-                // Recalcular precio hora extra si es necesario
                 String precioStr = inputPrecioAlquiler.getText().toString().trim();
                 if (!precioStr.isEmpty()) {
                     calcularPrecioHoraExtra();
@@ -195,19 +200,27 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             @Override
             public void onHorometroChanged(DetalleMes detalle, double nuevoHorometro) {
                 calcularHorasExtras(detalle, nuevoHorometro);
+
+                int position = adapterDetallesMes.getItems().indexOf(detalle);
+                if (position != -1) {
+                    adapterDetallesMes.notifyItemChanged(position, "CALCULATED_FIELDS");
+                }
+
                 actualizarDetalleMes(detalle);
             }
 
             @Override
-            public void onPagoMesConfirmado(DetalleMes detalle) {
-                detalle.setPagoMesConfirmado(true);
+            public void onPagoMesConfirmado(DetalleMes detalle, int position) {
                 actualizarDetalleMes(detalle);
+
+                Toast.makeText(getContext(), "Pago del mes confirmado correctamente", Toast.LENGTH_SHORT).show();
             }
 
             @Override
-            public void onPagoHEConfirmado(DetalleMes detalle) {
-                detalle.setPagoHEConfirmado(true);
+            public void onPagoHEConfirmado(DetalleMes detalle, int position) {
                 actualizarDetalleMes(detalle);
+
+                Toast.makeText(getContext(), "Pago de horas extras confirmado correctamente", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -224,12 +237,56 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (!precioStr.isEmpty()) {
             try {
                 double precio = Double.parseDouble(precioStr);
+                // Fórmula: precio/30/8*0.75
                 double precioHoraExtra = (precio / 30.0 / 8.0) * 0.75;
                 inputPrecioHoraExtra.setText(String.format(Locale.US, "%.2f", precioHoraExtra));
             } catch (NumberFormatException e) {
+                // Ignorar error
             }
         }
     }
+
+    private void calcularHorasExtras(DetalleMes detalle, double horometroActual) {
+        if (alquilerActual == null) return;
+
+        try {
+            // Obtener horómetro anterior
+            double horometroAnterior;
+            if (detalle.getNumeroMes() == 1) {
+                horometroAnterior = alquilerActual.getHorometroInicial();
+            } else {
+                // Buscar el mes anterior en la lista actual
+                horometroAnterior = obtenerHorometroMesAnterior(detalle.getNumeroMes() - 1);
+            }
+
+            // Calcular horas trabajadas
+            double horasTrabajadas = horometroActual - horometroAnterior;
+
+            // Calcular horas extras
+            double horasMinimas = alquilerActual.getHorasMinimas();
+            double horasExtras = Math.max(0, horasTrabajadas - horasMinimas);
+
+            detalle.setHorometro(horometroActual);
+            detalle.setHorasExtras(horasExtras);
+
+            // Calcular precio de horas extras
+            double precioHE = horasExtras * alquilerActual.getPrecioHoraExtra();
+            detalle.setPrecioHorasExtras(precioHE);
+
+        } catch (Exception e) {
+            Log.e("NuevoAlquilerMensual", "Error calculando horas extras", e);
+        }
+    }
+
+    private double obtenerHorometroMesAnterior(int numeroMesAnterior) {
+        for (DetalleMes detalle : adapterDetallesMes.getItems()) {
+            if (detalle.getNumeroMes() == numeroMesAnterior) {
+                return detalle.getHorometro();
+            }
+        }
+        return 0; // Fallback
+    }
+
     private void configurarDatePickers() {
         inputFechaInicial.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
@@ -335,6 +392,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             SimpleDateFormat formatoSalida = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             return formatoSalida.format(formatoEntrada.parse(fechaOriginal));
         } catch (Exception e) {
+            // Si ya está en formato dd/MM/yyyy, devolver tal cual
             return fechaOriginal;
         }
     }
@@ -505,6 +563,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             firebaseServicio.crearDetalleMes(primerMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
                 @Override
                 public void onSuccess(DetalleMes detalle) {
+                    // Detalle creado exitosamente
                 }
 
                 @Override
@@ -522,7 +581,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         firebaseServicio.actualizarDetalleMes(detalle, new FirebaseServicio.OnDetalleMesUpdatedListener() {
             @Override
             public void onSuccess() {
-                cargarDetallesMes();
+                // NO recargar todo, solo actualizar el item específico
+                // El color ya se actualizó inmediatamente en el adaptador
             }
 
             @Override
@@ -531,127 +591,12 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
         });
     }
+
     private void finalizarAlquiler() {
-        if (alquilerActual == null || alquilerId == null) {
-            Toast.makeText(getContext(), "Error: No se puede finalizar el alquiler", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Finalizar alquiler")
-                .setMessage("¿Está seguro de que desea finalizar este alquiler? " +
-                        "Se tomarán los datos del último mes registrado para completar la información.")
-                .setPositiveButton("Finalizar", (dialog, which) -> {
-                    ejecutarFinalizacion();
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
+        // TODO: Implementar lógica de finalización
+        Toast.makeText(getContext(), "Finalizando alquiler...", Toast.LENGTH_SHORT).show();
     }
 
-    private void ejecutarFinalizacion() {
-        firebaseServicio.getUltimoDetalleMes(alquilerId,
-                new FirebaseServicio.OnDetalleMesLoadedListener() {
-                    @Override
-                    public void onSuccess(DetalleMes ultimoDetalle) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
-                        try {
-                            alquilerActual.setFechaFinal(ultimoDetalle.getFechaFin());
-
-                            alquilerActual.setHorometroFinal(ultimoDetalle.getHorometro());
-
-                            alquilerActual.setFinalizado(true);
-
-                            firebaseServicio.actualizarAlquilerMensual(alquilerActual,
-                                    new FirebaseServicio.OnAlquilerUpdatedListener() {
-                                        @Override
-                                        public void onSuccess() {
-                                            Toast.makeText(getContext(),
-                                                    "Alquiler finalizado correctamente",
-                                                    Toast.LENGTH_SHORT).show();
-
-                                            inputFechaFinal.setText(ultimoDetalle.getFechaFin());
-                                            inputHorometroFinal.setText(String.valueOf(ultimoDetalle.getHorometro()));
-                                            btnFinalizarAlquiler.setEnabled(false);
-                                            btnFinalizarAlquiler.setAlpha(0.5f);
-                                            btnFinalizarAlquiler.setText("Alquiler finalizado");
-
-                                            requireActivity().onBackPressed();
-                                        }
-
-                                        @Override
-                                        public void onError(Exception e) {
-                                            Toast.makeText(getContext(),
-                                                    "Error al finalizar: " + e.getMessage(),
-                                                    Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-
-                        } catch (Exception e) {
-                            Toast.makeText(getContext(),
-                                    "Error al procesar datos de finalización",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        Toast.makeText(getContext(),
-                                "No se puede finalizar: No hay meses registrados",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-    private void calcularHorasExtras(DetalleMes detalle, double horometroActual) {
-        if (alquilerActual == null) return;
-
-        // Obtener horómetro anterior
-        if (detalle.getNumeroMes() == 1) {
-            // Primer mes: usar horómetro inicial del alquiler
-            double horometroAnterior = alquilerActual.getHorometroInicial();
-            calcularYActualizarHorasExtras(detalle, horometroAnterior, horometroActual);
-        } else {
-            // Mes posterior: obtener horómetro del mes anterior
-            firebaseServicio.getDetalleMesPorNumero(
-                    alquilerActual.getId(),
-                    detalle.getNumeroMes() - 1,
-                    new FirebaseServicio.OnDetalleMesLoadedListener() {
-                        @Override
-                        public void onSuccess(DetalleMes mesAnterior) {
-                            double horometroAnterior = mesAnterior.getHorometro();
-                            calcularYActualizarHorasExtras(detalle, horometroAnterior, horometroActual);
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(getContext(),
-                                    "Error al obtener datos del mes anterior",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-            );
-        }
-    }
-    private void calcularYActualizarHorasExtras(DetalleMes detalle,
-                                                double horometroAnterior,
-                                                double horometroActual) {
-        // Calcular horas trabajadas
-        double horasTrabajadas = horometroActual - horometroAnterior;
-
-        // Calcular horas extras
-        double horasMinimas = alquilerActual.getHorasMinimas();
-        double horasExtras = Math.max(0, horasTrabajadas - horasMinimas);
-
-        detalle.setHorometro(horometroActual);
-        detalle.setHorasExtras(horasExtras);
-
-        // Calcular precio de horas extras
-        double precioHE = horasExtras * alquilerActual.getPrecioHoraExtra();
-        detalle.setPrecioHorasExtras(precioHE);
-
-        // Refrescar el adapter para mostrar los cambios
-        cargarDetallesMes();
-    }
     private void configureGlobalFab() {
         View hostView = getView();
         if (hostView == null) return;
