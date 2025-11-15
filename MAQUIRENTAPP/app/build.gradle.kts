@@ -33,23 +33,17 @@ android {
 }
 
 dependencies {
-    // BOM de Firebase (ya lo tienes, mantén la versión 33.2.0)
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
-
-    // Firebase - Usar versiones del BOM (sin especificar versión)
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
-
-    // Firebase App Check
     implementation("com.google.firebase:firebase-appcheck-debug")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
-
-    //Firebase Functions
     implementation ("com.google.firebase:firebase-functions:20.4.0")
+    implementation("com.google.firebase:firebase-messaging")
 
-    // Resto de dependencias
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

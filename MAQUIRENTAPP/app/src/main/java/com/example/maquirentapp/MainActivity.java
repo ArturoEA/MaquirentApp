@@ -1,15 +1,20 @@
 package com.example.maquirentapp;
 
 import android.animation.ObjectAnimator;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.Manifest;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -34,6 +39,7 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 
 import android.graphics.drawable.Drawable;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton btnGlobal; // global FAB
@@ -63,6 +69,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String NUEVO_ALQUILER_DIA_KEY = "nuevo_alquiler_dia_fragment";
     private static final String PLANOS_CAMBIO_VOLTAJE_KEY = "planos_cambio_voltaje_fragment";
 
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    Log.d("MainActivity", "Permiso de notificaciones concedido");
+                } else {
+                    Log.w("MainActivity", "Permiso de notificaciones denegado");
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +109,16 @@ public class MainActivity extends AppCompatActivity {
         // Configurar estado inicial
         //setupInitialState();
         setupBackPressedDispatcher();
+        askNotificationPermission();
+    }
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED) {
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
     private void setupBackPressedDispatcher() {
         // Manejar el botón físico/gesture de back
@@ -193,6 +217,20 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "Usuario autenticado: " + userName + " - Rol: " + userRole);
                 configurarUISegunRol();
                 navegarSegunRol();
+                if ("admin".equals(userRole)) {
+                    FirebaseMessaging.getInstance().getToken()
+                            .addOnCompleteListener(task -> {
+                                if (!task.isSuccessful()) {
+                                    Log.w("MainActivity.verificarAutenticacion", "Fetching FCM registration token failed", task.getException());
+                                    return;
+                                }
+                                // Obtener nuevo token
+                                String token = task.getResult();
+                                Log.d("MainActivity.verificarAutenticacion", "FCM Token: " + token);
+                                // Guardar token en Firestore
+                                firebaseServicio.guardarFCMToken(token);
+                            });
+                }
             }
 
             @Override

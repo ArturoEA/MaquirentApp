@@ -1,6 +1,7 @@
 package com.example.maquirentapp.Network;
 
 import android.net.Uri;
+import android.util.Log;
 
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
@@ -10,6 +11,7 @@ import com.example.maquirentapp.Model.Usuario;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -543,6 +545,22 @@ public class FirebaseServicio {
                 .call(data)
                 .addOnSuccessListener(result -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
+    }
+    public void guardarFCMToken(String token) {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null || token == null || token.isEmpty()) {
+            return;
+        }
+
+        String uid = user.getUid();
+        db.collection("usuarios").document(uid)
+                .update("fcmTokens", FieldValue.arrayUnion(token))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FirebaseServicio", "FCM Token guardado para " + uid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FirebaseServicio", "Error al guardar FCM Token", e);
+                });
     }
     // Interfaces para callbacks
     public interface OnDetalleMesCreatedListener {

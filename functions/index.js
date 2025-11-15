@@ -134,6 +134,120 @@ exports.eliminarGruposExpirados = onSchedule(
 
 /**
  * ============================================================
+ * Enviar código de verificación para FINALIZAR un ALQUILER
+ * ============================================================
+ */
+exports.enviarCodigoFinalizarAlquiler = onCall(
+  { secrets: [EMAIL_USER, EMAIL_PASS] },
+  async (request) => {
+    const { alquilerId, nombreCliente, emailUsuario } = request.data;
+    const uid = request.auth?.uid;
+
+    if (!uid) {
+      throw new Error("El usuario debe estar autenticado.");
+    }
+    if (!alquilerId || !nombreCliente || !emailUsuario) {
+      throw new Error("Faltan datos (alquilerId, nombreCliente, emailUsuario).");
+    }
+
+    const db = admin.firestore();
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    // Código expira en 15 minutos
+    const expira = Date.now() + 15 * 60 * 1000;
+
+    // Guardar el código en el documento del alquiler
+    await db.collection("alquileresMensuales").doc(alquilerId).update({
+      codigoFinalizacion: codigo,
+      codigoFinalizacionExpira: expira,
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER.value(),
+        pass: EMAIL_PASS.value(),
+      },
+    });
+
+    const mailOptions = {
+      from: `MAQUIRENT <${EMAIL_USER.value()}>`,
+      to: emailUsuario,
+      subject: "Código de Verificación - Finalizar Alquiler",
+      html: `
+        <div style="font-family: Arial; padding: 20px;">
+          <h2>Confirmación de Finalización de Alquiler</h2>
+          <p>Has solicitado finalizar el alquiler para el cliente:</p>
+          <b>${nombreCliente}</b>
+          <p>Tu código de verificación es:</p>
+          <div style="font-size: 32px; color: #e74c3c; text-align:center;">${codigo}</div>
+          <p>Este código expira en 15 minutos.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    logger.info(`Código enviado a ${emailUsuario} para finalizar alquiler ${alquilerId}`);
+    return { success: true };
+  }
+);
+
+/**
+ * ============================================================
+ * Confirmar finalización de alquiler con código
+ * ============================================================
+ */
+exports.confirmarFinalizacionAlquiler = onCall(async (request) => {
+  const { alquilerId, codigoIngresado } = request.data;
+  const uid = request.auth?.uid;
+
+  if (!uid) {
+    throw new Error("El usuario debe estar autenticado.");
+  }
+  if (!alquilerId || !codigoIngresado) {
+    throw new Error("Datos incompletos.");
+  }
+
+  const db = admin.firestore();
+  const docRef = db.collection("alquileresMensuales").doc(alquilerId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    throw new Error("No se encontró el alquiler.");
+  }
+
+  const datos = doc.data();
+  const { codigoFinalizacion, codigoFinalizacionExpira } = datos;
+
+  if (!codigoFinalizacion || !codigoFinalizacionExpira) {
+    throw new Error("No se ha solicitado un código para este alquiler.");
+  }
+
+  if (datos.codigoFinalizacion !== codigoIngresado) {
+    throw new Error("Código incorrecto.");
+  }
+
+  if (Date.now() > datos.codigoFinalizacionExpira) {
+    // Limpiar código expirado
+    await docRef.update({
+      codigoFinalizacion: admin.firestore.FieldValue.delete(),
+      codigoFinalizacionExpira: admin.firestore.FieldValue.delete(),
+    });
+    throw new Error("El código ha expirado. Solicítalo nuevamente.");
+  }
+
+  // ¡Código correcto y válido!
+  await docRef.update({
+    finalizado: true,
+    fechaFinal: new Date().toISOString(), // Opcional: Sellar fecha de finalización
+    codigoFinalizacion: admin.firestore.FieldValue.delete(),
+    codigoFinalizacionExpira: admin.firestore.FieldValue.delete(),
+  });
+
+  logger.info(`Alquiler ${alquilerId} finalizado por ${uid}`);
+  return { success: true, message: "Alquiler finalizado correctamente." };
+});
+/**
+ * ============================================================
  * Enviar código de verificación para eliminar un usuario
  * ============================================================
  */
@@ -223,6 +337,119 @@ exports.confirmarEliminacionUsuario = onCall(
     return { success: true, message: "Usuario eliminado correctamente." };
   }
 );
+/**
+ * ============================================================
+ * FUNCIÓN PROGRAMADA: Notificar pagos pendientes (Lunes 9:00 AM)
+ * ============================================================
+ */
+exports.notificarPagosPendientes = onSchedule({
+  schedule: "50 16 * * 6", // "0 9 * * 1" = todos los lunes a las 9:00 AM
+  timeZone: "America/Lima",
+}, async (event) => {
+  logger.info("Ejecutando notificarPagosPendientes...");
+  const db = admin.firestore();
+  const pagosPendientes = [];
+
+  try {
+    // 1. Obtener todos los alquileres mensuales NO finalizados
+    const alquileresSnapshot = await db
+      .collection("alquileresMensuales")
+      .where("finalizado", "==", false)
+      .get();
+
+    if (alquileresSnapshot.empty) {
+      logger.info("No hay alquileres activos. Terminando.");
+      return null;
+    }
+
+    // 2. Iterar sobre cada alquiler y buscar sus detalles de mes
+    for (const alquilerDoc of alquileresSnapshot.docs) {
+      const alquiler = alquilerDoc.data();
+      alquiler.id = alquilerDoc.id;
+
+      const detallesSnapshot = await db
+        .collection("detallesMes")
+        .where("idAlquilerMensual", "==", alquiler.id)
+        .get();
+
+      for (const detalleDoc of detallesSnapshot.docs) {
+        const detalle = detalleDoc.data();
+        
+        // 3. Comprobar si hay pagos pendientes en este detalle
+        const mesPendiente = !detalle.pagoMesConfirmado;
+        const hePendiente = !detalle.pagoHEConfirmado && 
+                             detalle.precioHorasExtras > 0;
+
+        if (mesPendiente || hePendiente) {
+          pagosPendientes.push({
+            cliente: alquiler.nombreCliente,
+            periodo: detalle.tituloPeriodo,
+          });
+          // Solo necesitamos saber si hay al menos un pago pendiente
+          // por alquiler para no saturar la lista
+          break; 
+        }
+      }
+    }
+
+    const totalPendientes = pagosPendientes.length;
+    if (totalPendientes === 0) {
+      logger.info("No se encontraron pagos pendientes.");
+      return null;
+    }
+
+    logger.info(`Se encontraron ${totalPendientes} alquileres con pagos pendientes.`);
+
+    // 4. Obtener los tokens de los administradores
+    const tokens = [];
+    const adminSnapshot = await db
+      .collection("usuarios")
+      .where("rol", "==", "admin")
+      .get();
+
+    if (adminSnapshot.empty) {
+      logger.warn("No se encontraron usuarios 'admin' para notificar.");
+      return null;
+    }
+
+    adminSnapshot.forEach((adminDoc) => {
+      const adminData = adminDoc.data();
+      if (adminData.fcmTokens && Array.isArray(adminData.fcmTokens)) {
+        tokens.push(...adminData.fcmTokens);
+      }
+    });
+
+    if (tokens.length === 0) {
+      logger.warn("Se encontraron admins, pero no tienen tokens FCM.");
+      return null;
+    }
+
+    // 5. Crear y enviar el mensaje
+    const mensaje = totalPendientes === 1 ?
+      `Hay 1 alquiler con pagos pendientes.` :
+      `Hay ${totalPendientes} alquileres con pagos pendientes.`;
+
+    const payload = {
+      notification: {
+        title: "Pagos Pendientes - MAQUIRENT",
+        body: mensaje,
+      },
+      data: {
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+        screen: "pagos_pendientes" // (Pantalla por crear)
+      }
+    };
+
+    logger.info("Enviando notificación a tokens:", tokens);
+    await admin.messaging().sendToDevice(tokens, payload);
+
+    return { success: true, notificacionesEnviadas: tokens.length };
+
+  } catch (error) {
+    logger.error("Error al notificar pagos pendientes:", error);
+    return { success: false, error: error.message };
+  }
+});
 
 // ------------------------------------------------------------
 // FUNCIONES AUXILIARES

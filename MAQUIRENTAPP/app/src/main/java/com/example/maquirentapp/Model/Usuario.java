@@ -1,5 +1,8 @@
 package com.example.maquirentapp.Model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Usuario {
     private String uid;
     private String nombre;
@@ -10,8 +13,10 @@ public class Usuario {
     private long fechaUltimaActividad;
     private String creadoPor; // UID del admin que aprobó
     private String fotoPerfil; // URL de la foto de perfil en Storage
+    private List<String> fcmTokens;
 
     public Usuario() {
+        this.fcmTokens = new ArrayList<>();
     }
 
     public Usuario(String uid, String nombre, String email) {
@@ -93,5 +98,15 @@ public class Usuario {
     }
     public void setFotoPerfil(String fotoPerfil) {
         this.fotoPerfil = (fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : "";
+    }
+    public List<String> getFcmTokens() {
+        if (fcmTokens == null) {
+            fcmTokens = new ArrayList<>();
+        }
+        return fcmTokens;
+    }
+
+    public void setFcmTokens(List<String> fcmTokens) {
+        this.fcmTokens = fcmTokens;
     }
 }
