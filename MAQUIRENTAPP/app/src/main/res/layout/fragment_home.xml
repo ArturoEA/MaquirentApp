@@ -1,5 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -34,9 +35,9 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
         android:layout_marginStart="3dp"
         android:layout_marginEnd="3dp"
+        android:layout_marginBottom="20dp"
         android:backgroundTint="@color/white"
         app:cardCornerRadius="16dp"
         app:cardElevation="2dp">
@@ -384,148 +385,16 @@
         android:textColor="@color/text_primary"
         android:textSize="18sp" />
 
-    <HorizontalScrollView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerPagosPendientes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <!-- Tarjeta Pago Pendiente 1 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="280dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:backgroundTint="@color/card_dark"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <!-- Barra de color rojo -->
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/red_accent" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="5dp"
-                            android:text="Colonia Ingenieros"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="10dp"
-                            android:text="GEP 30-103 | Septiembre"
-                            android:textColor="@color/white"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="Monto pendiente de mes: S/.1200"
-                            android:textColor="@color/white"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Monto pendiente de HE: S/.100"
-                            android:textColor="@color/white"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Tarjeta Pago Pendiente 2 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="280dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:backgroundTint="@color/card_dark"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <!-- Barra de color rojo -->
-                    <View
-                        android:layout_width="10dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/yellow_accent" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="5dp"
-                            android:text="Colonia Ingenieros"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="10dp"
-                            android:text="GEP 30-103 | Septiembre"
-                            android:textColor="@color/white"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="Monto pendiente de mes: S/.1200"
-                            android:textColor="@color/white"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Monto pendiente de HE: S/.100"
-                            android:textColor="@color/white"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-        </LinearLayout>
-
-    </HorizontalScrollView>
+        android:clipToPadding="false"
+        android:orientation="horizontal"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/item_pago_pendiente"
+        tools:orientation="horizontal" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -580,7 +449,7 @@
                         android:text="Nuevo alquiler"
                         android:textAlignment="center"
                         android:textColor="@color/white"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -618,7 +487,7 @@
                         android:text="Cotizaciones"
                         android:textAlignment="center"
                         android:textColor="@color/white"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -721,8 +590,8 @@
                 android:id="@+id/cardValorizaciones"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
-                android:layout_weight="1.7"
                 android:layout_margin="8dp"
+                android:layout_weight="1.7"
                 android:backgroundTint="@color/card_dark"
                 android:clickable="true"
                 android:foreground="?android:attr/selectableItemBackground"
@@ -748,7 +617,7 @@
                         android:text="Valorizaciones"
                         android:textAlignment="center"
                         android:textColor="@color/white"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
@@ -759,8 +628,8 @@
                 android:id="@+id/cardContratos"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
-                android:layout_weight="1.3"
                 android:layout_margin="8dp"
+                android:layout_weight="1.3"
                 android:backgroundTint="@color/card_dark"
                 android:clickable="true"
                 android:foreground="?android:attr/selectableItemBackground"
@@ -786,7 +655,7 @@
                         android:text="Contratos"
                         android:textAlignment="center"
                         android:textColor="@color/white"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
