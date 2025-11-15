@@ -13,6 +13,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -24,11 +25,13 @@ import java.util.Map;
 public class FirebaseServicio {
     private final FirebaseFirestore db;
     private final FirebaseStorage storage;
+    private final FirebaseFunctions functions;
     private final FirebaseAuth auth;
     public FirebaseServicio() {
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         auth = FirebaseAuth.getInstance();
+        functions = FirebaseFunctions.getInstance();
     }
     public void registrarUsuario(String email, String password, String nombre, OnAuthListener listener) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -513,7 +516,34 @@ public class FirebaseServicio {
         // Esto requeriría parsear las fechas y verificar
         return true; // Implementar lógica completa
     }
+    public void solicitarCodigoFinalizacion(String alquilerId, String nombreCliente, OnSimpleCallback listener) {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null || user.getEmail() == null) {
+            listener.onError(new Exception("Usuario no autenticado"));
+            return;
+        }
 
+        Map<String, Object> data = new HashMap<>();
+        data.put("alquilerId", alquilerId);
+        data.put("nombreCliente", nombreCliente);
+        data.put("emailUsuario", user.getEmail());
+
+        functions.getHttpsCallable("enviarCodigoFinalizarAlquiler")
+                .call(data)
+                .addOnSuccessListener(result -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void confirmarFinalizacion(String alquilerId, String codigo, OnSimpleCallback listener) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("alquilerId", alquilerId);
+        data.put("codigoIngresado", codigo);
+
+        functions.getHttpsCallable("confirmarFinalizacionAlquiler")
+                .call(data)
+                .addOnSuccessListener(result -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
     // Interfaces para callbacks
     public interface OnDetalleMesCreatedListener {
         void onSuccess(DetalleMes detalle);

@@ -14,7 +14,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -69,6 +71,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private String monedaSeleccionada = "SOL";
     private AlquilerMensual alquilerActual;
+    private ExtendedFloatingActionButton fabGlobal;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,6 +94,11 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         firebaseServicio = new FirebaseServicio();
+
+        if (getActivity() != null) {
+            fabGlobal = getActivity().findViewById(R.id.btnGlobal);
+        }
+
         inicializarVistas(view);
         configurarSpinnerMoneda();
         configurarDatePickers();
@@ -176,17 +184,20 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
     }
 
     private void configurarListeners() {
         inputPrecioAlquiler.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -229,7 +240,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
         });
 
-        btnFinalizarAlquiler.setOnClickListener(v -> finalizarAlquiler());
+        btnFinalizarAlquiler.setOnClickListener(v -> mostrarDialogoConfirmarEnvio());
     }
 
     private void calcularPrecioHoraExtra() {
@@ -358,6 +369,13 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                 // Cargar detalles de mes
                 cargarDetallesMes();
+
+                if (alquiler.isFinalizado()) {
+                    deshabilitarCampos();
+                    if (fabGlobal != null) {
+                        fabGlobal.setVisibility(View.GONE);
+                    }
+                }
             }
 
             @Override
@@ -433,7 +451,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         inputPrecioHoraExtra.setEnabled(false);
         spinnerMoneda.setEnabled(false);
         adapterAccesorios.setClickEnabled(false);
-        btnFinalizarAlquiler.setEnabled(false);
+        btnFinalizarAlquiler.setVisibility(View.GONE);
     }
 
     private void habilitarCampos() {
@@ -448,8 +466,11 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         inputPrecioHoraExtra.setEnabled(true);
         spinnerMoneda.setEnabled(true);
         adapterAccesorios.setClickEnabled(true);
-        btnFinalizarAlquiler.setEnabled(true);
         adapterDetallesMes.setModoSoloLectura(false);
+        if (alquilerActual == null || !alquilerActual.isFinalizado()) {
+            btnFinalizarAlquiler.setVisibility(View.VISIBLE);
+            btnFinalizarAlquiler.setEnabled(true);
+        }
     }
 
     private void guardarAlquilerMensual() {
@@ -592,14 +613,101 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         });
     }
 
-    private void finalizarAlquiler() {
-        // TODO: Implementar lógica de finalización
-        Toast.makeText(getContext(), "Finalizando alquiler...", Toast.LENGTH_SHORT).show();
+    private void mostrarDialogoConfirmarEnvio() {
+        if (alquilerActual == null) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Finalizar Alquiler")
+                .setMessage("Estás a punto de finalizar este alquiler. Una vez finalizado, no podrás editar los datos.\n\nSe enviará un código a tu correo para confirmar.")
+                .setPositiveButton("Enviar Código", (dialog, which) -> {
+                    btnFinalizarAlquiler.setEnabled(false);
+                    btnFinalizarAlquiler.setText("Enviando...");
+
+                    firebaseServicio.solicitarCodigoFinalizacion(
+                            alquilerActual.getId(),
+                            alquilerActual.getNombreCliente(),
+                            new FirebaseServicio.OnSimpleCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(getContext(), "Código enviado a tu correo", Toast.LENGTH_SHORT).show();
+                                    btnFinalizarAlquiler.setEnabled(true);
+                                    btnFinalizarAlquiler.setText("Finalizar alquiler");
+                                    mostrarDialogoIngresarCodigo();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    btnFinalizarAlquiler.setEnabled(true);
+                                    btnFinalizarAlquiler.setText("Finalizar alquiler");
+                                }
+                            }
+                    );
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void mostrarDialogoIngresarCodigo() {
+        if (alquilerActual == null) return;
+
+        final EditText inputCodigo = new EditText(getContext());
+        inputCodigo.setHint("Código de 6 dígitos");
+        inputCodigo.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        inputCodigo.setMaxLines(1);
+
+        LinearLayout container = new LinearLayout(getContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(48, 16, 48, 16);
+        container.addView(inputCodigo);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Ingresa el Código")
+                .setMessage("Revisa tu correo e ingresa el código de 6 dígitos para finalizar el alquiler.")
+                .setView(container)
+                .setPositiveButton("Finalizar", (dialog, which) -> {
+                    String codigo = inputCodigo.getText().toString().trim();
+                    if (codigo.length() == 6) {
+                        confirmarFinalizacion(codigo);
+                    } else {
+                        Toast.makeText(getContext(), "El código debe tener 6 dígitos", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void confirmarFinalizacion(String codigo) {
+        firebaseServicio.confirmarFinalizacion(
+                alquilerActual.getId(),
+                codigo,
+                new FirebaseServicio.OnSimpleCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
+                        alquilerActual.setFinalizado(true); // Actualizar estado local
+                        deshabilitarCampos(); // Bloquear UI
+                        if (fabGlobal != null) {
+                            fabGlobal.setVisibility(View.GONE); // Ocultar FAB
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
     }
 
     private void configureGlobalFab() {
         View hostView = getView();
         if (hostView == null) return;
+
+        if (alquilerActual != null && alquilerActual.isFinalizado()) {
+            hideGlobalFab();
+            return;
+        }
 
         if (modoSoloLectura && !editandoActualmente) {
             configurarFabEditar();
@@ -607,7 +715,14 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             configurarFabGuardar();
         }
     }
-
+    private void hideGlobalFab() {
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
+        } else {
+            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
+            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        }
+    }
     private void configurarFabEditar() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
@@ -623,7 +738,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 fab.setText("Editar");
                 try {
                     fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_editar_blanco));
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 fab.setOnClickListener(v -> {
                     editandoActualmente = true;
                     habilitarCampos();
@@ -645,7 +761,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 fab.setText("Guardar");
                 try {
                     fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_guardar_blanco));
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 fab.setOnClickListener(v -> guardarAlquilerMensual());
                 fab.setVisibility(View.VISIBLE);
             }
