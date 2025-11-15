@@ -397,6 +397,18 @@
         tools:orientation="horizontal" />
 
     <TextView
+        android:id="@+id/emptyStatePagosPendientes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:paddingVertical="32dp"
+        android:text="No hay pagos pendientes."
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"

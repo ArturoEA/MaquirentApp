@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.maquirentapp.Access.PagoPendienteAdapter;
@@ -40,6 +41,7 @@ public class HomeFragment extends Fragment {
     private List<PagoPendiente> pagosPendientesList = new ArrayList<>();
     private Map<String, GrupoElectrogeno> gruposMap = new HashMap<>();
     private NavController navController;
+    private TextView emptyStatePagosPendientes;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -67,7 +69,7 @@ public class HomeFragment extends Fragment {
         CardView cardPlanosCambioVoltaje = view.findViewById(R.id.cardPlanosVoltaje);
         CardView cardFichasTecnicas = view.findViewById(R.id.cardFichasTecnicas);
 
-        NavController navController = Navigation.findNavController(view);
+        navController = Navigation.findNavController(view);
 
         cardNuevoAlquiler.setOnClickListener(v ->
                 navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerFragment));
@@ -76,6 +78,7 @@ public class HomeFragment extends Fragment {
         cardPlanosCambioVoltaje.setOnClickListener(v -> navController.navigate(R.id.action_home_to_PlanosCambioVoltajeFragment));
         cardFichasTecnicas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_FichasTecnicasFragment));
 
+        emptyStatePagosPendientes = view.findViewById(R.id.emptyStatePagosPendientes);
         setupPagosPendientesRecyclerView(view);
         cargarPagosPendientes();
     }
@@ -84,15 +87,11 @@ public class HomeFragment extends Fragment {
         recyclerPagosPendientes.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
 
         pagoPendienteAdapter = new PagoPendienteAdapter(pagosPendientesList, pago -> {
-            // Acción al hacer clic en un pago pendiente
             Bundle args = new Bundle();
             args.putString("idGrupo", pago.getIdGrupo());
             args.putString("alquilerId", pago.getAlquilerId());
-            args.putBoolean("modoSoloLectura", true);
-            // Puedes añadir el detalleMesId para hacer scroll automático en el siguiente fragmento
-            // args.putString("detalleMesIdDestacado", pago.getDetalleMesId());
+            args.putBoolean("modoSoloLectura", true);;
 
-            // Asegúrate de que esta acción exista en tu nav_graph.xml
             try {
                 navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerMensualFragment, args);
             } catch (Exception e) {
@@ -106,8 +105,6 @@ public class HomeFragment extends Fragment {
     private void cargarPagosPendientes() {
         pagosPendientesList.clear();
         gruposMap.clear();
-
-        // 1. Cargar todos los grupos electrógenos para mapear ID a Código
         firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
@@ -116,14 +113,12 @@ public class HomeFragment extends Fragment {
                         gruposMap.put(g.getId(), g);
                     }
                 }
-                // 2. Cargar los alquileres
                 cargarAlquileresActivos();
             }
 
             @Override
             public void onError(Exception e) {
                 Log.e("HomeFragment", "Error al cargar grupos", e);
-                // Continuar sin nombres de grupos si falla
                 cargarAlquileresActivos();
             }
         });
@@ -200,21 +195,27 @@ public class HomeFragment extends Fragment {
 
                 // Lógica de color
                 if (mesPendiente) {
-                    pago.setEstadoColor(R.color.red_accent); // Rojo si el mes está pendiente
+                    pago.setEstadoColor(R.color.red_accent);
                 } else {
-                    pago.setEstadoColor(R.color.yellow_accent); // Amarillo si solo HE está pendiente
+                    pago.setEstadoColor(R.color.yellow_accent);
                 }
 
                 pagosPendientesList.add(pago);
             }
         }
     }
-
     private void actualizarAdaptadorPagos() {
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 pagoPendienteAdapter.setItems(pagosPendientesList);
-                // Aquí también puedes gestionar un "empty state" para la lista de pagos
+
+                if (pagosPendientesList.isEmpty()) {
+                    recyclerPagosPendientes.setVisibility(View.GONE);
+                    emptyStatePagosPendientes.setVisibility(View.VISIBLE);
+                } else {
+                    recyclerPagosPendientes.setVisibility(View.VISIBLE);
+                    emptyStatePagosPendientes.setVisibility(View.GONE);
+                }
             });
         }
     }
