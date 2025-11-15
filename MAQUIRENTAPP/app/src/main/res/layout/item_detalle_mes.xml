@@ -66,9 +66,7 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/textInputHorometro"
                     style="@style/DetalleMesTextInputLayout"
-                    android:hint="Horómetro al 25/09/2025"
-                    app:boxStrokeColor="@color/white"
-                    app:boxStrokeWidth="2dp">
+                    android:hint="Horómetro al 25/09/2025">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/inputHorometro"

@@ -64,9 +64,9 @@
                     android:id="@+id/tvMontoMes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Monto pendiente de mes: S/.0.00"
+                    android:text="Mes: S/.0.00"
                     android:textColor="@color/white"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -79,9 +79,9 @@
                     android:id="@+id/tvMontoHE"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Monto pendiente de HE: S/.0.00"
+                    android:text="Horas extra: S/.0.00"
                     android:textColor="@color/white"
-                    android:textSize="14sp" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
         </LinearLayout>

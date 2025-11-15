@@ -79,28 +79,24 @@ public class PagoPendienteAdapter extends RecyclerView.Adapter<PagoPendienteAdap
             tvCodigoGrupo.setText(pago.getCodigoGrupo());
             tvTituloPeriodo.setText(pago.getTituloPeriodo());
 
-            // Mostrar/Ocultar Monto Mes
             if (pago.getMontoPendienteMes() > 0) {
                 llMontoMes.setVisibility(View.VISIBLE);
-                tvMontoMes.setText(String.format(Locale.US, "Monto pendiente de mes: %s%.2f",
+                tvMontoMes.setText(String.format(Locale.US, "Mes: %s%.2f",
                         pago.getMoneda(), pago.getMontoPendienteMes()));
             } else {
                 llMontoMes.setVisibility(View.GONE);
             }
 
-            // Mostrar/Ocultar Monto Horas Extras
             if (pago.getMontoPendienteHE() > 0) {
                 llMontoHE.setVisibility(View.VISIBLE);
-                tvMontoHE.setText(String.format(Locale.US, "Monto pendiente de HE: %s%.2f",
+                tvMontoHE.setText(String.format(Locale.US, "Horas extra: %s%.2f",
                         pago.getMoneda(), pago.getMontoPendienteHE()));
             } else {
                 llMontoHE.setVisibility(View.GONE);
             }
 
-            // Configurar color de la barra
             barraEstado.setBackgroundColor(ContextCompat.getColor(context, pago.getEstadoColor()));
 
-            // Configurar click listener
             itemView.setOnClickListener(v -> listener.onItemClick(pago));
         }
     }
