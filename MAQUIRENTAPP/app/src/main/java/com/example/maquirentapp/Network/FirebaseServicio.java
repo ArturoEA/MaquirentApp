@@ -555,10 +555,14 @@ public class FirebaseServicio {
                 .addOnFailureListener(listener::onError);
     }
 
-    public void confirmarFinalizacion(String alquilerId, String codigo, OnSimpleCallback listener) {
+    public void confirmarFinalizacion(String alquilerId, String codigo,
+                                      double horometroFinal, String fechaFinal,
+                                      OnSimpleCallback listener) {
         Map<String, Object> data = new HashMap<>();
         data.put("alquilerId", alquilerId);
         data.put("codigoIngresado", codigo);
+        data.put("horometroFinal", horometroFinal);
+        data.put("fechaFinal", fechaFinal);
 
         functions.getHttpsCallable("confirmarFinalizacionAlquiler")
                 .call(data)

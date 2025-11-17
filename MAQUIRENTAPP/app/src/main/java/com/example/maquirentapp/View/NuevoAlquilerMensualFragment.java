@@ -752,19 +752,85 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
-
     private void confirmarFinalizacion(String codigo) {
+
+        if (getActivity() != null) {
+            View currentFocus = getActivity().getCurrentFocus();
+            if (currentFocus != null) {
+                currentFocus.clearFocus();
+            }
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            String fechaFinalManual = inputFechaFinal.getText().toString().trim();
+            String horometroFinalManualStr = inputHorometroFinal.getText().toString().trim();
+
+            if (fechaFinalManual.isEmpty() || horometroFinalManualStr.isEmpty()) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Finalización Incompleta")
+                        .setMessage("Los campos 'Fecha Final' u 'Horómetro Final' están vacíos. Si continúas, se usarán la fecha de hoy y el último horómetro registrado en los detalles mensuales.\n\n¿Deseas continuar?")
+                        .setPositiveButton("Continuar", (dialog, which) -> {
+                            procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            } else {
+                procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
+            }
+        }, 100);
+    }
+    private void procederConFinalizacion(String codigo, String fechaFinalManual, String horometroFinalManualStr) {
+        double horometroFinal;
+        String fechaFinal;
+
+        if (!horometroFinalManualStr.isEmpty()) {
+            try {
+                horometroFinal = Double.parseDouble(horometroFinalManualStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Horómetro final manual inválido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else {
+            horometroFinal = 0;
+            List<DetalleMes> detalles = adapterDetallesMes.getItems();
+
+            for (int i = detalles.size() - 1; i >= 0; i--) {
+                if (detalles.get(i).getHorometro() > 0) {
+                    horometroFinal = detalles.get(i).getHorometro();
+                    break;
+                }
+            }
+            if (horometroFinal == 0 && alquilerActual != null) {
+                horometroFinal = alquilerActual.getHorometroInicial();
+            }
+        }
+
+        if (!fechaFinalManual.isEmpty()) {
+            fechaFinal = fechaFinalManual;
+        } else {
+            fechaFinal = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date());
+        }
+
+        if (alquilerActual == null) {
+            Toast.makeText(getContext(), "Error: No se pudo encontrar el alquiler", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        alquilerActual.setHorometroFinal(horometroFinal);
+        alquilerActual.setFechaFinal(fechaFinal);
+
         firebaseServicio.confirmarFinalizacion(
                 alquilerActual.getId(),
                 codigo,
+                horometroFinal,
+                fechaFinal,
                 new FirebaseServicio.OnSimpleCallback() {
                     @Override
                     public void onSuccess() {
                         Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
-                        alquilerActual.setFinalizado(true); // Actualizar estado local
-                        deshabilitarCampos(); // Bloquear UI
+                        alquilerActual.setFinalizado(true);
+                        deshabilitarCampos();
                         if (fabGlobal != null) {
-                            fabGlobal.setVisibility(View.GONE); // Ocultar FAB
+                            fabGlobal.setVisibility(View.GONE);
                         }
                     }
 
@@ -775,7 +841,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 }
         );
     }
-
     private void configureGlobalFab() {
         View hostView = getView();
         if (hostView == null) return;
