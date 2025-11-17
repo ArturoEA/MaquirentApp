@@ -226,7 +226,7 @@ exports.enviarCodigoFinalizarAlquiler = onCall(
  * ============================================================
  */
 exports.confirmarFinalizacionAlquiler = onCall(async (request) => {
-  const { alquilerId, codigoIngresado } = request.data;
+  const { alquilerId, codigoIngresado, horometroFinal, fechaFinal } = request.data;
   const uid = request.auth?.uid;
 
   if (!uid) {
@@ -264,10 +264,10 @@ exports.confirmarFinalizacionAlquiler = onCall(async (request) => {
     throw new Error("El código ha expirado. Solicítalo nuevamente.");
   }
 
-  // ¡Código correcto y válido!
   await docRef.update({
     finalizado: true,
-    fechaFinal: new Date().toISOString(), // Opcional: Sellar fecha de finalización
+    fechaFinal: fechaFinal, 
+    horometroFinal: horometroFinal,
     codigoFinalizacion: admin.firestore.FieldValue.delete(),
     codigoFinalizacionExpira: admin.firestore.FieldValue.delete(),
   });

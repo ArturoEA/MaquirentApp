@@ -753,61 +753,25 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 .show();
     }
     private void confirmarFinalizacion(String codigo) {
+        String fechaFinalManual = inputFechaFinal.getText().toString().trim();
+        String horometroFinalManualStr = inputHorometroFinal.getText().toString().trim();
 
-        if (getActivity() != null) {
-            View currentFocus = getActivity().getCurrentFocus();
-            if (currentFocus != null) {
-                currentFocus.clearFocus();
-            }
+        if (fechaFinalManual.isEmpty() || horometroFinalManualStr.isEmpty()) {
+            Toast.makeText(getContext(), "Fecha Final y Horómetro Final son obligatorios.", Toast.LENGTH_LONG).show();
+            return;
         }
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            String fechaFinalManual = inputFechaFinal.getText().toString().trim();
-            String horometroFinalManualStr = inputHorometroFinal.getText().toString().trim();
 
-            if (fechaFinalManual.isEmpty() || horometroFinalManualStr.isEmpty()) {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("Finalización Incompleta")
-                        .setMessage("Los campos 'Fecha Final' u 'Horómetro Final' están vacíos. Si continúas, se usarán la fecha de hoy y el último horómetro registrado en los detalles mensuales.\n\n¿Deseas continuar?")
-                        .setPositiveButton("Continuar", (dialog, which) -> {
-                            procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
-                        })
-                        .setNegativeButton("Cancelar", null)
-                        .show();
-            } else {
-                procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
-            }
-        }, 100);
+        procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
     }
     private void procederConFinalizacion(String codigo, String fechaFinalManual, String horometroFinalManualStr) {
         double horometroFinal;
-        String fechaFinal;
+        String fechaFinal = fechaFinalManual;
 
-        if (!horometroFinalManualStr.isEmpty()) {
-            try {
-                horometroFinal = Double.parseDouble(horometroFinalManualStr);
-            } catch (NumberFormatException e) {
-                Toast.makeText(getContext(), "Horómetro final manual inválido", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        } else {
-            horometroFinal = 0;
-            List<DetalleMes> detalles = adapterDetallesMes.getItems();
-
-            for (int i = detalles.size() - 1; i >= 0; i--) {
-                if (detalles.get(i).getHorometro() > 0) {
-                    horometroFinal = detalles.get(i).getHorometro();
-                    break;
-                }
-            }
-            if (horometroFinal == 0 && alquilerActual != null) {
-                horometroFinal = alquilerActual.getHorometroInicial();
-            }
-        }
-
-        if (!fechaFinalManual.isEmpty()) {
-            fechaFinal = fechaFinalManual;
-        } else {
-            fechaFinal = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date());
+        try {
+            horometroFinal = Double.parseDouble(horometroFinalManualStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), "Horómetro final manual inválido", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         if (alquilerActual == null) {

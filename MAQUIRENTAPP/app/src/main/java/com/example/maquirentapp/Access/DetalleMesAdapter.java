@@ -1,6 +1,7 @@
 package com.example.maquirentapp.Access;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -106,6 +107,20 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                 deshabilitarInputHorometro(holder);
             }
         }
+    }
+    public void forzarGuardadoDatosVisibles(RecyclerView recyclerView) {
+        if (recyclerView == null) return;
+        Log.d("DetalleMesAdapter", "Iniciando guardado forzado de horómetros...");
+
+        for (int i = 0; i < recyclerView.getChildCount(); i++) {
+            View view = recyclerView.getChildAt(i);
+            ViewHolder holder = (ViewHolder) recyclerView.getChildViewHolder(view);
+
+            if (holder != null && holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+                guardarValorHorometroEnModelo(holder, items.get(holder.getAdapterPosition()));
+            }
+        }
+        Log.d("DetalleMesAdapter", "Guardado forzado completado.");
     }
     private void configurarConfirmaciones(ViewHolder holder, DetalleMes detalle) {
         // Confirmación de pago de mes
@@ -245,27 +260,34 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setOnFocusChangeListener(null);
         holder.inputHorometro.setOnEditorActionListener(null);
     }
-
-    private void procesarYActualizarHorometro(ViewHolder holder, DetalleMes detalle, int position) {
+    private void guardarValorHorometroEnModelo(ViewHolder holder, DetalleMes detalle) {
         String nuevoValor = holder.inputHorometro.getText().toString().trim();
-        if (!nuevoValor.isEmpty() && listener != null) {
-            try {
-                double horometro = Double.parseDouble(nuevoValor);
-                if (detalle.getHorometro() != horometro) {
-                    detalle.setHorometro(horometro);
+        if (nuevoValor.isEmpty()) {
+            detalle.setHorometro(0);
+            return;
+        }
 
-                    listener.onHorometroChanged(detalle, horometro);
-
-                    holder.itemView.postDelayed(() -> {
-                        notifyItemChanged(position, "CALCULATED_FIELDS");
-                    }, 100);
-                }
-            } catch (NumberFormatException e) {
-                holder.inputHorometro.setError("Número inválido");
-            }
+        try {
+            double horometro = Double.parseDouble(nuevoValor);
+            detalle.setHorometro(horometro);
+        } catch (NumberFormatException e) {
+            Log.e("DetalleMesAdapter", "Número inválido al forzar guardado");
         }
     }
+    private void procesarYActualizarHorometro(ViewHolder holder, DetalleMes detalle, int position) {
+        double horometroAntes = detalle.getHorometro();
 
+        guardarValorHorometroEnModelo(holder, detalle);
+
+        double horometroDespues = detalle.getHorometro();
+
+        if (horometroAntes != horometroDespues && listener != null) {
+            listener.onHorometroChanged(detalle, horometroDespues);
+            holder.itemView.postDelayed(() -> {
+                notifyItemChanged(position, "CALCULATED_FIELDS");
+            }, 100);
+        }
+    }
     private void habilitarCamposEdicion(ViewHolder holder) {
         holder.inputHorometro.setEnabled(true);
         holder.inputHorometro.setFocusable(true);
