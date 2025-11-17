@@ -343,75 +343,70 @@ exports.confirmarEliminacionUsuario = onCall(
  * ============================================================
  */
 exports.notificarPagosPendientes = onSchedule({
-  schedule: "50 16 * * 6", // "0 9 * * 1" = todos los lunes a las 9:00 AM
+  schedule: "0 9 * * 1",
   timeZone: "America/Lima",
+  region: "us-central1",
 }, async (event) => {
   logger.info("Ejecutando notificarPagosPendientes...");
   const db = admin.firestore();
   const pagosPendientes = [];
 
   try {
-    // 1. Obtener todos los alquileres mensuales NO finalizados
+    // 1. Obtener alquileres activos
     const alquileresSnapshot = await db
       .collection("alquileresMensuales")
       .where("finalizado", "==", false)
       .get();
-
+      
     if (alquileresSnapshot.empty) {
-      logger.info("No hay alquileres activos. Terminando.");
+      logger.info("No hay alquileres activos.");
       return null;
     }
 
-    // 2. Iterar sobre cada alquiler y buscar sus detalles de mes
+    // 2. Buscar pagos pendientes
+    let totalPendientes = 0;
+    
     for (const alquilerDoc of alquileresSnapshot.docs) {
       const alquiler = alquilerDoc.data();
-      alquiler.id = alquilerDoc.id;
-
+      
+      // Obtener detalles de mes para este alquiler
       const detallesSnapshot = await db
         .collection("detallesMes")
-        .where("idAlquilerMensual", "==", alquiler.id)
+        .where("idAlquilerMensual", "==", alquilerDoc.id)
         .get();
-
-      for (const detalleDoc of detallesSnapshot.docs) {
+      
+      detallesSnapshot.forEach((detalleDoc) => {
         const detalle = detalleDoc.data();
         
-        // 3. Comprobar si hay pagos pendientes en este detalle
-        const mesPendiente = !detalle.pagoMesConfirmado;
-        const hePendiente = !detalle.pagoHEConfirmado && 
-                             detalle.precioHorasExtras > 0;
-
-        if (mesPendiente || hePendiente) {
+        // Verificar si hay pagos pendientes
+        if (!detalle.pagoMesConfirmado || 
+            (detalle.horasExtras > 0 && !detalle.pagoHEConfirmado)) {
           pagosPendientes.push({
-            cliente: alquiler.nombreCliente,
+            alquilerId: alquilerDoc.id,
+            empresa: alquiler.nombreCliente,
             periodo: detalle.tituloPeriodo,
+            pagoMesPendiente: !detalle.pagoMesConfirmado,
+            pagoHEPendiente: detalle.horasExtras > 0 && !detalle.pagoHEConfirmado
           });
-          // Solo necesitamos saber si hay al menos un pago pendiente
-          // por alquiler para no saturar la lista
-          break; 
+          totalPendientes++;
         }
-      }
+      });
     }
 
-    const totalPendientes = pagosPendientes.length;
     if (totalPendientes === 0) {
-      logger.info("No se encontraron pagos pendientes.");
+      logger.info("No hay pagos pendientes.");
       return null;
     }
 
     logger.info(`Se encontraron ${totalPendientes} alquileres con pagos pendientes.`);
 
-    // 4. Obtener los tokens de los administradores
+    // 3. Obtener tokens de administradores
     const tokens = [];
     const adminSnapshot = await db
       .collection("usuarios")
       .where("rol", "==", "admin")
       .get();
-
-    if (adminSnapshot.empty) {
-      logger.warn("No se encontraron usuarios 'admin' para notificar.");
-      return null;
-    }
-
+      
     adminSnapshot.forEach((adminDoc) => {
       const adminData = adminDoc.data();
       if (adminData.fcmTokens && Array.isArray(adminData.fcmTokens)) {
@@ -420,36 +415,118 @@ exports.notificarPagosPendientes = onSchedule({
     });
 
     if (tokens.length === 0) {
-      logger.warn("Se encontraron admins, pero no tienen tokens FCM.");
+      logger.warn("No se encontraron tokens FCM de administradores.");
       return null;
     }
 
-    // 5. Crear y enviar el mensaje
-    const mensaje = totalPendientes === 1 ?
-      `Hay 1 alquiler con pagos pendientes.` :
-      `Hay ${totalPendientes} alquileres con pagos pendientes.`;
+    logger.info(`Enviando notificación a ${tokens.length} token(s)`);
 
-    const payload = {
+    // 4.Usar sendEach() en lugar de sendToDevice()
+    const messages = tokens.map(token => ({
+      token: token,
       notification: {
         title: "Pagos Pendientes - MAQUIRENT",
-        body: mensaje,
+        body: `Hay ${totalPendientes} alquiler${totalPendientes > 1 ? 'es' : ''} con pagos pendientes.`
       },
       data: {
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-        screen: "pagos_pendientes" // (Pantalla por crear)
+        type: "pagos_pendientes",
+        count: totalPendientes.toString(),
+        timestamp: Date.now().toString()
+      },
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          channelId: "pagos_pendientes"
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            badge: totalPendientes
+          }
+        }
       }
+    }));
+
+    const response = await admin.messaging().sendEach(messages);
+
+    let successCount = 0;
+    let failureCount = 0;
+    const failedTokens = [];
+
+    response.responses.forEach((resp, idx) => {
+      if (resp.success) {
+        successCount++;
+        logger.info(`Mensaje enviado exitosamente al token: ${tokens[idx].substring(0, 10)}...`);
+      } else {
+        failureCount++;
+        logger.error(`Error al enviar al token ${tokens[idx].substring(0, 10)}...: ${resp.error?.message}`);
+        
+        // Si el token es inválido, marcarlo para eliminación
+        if (resp.error?.code === 'messaging/invalid-registration-token' ||
+            resp.error?.code === 'messaging/registration-token-not-registered') {
+          failedTokens.push(tokens[idx]);
+        }
+      }
+    });
+
+    logger.info(`Notificaciones enviadas: ${successCount} exitosas, ${failureCount} fallidas`);
+
+    // Opcional: Limpiar tokens inválidos
+    if (failedTokens.length > 0) {
+      await limpiarTokensInvalidos(db, failedTokens);
+    }
+
+    return { 
+      success: true, 
+      totalPendientes,
+      notificacionesEnviadas: successCount,
+      notificacionesFallidas: failureCount
     };
-
-    logger.info("Enviando notificación a tokens:", tokens);
-    await admin.messaging().sendToDevice(tokens, payload);
-
-    return { success: true, notificacionesEnviadas: tokens.length };
 
   } catch (error) {
     logger.error("Error al notificar pagos pendientes:", error);
     return { success: false, error: error.message };
   }
 });
+
+// Función auxiliar para limpiar tokens inválidos
+async function limpiarTokensInvalidos(db, tokensInvalidos) {
+  logger.info(`Limpiando ${tokensInvalidos.length} token(s) inválido(s)...`);
+  
+  try {
+    const adminSnapshot = await db
+      .collection("usuarios")
+      .where("rol", "==", "admin")
+      .get();
+    
+    const batch = db.batch();
+    let cleanedCount = 0;
+
+    adminSnapshot.forEach((adminDoc) => {
+      const adminData = adminDoc.data();
+      if (adminData.fcmTokens && Array.isArray(adminData.fcmTokens)) {
+        const tokensActualizados = adminData.fcmTokens.filter(
+          token => !tokensInvalidos.includes(token)
+        );
+        
+        if (tokensActualizados.length !== adminData.fcmTokens.length) {
+          batch.update(adminDoc.ref, { fcmTokens: tokensActualizados });
+          cleanedCount++;
+        }
+      }
+    });
+
+    if (cleanedCount > 0) {
+      await batch.commit();
+      logger.info(`Se limpiaron tokens inválidos de ${cleanedCount} usuario(s)`);
+    }
+  } catch (error) {
+    logger.error("Error al limpiar tokens inválidos:", error);
+  }
+}
 
 // ------------------------------------------------------------
 // FUNCIONES AUXILIARES
