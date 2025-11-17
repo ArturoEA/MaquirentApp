@@ -38,6 +38,7 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.DetalleMesAdapter;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -72,6 +73,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private String monedaSeleccionada = "SOL";
     private AlquilerMensual alquilerActual;
     private ExtendedFloatingActionButton fabGlobal;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,6 +96,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         firebaseServicio = new FirebaseServicio();
+        firebaseAuth = FirebaseAuth.getInstance();
 
         if (getActivity() != null) {
             fabGlobal = getActivity().findViewById(R.id.btnGlobal);
@@ -524,6 +527,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setPrecioHoraExtra(precioHoraExtra);
         alquiler.setIdGrupo(idGrupo);
         alquiler.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
+
+        if (firebaseAuth.getCurrentUser() != null) {
+            alquilerActual.setAdminUid(firebaseAuth.getCurrentUser().getUid());
+        }
 
         if (modoEdicion) {
             firebaseServicio.actualizarAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerUpdatedListener() {

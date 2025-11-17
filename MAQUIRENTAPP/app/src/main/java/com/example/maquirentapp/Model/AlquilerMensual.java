@@ -1,9 +1,10 @@
 package com.example.maquirentapp.Model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AlquilerMensual {
+public class AlquilerMensual implements Serializable {
     private String id;
     private String idGrupo;
     private String nombreCliente;
@@ -18,6 +19,7 @@ public class AlquilerMensual {
     private double precioHoraExtra;
     private List<String> accesoriosIds;
     private boolean finalizado;
+    private String adminUid;
 
     public AlquilerMensual() {
         this.accesoriosIds = new ArrayList<>();
@@ -134,5 +136,12 @@ public class AlquilerMensual {
 
     public void setFinalizado(boolean finalizado) {
         this.finalizado = finalizado;
+    }
+    public String getAdminUid() {
+        return adminUid;
+    }
+
+    public void setAdminUid(String adminUid) {
+        this.adminUid = adminUid;
     }
 }
