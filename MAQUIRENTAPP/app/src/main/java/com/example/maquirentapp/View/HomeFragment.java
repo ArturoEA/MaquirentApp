@@ -105,7 +105,7 @@ public class HomeFragment extends Fragment {
     private void cargarPagosPendientes() {
         pagosPendientesList.clear();
         gruposMap.clear();
-        firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
+        firebaseServicio.getGruposElectrogenos(false, new FirebaseServicio.OnGruposLoadedListener() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 for (GrupoElectrogeno g : grupos) {

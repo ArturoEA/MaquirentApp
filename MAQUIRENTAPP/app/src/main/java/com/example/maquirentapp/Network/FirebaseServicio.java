@@ -30,12 +30,14 @@ public class FirebaseServicio {
     private final FirebaseStorage storage;
     private final FirebaseFunctions functions;
     private final FirebaseAuth auth;
+
     public FirebaseServicio() {
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         auth = FirebaseAuth.getInstance();
         functions = FirebaseFunctions.getInstance();
     }
+
     public void registrarUsuario(String email, String password, String nombre, OnAuthListener listener) {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
@@ -49,6 +51,7 @@ public class FirebaseServicio {
                     }
                 });
     }
+
     private void crearPerfilUsuario(String uid, String nombre, String email, OnAuthListener listener) {
         Usuario usuario = new Usuario(uid, nombre, email);
 
@@ -60,6 +63,7 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+
     public void verificarEstadoUsuario(OnAuthListener listener) {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) {
@@ -92,6 +96,7 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+
     public void getUsuariosPendientes(OnUsuariosListener listener) {
         db.collection("usuarios")
                 .whereEqualTo("estado", "pendiente")
@@ -102,6 +107,7 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+
     public void aprobarUsuario(String uid, OnUsuarioUpdatedListener listener) {
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) return;
@@ -115,6 +121,7 @@ public class FirebaseServicio {
                 .addOnSuccessListener(aVoid -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
+
     public void desactivarUsuario(String uid, OnUsuarioUpdatedListener listener) {
         db.collection("usuarios")
                 .document(uid)
@@ -122,6 +129,7 @@ public class FirebaseServicio {
                 .addOnSuccessListener(aVoid -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
+
     public void iniciarSesion(String email, String password, OnAuthListener listener) {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
@@ -132,9 +140,11 @@ public class FirebaseServicio {
                     }
                 });
     }
+
     public void cerrarSesion() {
         auth.signOut();
     }
+
     public void crearGrupoConImagen(String codigo, Uri imagenUri, OnGrupoCreatedListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("gruposElectrogenos").document();
@@ -182,17 +192,21 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+
     // Interface para callbacks simples
     public interface OnSimpleCallback {
         void onSuccess();
+
         void onError(Exception e);
     }
+
     public void actualizarCodigoGrupo(String grupoId, String nuevoCodigo, OnSimpleCallback callback) {
         db.collection("gruposElectrogenos").document(grupoId)
                 .update("codigo", nuevoCodigo)
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
+
     public void eliminarGrupoSuave(String grupoId, Map<String, Object> updates, OnSimpleCallback callback) {
         db.collection("gruposElectrogenos").document(grupoId)
                 .update(updates)
@@ -236,23 +250,27 @@ public class FirebaseServicio {
     }
 
     // Obtener grupos electrógenos
-    public void getGruposElectrogenos(OnGruposLoadedListener listener) {
-        db.collection("gruposElectrogenos")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        List<GrupoElectrogeno> grupos = new ArrayList<>();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            GrupoElectrogeno grupo = document.toObject(GrupoElectrogeno.class);
-                            grupo.setId(document.getId());
-                            grupos.add(grupo);
-                        }
-                        listener.onSuccess(grupos);
-                    } else {
-                        listener.onError(task.getException());
-                    }
-                });
+    public void getGruposElectrogenos(boolean incluirEliminados, OnGruposLoadedListener listener) {
+        Query query = db.collection("gruposElectrogenos");
+
+        if (!incluirEliminados) {
+            query = query.whereEqualTo("eliminado", false);
+        }
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                List<GrupoElectrogeno> grupos = new ArrayList<>();
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    GrupoElectrogeno grupo = document.toObject(GrupoElectrogeno.class);
+                    grupo.setId(document.getId());
+                    grupos.add(grupo);
+                }
+                listener.onSuccess(grupos);
+            } else {
+                listener.onError(task.getException());
+            }
+        });
     }
+
     //Métodos para accesorios
     public void getAccesorios(String tipo, OnAccesoriosLoadedListener listener) {
         db.collection("accesorios")
@@ -352,6 +370,7 @@ public class FirebaseServicio {
                 .addOnSuccessListener(aVoid -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
+
     // Métodos para DetalleMes
     public void crearDetalleMes(DetalleMes detalle, OnDetalleMesCreatedListener listener) {
         if (detalle.getIdAlquilerMensual() == null || detalle.getIdAlquilerMensual().isEmpty()) {
@@ -517,6 +536,7 @@ public class FirebaseServicio {
         // Esto requeriría parsear las fechas y verificar
         return true; // Implementar lógica completa
     }
+
     public void solicitarCodigoFinalizacion(String alquilerId, String nombreCliente, OnSimpleCallback listener) {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null || user.getEmail() == null) {
@@ -545,6 +565,7 @@ public class FirebaseServicio {
                 .addOnSuccessListener(result -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
+
     public void guardarFCMToken(String token) {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null || token == null || token.isEmpty()) {
@@ -561,6 +582,7 @@ public class FirebaseServicio {
                     Log.e("FirebaseServicio", "Error al guardar FCM Token", e);
                 });
     }
+
     public void registrarIngreso(Ingreso ingreso, OnIngresoRegistradoListener listener) {
         db.collection("ingresosRegistrados")
                 .add(ingreso)
@@ -569,6 +591,7 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+
     public void getIngresosPorGrupoYMes(String idGrupo, int mes, int anio, OnIngresosLoadedListener listener) {
         db.collection("ingresosRegistrados")
                 .whereEqualTo("idGrupo", idGrupo)
@@ -585,98 +608,127 @@ public class FirebaseServicio {
     // Interfaces para callbacks
     public interface OnIngresosLoadedListener {
         void onSuccess(List<Ingreso> ingresos);
+
         void onError(Exception e);
     }
+
     public interface OnIngresoRegistradoListener {
         void onSuccess(String id);
+
         void onError(Exception e);
     }
+
     public interface OnDetalleMesCreatedListener {
         void onSuccess(DetalleMes detalle);
+
         void onError(Exception e);
     }
 
     public interface OnDetallesMesLoadedListener {
         void onSuccess(List<DetalleMes> detalles);
+
         void onError(Exception e);
     }
 
     public interface OnDetalleMesLoadedListener {
         void onSuccess(DetalleMes detalle);
+
         void onError(Exception e);
     }
 
     public interface OnDetalleMesUpdatedListener {
         void onSuccess();
+
         void onError(Exception e);
     }
 
     public interface OnDetalleMesDeletedListener {
         void onSuccess();
+
         void onError(Exception e);
     }
 
     public interface OnAlquileresActivosListener {
         void onSuccess(List<AlquilerMensual> alquileres);
+
         void onError(Exception e);
     }
+
     public interface OnAccesoriosLoadedListener {
         void onSuccess(List<Accesorio> accesorios);
+
         void onError(Exception e);
     }
 
     public interface OnAccesorioLoadedListener {
         void onSuccess(Accesorio accesorio);
+
         void onError(Exception e);
     }
 
     public interface OnAlquilerMensualLoadedListener {
         void onSuccess(AlquilerMensual alquiler);
+
         void onError(Exception e);
     }
 
     public interface OnAlquilerUpdatedListener {
         void onSuccess();
+
         void onError(Exception e);
     }
 
     public interface OnAlquilerDeletedListener {
         void onSuccess();
+
         void onError(Exception e);
     }
+
     public interface OnAuthListener {
         void onLoginExitoso(Usuario usuario);
+
         void onRegistroExitoso(Usuario usuario);
+
         void onUsuarioPendiente();
+
         void onUsuarioInactivo();
+
         void onError(Exception e);
     }
 
     public interface OnUsuariosListener {
         void onSuccess(List<Usuario> usuarios);
+
         void onError(Exception e);
     }
 
     public interface OnUsuarioUpdatedListener {
         void onSuccess();
+
         void onError(Exception e);
     }
+
     public interface OnGrupoCreatedListener {
         void onSuccess(GrupoElectrogeno grupo);
+
         void onError(Exception e);
     }
+
     public interface OnAlquileresLoadedListener {
         void onSuccess(List<AlquilerMensual> alquileres);
+
         void onError(Exception e);
     }
 
     public interface OnAlquilerCreatedListener {
         void onSuccess(AlquilerMensual alquiler);
+
         void onError(Exception e);
     }
 
     public interface OnGruposLoadedListener {
         void onSuccess(List<GrupoElectrogeno> grupos);
+
         void onError(Exception e);
     }
 }

@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/background_light"
-    android:theme="@style/Theme.TextMain">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:theme="@style/Theme.TextMain"
+    tools:context=".View.CGEFragment">
 
-    <LinearLayout
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_grupos_electrogenos"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="true"
+        android:padding="8dp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_grupos_electrogenos"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/background_light"
-            android:clipToPadding="false"
-            android:padding="16dp"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switchEliminados"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mostrar grupos eliminados"
+        android:textSize="16sp"
+        android:textColor="@color/black"
+        android:theme="@style/Theme.TextMain" />
 
-    </LinearLayout>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

@@ -148,7 +148,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
     private void cargarGrupos() {
         Log.d(TAG, "Iniciando carga de grupos...");
 
-        firebaseServicio.getGruposElectrogenos(new FirebaseServicio.OnGruposLoadedListener() {
+        firebaseServicio.getGruposElectrogenos(false, new FirebaseServicio.OnGruposLoadedListener() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 List<GrupoElectrogeno> filtrados = new ArrayList<>();
