@@ -71,13 +71,14 @@ public class CGEFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        navController = Navigation.findNavController(view);
+
         firebaseServicio = new FirebaseServicio();
 
         progressBar = view.findViewById(R.id.progressBar);
         switchEliminados = view.findViewById(R.id.switchEliminados);
         recyclerView = view.findViewById(R.id.recycler_grupos_electrogenos);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
         setupRecyclerView(view);
         switchEliminados.setOnCheckedChangeListener((buttonView, isChecked) -> {
             cargarGrupos();

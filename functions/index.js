@@ -4,7 +4,8 @@ const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { getStorage } = require("firebase-admin/storage")
 
 admin.initializeApp();
 
@@ -76,63 +77,90 @@ exports.enviarCodigoEliminacion = onCall(
   }
 );
 
-/**
- * ============================================================
- * FUNCIÓN PROGRAMADA: Eliminar grupos expirados cada día a las 2:00 AM
- * ============================================================
- */
-exports.eliminarGruposExpirados = onSchedule(
-  {
-    schedule: "0 2 * * *",
-    timeZone: "America/Lima",
-    secrets: [EMAIL_USER, EMAIL_PASS, ADMIN_EMAIL],
-  },
-  async () => {
+exports.borrarFotosDeGrupoEliminado = onDocumentUpdated("gruposElectrogenos/{grupoId}", async (event) => {
+  const antes = event.data.before.data();
+  const despues = event.data.after.data();
+
+  // Si el campo 'eliminado' cambió de 'false' a 'true'
+  if (antes.eliminado === false && despues.eliminado === true) {
+    logger.info(`Iniciando borrado de fotos para Grupo (Soft Delete): ${event.params.grupoId}`);
+    
     const db = admin.firestore();
-    const ahora = Date.now();
-    const treintaDiasEnMs = 30 * 24 * 60 * 60 * 1000;
+    const storage = getStorage();
+    const grupoId = event.params.grupoId;
 
     try {
-      const snapshot = await db
-        .collection("gruposElectrogenos")
-        .where("eliminado", "==", true)
-        .get();
-
-      if (snapshot.empty) {
-        logger.info("No hay grupos para eliminar");
-        return null;
+      // 1. Borrar foto principal del grupo
+      if (despues.foto && despues.foto.includes("firebasestorage")) {
+        await borrarFotoPorUrl(storage, despues.foto, "Foto Principal");
       }
 
-      const batch = db.batch();
-      const gruposEliminados = [];
+      // 2. Buscar todos los mantenimientos de ESE grupo
+      const mantenimientosSnapshot = await db.collection("mantenimientos")
+        .where("idGrupo", "==", grupoId)
+        .get();
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const fechaEliminacion = data.fechaEliminacion;
-
-        if (fechaEliminacion && ahora - fechaEliminacion >= treintaDiasEnMs) {
-          batch.delete(doc.ref);
-          gruposEliminados.push({
-            id: doc.id,
-            codigo: data.codigo,
-            fechaEliminacion: new Date(fechaEliminacion).toISOString(),
-          });
-
-          if (data.foto) eliminarFotoStorage(data.foto);
+      if (mantenimientosSnapshot.empty) {
+        logger.info("No hay mantenimientos, borrado de fotos terminado.");
+        return null;
+      }
+      
+      // 3. Borrar todas las fotos de cada mantenimiento
+      let contadorFotos = 0;
+      for (const doc of mantenimientosSnapshot.docs) {
+        const mantenimiento = doc.data();
+        if (mantenimiento.fotosUrls && Array.isArray(mantenimiento.fotosUrls)) {
+          for (const url of mantenimiento.fotosUrls) {
+            await borrarFotoPorUrl(storage, url, "Foto Mantenimiento");
+            contadorFotos++;
+          }
+          await doc.ref.update({ fotosUrls: [] });
         }
-      });
+      }
+      
+      logger.info(`Borrado de fotos completado. Total: ${contadorFotos} fotos de mant.`);
+      return { success: true, fotosBorradas: contadorFotos };
 
-      await batch.commit();
-      logger.info(`Eliminados ${gruposEliminados.length} grupos electrógenos`);
-      await enviarNotificacionAdmin(gruposEliminados);
-      return { eliminados: gruposEliminados.length };
     } catch (error) {
-      logger.error("Error eliminando grupos:", error);
-      return null;
+      logger.error(`Error borrando fotos para ${grupoId}:`, error);
+      return { success: false };
     }
   }
-);
+  return null;
+});
 
+exports.limpiarDatosGrupoEliminado = onDocumentDeleted("gruposElectrogenos/{grupoId}", async (event) => {
+  const grupoId = event.params.grupoId;
+  const db = admin.firestore();
+  
+  logger.info(`INICIANDO LIMPIEZA EN CASCADA (Hard Delete) para Grupo: ${grupoId}`);
+
+  // 1. Borrar Alquileres Mensuales
+  const alquileresMensuales = await db.collection("alquileresMensuales")
+    .where("idGrupo", "==", grupoId).get();
+    
+  if (!alquileresMensuales.empty) {
+    logger.info(`Borrando ${alquileresMensuales.size} alquiler(es) mensual(es)`);
+    for (const doc of alquileresMensuales.docs) {
+      await doc.ref.delete();
+    }
+  }
+
+  // 2. Borrar Mantenimientos
+  const mantenimientos = await db.collection("mantenimientos")
+    .where("idGrupo", "==", grupoId).get();
+    
+  if (!mantenimientos.empty) {
+    const batchManto = db.batch();
+    mantenimientos.forEach(doc => batchManto.delete(doc.ref));
+    await batchManto.commit();
+  }
+  
+  // ... (Añadir borrado de AlquileresDiarios si es necesario) ...
+  
+  logger.info(`LIMPIEZA COMPLETA (Hard Delete) para Grupo: ${grupoId}`);
+  return { success: true };
+});
 /**
  * ============================================================
  * Enviar código de verificación para FINALIZAR un ALQUILER
@@ -630,55 +658,73 @@ async function limpiarTokensInvalidos(db, tokensInvalidos) {
     logger.error("Error al limpiar tokens inválidos:", error);
   }
 }
+/**
+ * ============================================================
+ * TRIGGER: Limpiar datos asociados al eliminar un Alquiler Mensual
+ * ============================================================
+ */
+exports.limpiarDatosAlquilerMensualEliminado = onDocumentDeleted("alquileresMensuales/{alquilerId}", async (event) => {
+  const alquilerId = event.params.alquilerId;
+  const db = admin.firestore();
+  const batch = db.batch();
+
+  logger.info(`Iniciando limpieza para alquiler mensual eliminado: ${alquilerId}`);
+
+  try {
+    // 1. Encontrar y borrar todos los 'detallesMes' asociados
+    const detallesSnapshot = await db.collection("detallesMes")
+      .where("idAlquilerMensual", "==", alquilerId)
+      .get();
+
+    if (!detallesSnapshot.empty) {
+      detallesSnapshot.forEach(doc => {
+        logger.info(`Borrando detalleMes: ${doc.id}`);
+        batch.delete(doc.ref);
+      });
+    }
+
+    // 2. Encontrar y borrar todos los 'ingresosRegistrados' asociados
+    const ingresosSnapshot = await db.collection("ingresosRegistrados")
+      .where("idAlquiler", "==", alquilerId)
+      .get();
+
+    if (!ingresosSnapshot.empty) {
+      ingresosSnapshot.forEach(doc => {
+        logger.info(`Borrando ingresoRegistrado: ${doc.id}`);
+        batch.delete(doc.ref);
+      });
+    }
+
+    // 3. Ejecutar el borrado en lote
+    await batch.commit();
+    logger.info(`Limpieza completa para alquiler ${alquilerId}.`);
+    return { success: true };
+
+  } catch (error) {
+    logger.error(`Error limpiando datos para alquiler ${alquilerId}:`, error);
+    return { success: false, error: error.message };
+  }
+});
+
+
+
+
+
+
 
 // ------------------------------------------------------------
 // FUNCIONES AUXILIARES
 // ------------------------------------------------------------
-async function eliminarFotoStorage(fotoUrl) {
+async function borrarFotoPorUrl(storage, url, logTipo) {
   try {
-    const bucket = admin.storage().bucket();
-    const fileName = fotoUrl.split("/").pop().split("?")[0];
-    const decodedFileName = decodeURIComponent(fileName);
-    await bucket.file(decodedFileName).delete();
-    logger.info(`Foto eliminada: ${decodedFileName}`);
-  } catch (error) {
-    logger.error("Error eliminando foto:", error);
-  }
-}
-
-async function enviarNotificacionAdmin(gruposEliminados) {
-  const adminEmail = ADMIN_EMAIL.value();
-  if (!adminEmail || gruposEliminados.length === 0) return;
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: EMAIL_USER.value(),
-      pass: EMAIL_PASS.value(),
-    },
-  });
-
-  const listaGrupos = gruposEliminados
-    .map(
-      (g) => `<li>${g.codigo} (Marcado el: ${g.fechaEliminacion})</li>`
-    )
-    .join("");
-
-  const mailOptions = {
-    from: `MAQUIRENT <${EMAIL_USER.value()}>`,
-    to: adminEmail,
-    subject: `Grupos Eliminados - ${new Date().toLocaleDateString()}`,
-    html: `
-      <h2>Reporte de Eliminación Automática</h2>
-      <ul>${listaGrupos}</ul>
-      <p>Total: ${gruposEliminados.length}</p>
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    logger.info(`Notificación enviada al admin: ${adminEmail}`);
-  } catch (error) {
-    logger.error("Error enviando notificación al admin:", error);
+    const urlObj = new URL(url);
+    const pathName = urlObj.pathname;
+    const filePath = decodeURIComponent(pathName.split("/o/")[1].split("?")[0]);
+    
+    const file = storage.bucket().file(filePath);
+    await file.delete();
+    logger.info(`(${logTipo}) Foto borrada de Storage: ${filePath}`);
+  } catch (err) {
+    logger.warn(`No se pudo borrar foto (${logTipo}) de Storage: ${url}. Error: ${err.message}`);
   }
 }
