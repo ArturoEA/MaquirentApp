@@ -33,6 +33,7 @@ import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.DetalleMesAdapter;
@@ -227,12 +228,24 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             public void onPagoMesConfirmado(DetalleMes detalle, int position) {
                 actualizarDetalleMes(detalle);
 
+                registrarIngresoProrrateado(
+                        alquilerActual.getPrecioAlquiler(),
+                        "Alquiler Mensual",
+                        detalle
+                );
+
                 Toast.makeText(getContext(), "Pago del mes confirmado correctamente", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onPagoHEConfirmado(DetalleMes detalle, int position) {
                 actualizarDetalleMes(detalle);
+
+                registrarIngresoProrrateado(
+                        detalle.getPrecioHorasExtras(),
+                        "Horas Extras",
+                        detalle
+                );
 
                 Toast.makeText(getContext(), "Pago de horas extras confirmado correctamente", Toast.LENGTH_SHORT).show();
             }
@@ -258,6 +271,65 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 // Ignorar error
             }
         }
+    }
+    private void registrarIngresoProrrateado(double montoTotal, String tipo, DetalleMes detalle) {
+        if (alquilerActual == null || montoTotal == 0) return;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        final double DIAS_MES_COMERCIAL = 30.0;
+
+        try {
+            Date fechaInicio = sdf.parse(detalle.getFechaInicio());
+            Date fechaFin = sdf.parse(detalle.getFechaFin());
+            if (fechaInicio == null || fechaFin == null) return;
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fechaInicio);
+
+            while (!cal.getTime().after(fechaFin)) {
+                int mesActual = cal.get(Calendar.MONTH); // 0-11
+                int anioActual = cal.get(Calendar.YEAR);
+
+                int diasEnEsteMes = 0;
+                while (cal.get(Calendar.MONTH) == mesActual && !cal.getTime().after(fechaFin)) {
+                    diasEnEsteMes++;
+                    cal.add(Calendar.DAY_OF_YEAR, 1);
+                }
+
+                if (diasEnEsteMes > 0) {
+                    double montoProrrateado = (diasEnEsteMes / DIAS_MES_COMERCIAL) * montoTotal;
+
+                    Ingreso ingreso = new Ingreso(
+                            montoProrrateado,
+                            alquilerActual.getMoneda(),
+                            tipo,
+                            alquilerActual.getIdGrupo(),
+                            alquilerActual.getId(),
+                            alquilerActual.getNombreCliente(),
+                            mesActual + 1,
+                            anioActual
+                    );
+
+                    enviarIngresoAFirebase(ingreso);
+                }
+            }
+
+        } catch (ParseException e) {
+            Log.e("NuevoAlquiler", "Error al prorratear ingreso", e);
+        }
+    }
+    private void enviarIngresoAFirebase(Ingreso ingreso) {
+        firebaseServicio.registrarIngreso(ingreso, new FirebaseServicio.OnIngresoRegistradoListener() {
+            @Override
+            public void onSuccess(String id) {
+                Log.i("NuevoAlquiler", "Ingreso prorrateado registrado (Mes: " + ingreso.getMes() + "): " + id);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("NuevoAlquiler", "Error al registrar ingreso prorrateado (Mes: " + ingreso.getMes() + ")", e);
+            }
+        });
     }
 
     private void calcularHorasExtras(DetalleMes detalle, double horometroActual) {
@@ -529,7 +601,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
 
         if (firebaseAuth.getCurrentUser() != null) {
-            alquilerActual.setAdminUid(firebaseAuth.getCurrentUser().getUid());
+            alquiler.setAdminUid(firebaseAuth.getCurrentUser().getUid());
         }
 
         if (modoEdicion) {
@@ -566,32 +638,31 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private void generarPrimerDetalleMes(AlquilerMensual alquiler) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date fechaInicio = sdf.parse(alquiler.getFechaInicial());
+            Date fechaInicioDate = sdf.parse(alquiler.getFechaInicial());
+            if (fechaInicioDate == null) return;
 
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(fechaInicio);
+            Calendar calInicio = Calendar.getInstance();
+            calInicio.setTime(fechaInicioDate);
 
-            // Sumar 30 días para obtener fecha fin
-            cal.add(Calendar.DAY_OF_MONTH, 30);
-            Date fechaFin = cal.getTime();
+            Calendar calFin = (Calendar) calInicio.clone();
+            calFin.add(Calendar.DAY_OF_YEAR, 29);
+
+            Date fechaFinDate = calFin.getTime();
+
+            String strFechaInicio = sdf.format(fechaInicioDate);
+            String strFechaFin = sdf.format(fechaFinDate);
 
             DetalleMes primerMes = new DetalleMes();
             primerMes.setIdAlquilerMensual(alquiler.getId());
             primerMes.setNumeroMes(1);
-            primerMes.setFechaInicio(sdf.format(fechaInicio));
-            primerMes.setFechaFin(sdf.format(fechaFin));
-
-            // Crear título del período
-            SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
-            String mesInicio = monthFormat.format(fechaInicio);
-            String mesFin = monthFormat.format(fechaFin);
-            primerMes.setTituloPeriodo(mesInicio.substring(0, 1).toUpperCase() + mesInicio.substring(1) +
-                    " - " + mesFin.substring(0, 1).toUpperCase() + mesFin.substring(1));
+            primerMes.setFechaInicio(strFechaInicio);
+            primerMes.setFechaFin(strFechaFin);
+            primerMes.setTituloPeriodo("Mes 1: " + strFechaInicio + " - " + strFechaFin);
 
             firebaseServicio.crearDetalleMes(primerMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
                 @Override
                 public void onSuccess(DetalleMes detalle) {
-                    // Detalle creado exitosamente
+                    Log.i("NuevoAlquiler", "Primer detalle de mes creado.");
                 }
 
                 @Override
@@ -609,8 +680,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         firebaseServicio.actualizarDetalleMes(detalle, new FirebaseServicio.OnDetalleMesUpdatedListener() {
             @Override
             public void onSuccess() {
-                // NO recargar todo, solo actualizar el item específico
-                // El color ya se actualizó inmediatamente en el adaptador
             }
 
             @Override
@@ -722,6 +791,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             configurarFabGuardar();
         }
     }
+
     private void hideGlobalFab() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
@@ -730,6 +800,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             if (activityFab != null) activityFab.setVisibility(View.GONE);
         }
     }
+
     private void configurarFabEditar() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();

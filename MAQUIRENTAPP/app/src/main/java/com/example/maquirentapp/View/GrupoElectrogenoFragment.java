@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 
@@ -28,6 +29,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GrupoElectrogenoFragment extends Fragment {
     private String codigo;
@@ -38,7 +40,10 @@ public class GrupoElectrogenoFragment extends Fragment {
     private TextView tvTotalSOL, tvTotalUSD;
     private int mesSeleccionado = Calendar.getInstance().get(Calendar.MONTH); // Mes actual (0-11)
     private int anioActual = Calendar.getInstance().get(Calendar.YEAR);
-
+    private double acumuladoSOL = 0;
+    private double acumuladoUSD = 0;
+    private boolean isSpinnerInitialLoad = true;
+    private int idCargaActual = 0;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +67,9 @@ public class GrupoElectrogenoFragment extends Fragment {
                 (getArguments() != null ? getArguments().getString("codigo") : null);
         final String idGrupoLocal = idGrupo != null ? idGrupo :
                 (getArguments() != null ? getArguments().getString("idGrupo") : null);
+
+        isSpinnerInitialLoad = true;
+        idCargaActual = 0;
 
         // Inicializar vistas
         spinnerMeses = view.findViewById(R.id.spinnerMeses);
@@ -118,6 +126,10 @@ public class GrupoElectrogenoFragment extends Fragment {
         spinnerMeses.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (isSpinnerInitialLoad) {
+                    isSpinnerInitialLoad = false;
+                    return;
+                }
                 mesSeleccionado = position;
                 cargarTotalesMes(position);
             }
@@ -126,126 +138,47 @@ public class GrupoElectrogenoFragment extends Fragment {
             public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
-
     private void cargarTotalesMes(int mes) {
         if (idGrupo == null) return;
+        idCargaActual++;
+        final int idDeEstaCarga = idCargaActual;
 
-        // Obtener todos los alquileres mensuales del grupo
-        firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
-            @Override
-            public void onSuccess(List<AlquilerMensual> alquileres) {
-                List<AlquilerMensual> alquileresFiltrados = new ArrayList<>();
+        acumuladoSOL = 0;
+        acumuladoUSD = 0;
+        actualizarTotal(tvTotalSOL, 0, "SOL");
+        actualizarTotal(tvTotalUSD, 0, "USD");
 
-                // Filtrar alquileres de este grupo
-                for (AlquilerMensual alquiler : alquileres) {
-                    if (alquiler.getIdGrupo() != null && alquiler.getIdGrupo().equals(idGrupo)) {
-                        alquileresFiltrados.add(alquiler);
-                    }
-                }
-
-                calcularTotalesPorMes(alquileresFiltrados, mes);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar alquileres: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void calcularTotalesPorMes(List<AlquilerMensual> alquileres, int mes) {
-        double totalSOL = 0;
-        double totalUSD = 0;
-
-        for (AlquilerMensual alquiler : alquileres) {
-            // Obtener detalles de mes para este alquiler
-            firebaseServicio.getDetallesMesPorAlquiler(alquiler.getId(),
-                    new FirebaseServicio.OnDetallesMesLoadedListener() {
-                        @Override
-                        public void onSuccess(List<DetalleMes> detalles) {
-                            double[] totales = calcularMontoDelMes(alquiler, detalles, mes);
-
-                            if (alquiler.getMoneda() != null && alquiler.getMoneda().equals("USD")) {
-                                actualizarTotal(tvTotalUSD, totales[0], "USD");
+        firebaseServicio.getIngresosPorGrupoYMes(idGrupo, mes, anioActual,
+                new FirebaseServicio.OnIngresosLoadedListener() {
+                    @Override
+                    public void onSuccess(List<Ingreso> ingresos) {
+                        if (idDeEstaCarga != idCargaActual) {
+                            Log.d("GrupoElectrogeno", "Respuesta antigua ignorada (ID: " + idDeEstaCarga + ")");
+                            return;
+                        }
+                        for (Ingreso ingreso : ingresos) {
+                            if (ingreso.getMoneda() != null && ingreso.getMoneda().equals("USD")) {
+                                acumuladoUSD += ingreso.getMonto();
                             } else {
-                                actualizarTotal(tvTotalSOL, totales[0], "SOL");
+                                acumuladoSOL += ingreso.getMonto();
                             }
                         }
 
-                        @Override
-                        public void onError(Exception e) {
-                            // Silenciar error si no hay detalles
+                        actualizarTotal(tvTotalSOL, acumuladoSOL, "SOL");
+                        actualizarTotal(tvTotalUSD, acumuladoUSD, "USD");
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (idDeEstaCarga != idCargaActual) {
+                            return;
                         }
-                    });
-        }
+                        Toast.makeText(getContext(), "Error al cargar ingresos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        // (Aquí iría la llamada a Alquileres Diarios, que también sumarían a 'acumuladoSOL/USD')
     }
-
-    private double[] calcularMontoDelMes(AlquilerMensual alquiler, List<DetalleMes> detalles, int mesTarget) {
-        double montoMes = 0;
-        double montoHorasExtras = 0;
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
-        for (DetalleMes detalle : detalles) {
-            try {
-                Date fechaInicio = sdf.parse(detalle.getFechaInicio());
-                Date fechaFin = sdf.parse(detalle.getFechaFin());
-
-                if (fechaInicio == null || fechaFin == null) continue;
-
-                Calendar calInicio = Calendar.getInstance();
-                calInicio.setTime(fechaInicio);
-
-                Calendar calFin = Calendar.getInstance();
-                calFin.setTime(fechaFin);
-
-                // Verificar si el período cae en el mes objetivo
-                int mesInicio = calInicio.get(Calendar.MONTH);
-                int mesFin = calFin.get(Calendar.MONTH);
-                int anioInicio = calInicio.get(Calendar.YEAR);
-                int anioFin = calFin.get(Calendar.YEAR);
-
-                // Si el período está completamente dentro del mes
-                if (mesInicio == mesTarget && mesFin == mesTarget &&
-                        anioInicio == anioActual && anioFin == anioActual) {
-                    montoMes += alquiler.getPrecioAlquiler();
-                    montoHorasExtras += detalle.getPrecioHorasExtras();
-                }
-                // Si el período cruza dos meses
-                else if ((mesInicio == mesTarget && anioInicio == anioActual) ||
-                        (mesFin == mesTarget && anioFin == anioActual)) {
-                    // Calcular proporción de días en el mes
-                    double diasEnMes = calcularDiasEnMes(fechaInicio, fechaFin, mesTarget, anioActual);
-                    double proporcion = diasEnMes / 30.0; // Mes comercial de 30 días
-
-                    montoMes += alquiler.getPrecioAlquiler() * proporcion;
-                    montoHorasExtras += detalle.getPrecioHorasExtras() * proporcion;
-                }
-
-            } catch (ParseException e) {
-                Log.e("GrupoElectrogeno", "Error al parsear fechas", e);
-            }
-        }
-
-        return new double[]{montoMes + montoHorasExtras, montoHorasExtras};
-    }
-
-    private int calcularDiasEnMes(Date fechaInicio, Date fechaFin, int mesTarget, int anioTarget) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(fechaInicio);
-
-        int diasEnMes = 0;
-
-        while (!cal.getTime().after(fechaFin)) {
-            if (cal.get(Calendar.MONTH) == mesTarget && cal.get(Calendar.YEAR) == anioTarget) {
-                diasEnMes++;
-            }
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-        }
-
-        return diasEnMes;
-    }
-
     private void actualizarTotal(TextView textView, double total, String moneda) {
         String simbolo = moneda.equals("USD") ? "$" : "S/.";
         String totalFormateado = String.format(Locale.US, "%s %.2f", simbolo, total);

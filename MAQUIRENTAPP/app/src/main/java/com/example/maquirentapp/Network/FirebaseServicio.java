@@ -7,6 +7,7 @@ import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
+import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Model.Usuario;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -186,16 +187,12 @@ public class FirebaseServicio {
         void onSuccess();
         void onError(Exception e);
     }
-
-    // Método para actualizar código del grupo
     public void actualizarCodigoGrupo(String grupoId, String nuevoCodigo, OnSimpleCallback callback) {
         db.collection("gruposElectrogenos").document(grupoId)
                 .update("codigo", nuevoCodigo)
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
-
-    // Método para eliminación suave
     public void eliminarGrupoSuave(String grupoId, Map<String, Object> updates, OnSimpleCallback callback) {
         db.collection("gruposElectrogenos").document(grupoId)
                 .update(updates)
@@ -424,6 +421,8 @@ public class FirebaseServicio {
         updates.put("pagoMesConfirmado", detalle.isPagoMesConfirmado());
         updates.put("pagoHEConfirmado", detalle.isPagoHEConfirmado());
         updates.put("numeroMes", detalle.getNumeroMes());
+        updates.put("fechaConfirmacionPagoMes", detalle.getFechaConfirmacionPagoMes());
+        updates.put("fechaConfirmacionPagoHE", detalle.getFechaConfirmacionPagoHE());
 
         db.collection("detallesMes")
                 .document(detalle.getId())
@@ -562,7 +561,36 @@ public class FirebaseServicio {
                     Log.e("FirebaseServicio", "Error al guardar FCM Token", e);
                 });
     }
+    public void registrarIngreso(Ingreso ingreso, OnIngresoRegistradoListener listener) {
+        db.collection("ingresosRegistrados")
+                .add(ingreso)
+                .addOnSuccessListener(documentReference -> {
+                    listener.onSuccess(documentReference.getId());
+                })
+                .addOnFailureListener(listener::onError);
+    }
+    public void getIngresosPorGrupoYMes(String idGrupo, int mes, int anio, OnIngresosLoadedListener listener) {
+        db.collection("ingresosRegistrados")
+                .whereEqualTo("idGrupo", idGrupo)
+                .whereEqualTo("mes", mes + 1)
+                .whereEqualTo("anio", anio)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Ingreso> ingresos = queryDocumentSnapshots.toObjects(Ingreso.class);
+                    listener.onSuccess(ingresos);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
     // Interfaces para callbacks
+    public interface OnIngresosLoadedListener {
+        void onSuccess(List<Ingreso> ingresos);
+        void onError(Exception e);
+    }
+    public interface OnIngresoRegistradoListener {
+        void onSuccess(String id);
+        void onError(Exception e);
+    }
     public interface OnDetalleMesCreatedListener {
         void onSuccess(DetalleMes detalle);
         void onError(Exception e);

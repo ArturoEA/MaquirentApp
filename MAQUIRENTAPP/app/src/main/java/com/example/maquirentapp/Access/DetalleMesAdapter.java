@@ -79,7 +79,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
 
-        // NUEVO: Configurar visibilidad de las confirmaciones
         configurarConfirmaciones(holder, detalle);
 
         actualizarEstadoBotones(holder, detalle);
@@ -88,7 +87,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.btnExpandir.setRotation(detalle.isExpandido() ? 180f : 0f);
         holder.layoutContenido.setVisibility(detalle.isExpandido() ? View.VISIBLE : View.GONE);
 
-        // Manejo seguro del click del ítem
         holder.itemView.setOnClickListener(v -> {
             ocultarTeclado(v);
             quitarFocoDeInputs(holder);
@@ -102,17 +100,13 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         if (modoSoloLectura) {
             deshabilitarCampos(holder);
         } else {
-            // Verificar si algún pago está confirmado para deshabilitar edición
+            configurarListeners(holder, detalle, position);
+            habilitarCamposEdicion(holder);
             if (detalle.isPagoMesConfirmado() || detalle.isPagoHEConfirmado()) {
                 deshabilitarInputHorometro(holder);
-            } else {
-                habilitarCamposEdicion(holder);
-                configurarListeners(holder, detalle, position);
             }
         }
     }
-
-    // NUEVO MÉTODO: Configurar visibilidad de textos de confirmación
     private void configurarConfirmaciones(ViewHolder holder, DetalleMes detalle) {
         // Confirmación de pago de mes
         if (detalle.isPagoMesConfirmado() && detalle.getFechaConfirmacionPagoMes() != null) {
