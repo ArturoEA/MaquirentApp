@@ -102,9 +102,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         inputLugar = view.findViewById(R.id.ubicacionEditText);
         spinnerMoneda = view.findViewById(R.id.spinnerMoneda);
         tvSimboloMoneda = view.findViewById(R.id.tvSimboloMoneda);
-        inputFechaInicial = view.findViewById(R.id.inputFechaInicial);
+        inputFechaInicial = view.findViewById(R.id.fechaInicialEditText);
         inputFechaFinal = view.findViewById(R.id.fechaFinalEditText);
-        inputHorometroInicial = view.findViewById(R.id.inputHorometroInicial);
+        inputHorometroInicial = view.findViewById(R.id.horometroInicialEditText);
         inputHorometroFinal = view.findViewById(R.id.horometroFinalEditText);
         inputPrecio = view.findViewById(R.id.inputPrecioAlquiler);
         inputHorasMaximas = view.findViewById(R.id.horasMaxDia);

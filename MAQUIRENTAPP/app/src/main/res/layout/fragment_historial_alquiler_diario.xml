@@ -1,13 +1,51 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.HistorialAlquilerDiarioFragment">
+    android:orientation="vertical"
+    android:background="@color/background_light"
+    android:theme="@style/Theme.TextMain">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <Spinner
+            android:id="@+id/spinnerMeses"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/spinner_background"/>
+
+        <TextView
+            android:id="@+id/tvAnio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2025"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginStart="16dp"
+            android:padding="8dp"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerHistorialAlquilerDiario"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
 
     <TextView
+        android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="No hay alquileres diarios para este período."
+        android:gravity="center"
+        android:visibility="gone"/>
 
-</FrameLayout>
+</LinearLayout>

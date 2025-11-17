@@ -48,7 +48,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_historial_alquiler_mensual, container, false);
+        return inflater.inflate(R.layout.fragment_historial_alquiler_diario, container, false);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         navController = Navigation.findNavController(view);
 
-        recyclerView = view.findViewById(R.id.recyclerAlquileres);
+        recyclerView = view.findViewById(R.id.recyclerHistorialAlquilerDiario);
         spinnerMeses = view.findViewById(R.id.spinnerMeses);
         tvAnio = view.findViewById(R.id.tvAnio);
 

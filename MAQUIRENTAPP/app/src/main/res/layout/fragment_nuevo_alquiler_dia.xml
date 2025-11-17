@@ -46,6 +46,7 @@
                     android:id="@+id/clienteEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:hint="Cliente" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -56,6 +57,7 @@
                     android:id="@+id/ubicacionEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:hint="Lugar de trabajo del equipo" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -76,6 +78,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Horómetro inicial"
+                        android:textColor="@color/black"
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -91,6 +94,7 @@
                         android:layout_height="wrap_content"
                         android:clickable="true"
                         android:focusable="false"
+                        android:textColor="@color/black"
                         android:hint="Fecha inicial" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
@@ -112,6 +116,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Horómetro final"
+                        android:textColor="@color/black"
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -127,6 +132,7 @@
                         android:layout_height="wrap_content"
                         android:clickable="true"
                         android:focusable="false"
+                        android:textColor="@color/black"
                         android:hint="Fecha final" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
@@ -191,13 +197,14 @@
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/CustomTextInputLayout"
                     android:layout_width="0dp"
-                    android:layout_weight="0.8">
+                    android:layout_weight="0.5">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/horasMaxDia"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Horas máx. por día"
+                        android:hint="Máx. horas"
+                        android:textColor="@color/black"
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -279,6 +286,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Comentarios"
+                    android:textColor="@color/black"
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
