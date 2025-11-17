@@ -138,6 +138,11 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="Precio"
+                app:hintTextColor="@color/colorHints"
+                android:layout_gravity="center_vertical"
+                app:cursorColor="@color/black"
+                app:boxStrokeColor="@color/black"
+                android:textColorHint="@color/colorHints"
                 app:boxBackgroundMode="none">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -146,6 +151,7 @@
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
                     android:inputType="numberDecimal"
+                    android:textAlignment="center"
                     android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -153,6 +159,7 @@
                 android:id="@+id/spinnerMoneda"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/black"
                 android:spinnerMode="dropdown" />
         </LinearLayout>
 

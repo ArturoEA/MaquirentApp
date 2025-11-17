@@ -4,6 +4,7 @@ const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 
 admin.initializeApp();
 
@@ -490,6 +491,108 @@ exports.notificarPagosPendientes = onSchedule({
     logger.error("Error al notificar pagos pendientes:", error);
     return { success: false, error: error.message };
   }
+});
+
+exports.notificarNuevoAlquilerMensual = onDocumentCreated("alquileresMensuales/{alquilerId}", async (event) => {
+  const db = admin.firestore();
+
+  // 1. Obtener los datos del alquiler recién creado
+  const snap = event.data;
+  if (!snap) {
+    logger.warn("No hay datos en el evento de creación.");
+    return null;
+  }
+  const alquiler = snap.data();
+  const creadorUid = alquiler.adminUid; // El UID del admin que lo creó
+  const nombreCliente = alquiler.nombreCliente || "Cliente Desconocido";
+
+  logger.info(`Nuevo alquiler mensual creado por ${creadorUid} para ${nombreCliente}.`);
+
+  // 2. Obtener tokens de TODOS los administradores
+  const tokens = [];
+  const adminSnapshot = await db
+    .collection("usuarios")
+    .where("rol", "==", "admin")
+    .get();
+
+  if (adminSnapshot.empty) {
+    logger.warn("No se encontraron admins para notificar.");
+    return null;
+  }
+  
+  const tokensAExcluir = [];
+
+  adminSnapshot.forEach((adminDoc) => {
+    // Si el admin es el que creó el alquiler, NO le notificamos
+    if (adminDoc.id === creadorUid) {
+      logger.info(`Excluyendo al creador de la notificación: ${adminDoc.id}`);
+      return;
+    }
+    
+    const adminData = adminDoc.data();
+    if (adminData.fcmTokens && Array.isArray(adminData.fcmTokens)) {
+      tokens.push(...adminData.fcmTokens);
+    }
+  });
+
+  if (tokens.length === 0) {
+    logger.info("No hay otros admins a quienes notificar.");
+    return null;
+  }
+
+  // 3. Crear y enviar las notificaciones
+  logger.info(`Enviando notificación de nuevo alquiler a ${tokens.length} token(s)`);
+
+  const messages = tokens.map(token => ({
+    token: token,
+    notification: {
+      title: "Nuevo Alquiler Registrado",
+      body: `Se creó un nuevo alquiler mensual para: ${nombreCliente}`
+    },
+    data: {
+      type: "nuevo_alquiler",
+      alquilerId: snap.id
+    },
+    android: {
+      priority: "high",
+      notification: {
+        sound: "default",
+        channelId: "pagos_pendientes"
+      }
+    },
+    apns: {
+      payload: { aps: { sound: "default", badge: 1 } }
+    }
+  }));
+
+  const response = await admin.messaging().sendEach(messages);
+
+  // 4.Limpiar tokens fallidos
+  let failureCount = 0;
+  const failedTokens = [];
+
+  response.responses.forEach((resp, idx) => {
+    if (!resp.success) {
+      failureCount++;
+      if (resp.error?.code === 'messaging/invalid-registration-token' ||
+          resp.error?.code === 'messaging/registration-token-not-registered') {
+        failedTokens.push(tokens[idx]);
+      }
+    }
+  });
+
+  if (failureCount > 0) {
+    logger.warn(`Fallaron ${failureCount} notificaciones de nuevo alquiler.`);
+  }
+
+  if (failedTokens.length > 0) {
+    await limpiarTokensInvalidos(db, failedTokens);
+  }
+
+  return { 
+    success: true, 
+    notificacionesEnviadas: response.successCount 
+  };
 });
 
 // Función auxiliar para limpiar tokens inválidos
