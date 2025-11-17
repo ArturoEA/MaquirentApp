@@ -230,7 +230,7 @@ public class PdfViewerActivity extends AppCompatActivity {
     }
 
     private void descargarPdf() {
-        // Aquí puedes llamar al método del ViewModel para descargar
+        // Aquí puedes llamar al mét0do del ViewModel para descargar
         Toast.makeText(this, "Descargando...", Toast.LENGTH_SHORT).show();
 
         // Implementar descarga real usando DownloadManager o copiando el archivo

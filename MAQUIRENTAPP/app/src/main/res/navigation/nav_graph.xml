@@ -47,7 +47,7 @@
 
         <action
             android:id="@+id/action_homeFragment_to_nuevoAlquilerFragment"
-            app:destination="@id/nuevoAlquilerFragment"
+            app:destination="@id/nuevoAlquilerDiaFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -131,6 +131,13 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"/>
+        <action
+            android:id="@+id/action_grupoElectrogeno_to_historialAlquilerDiario"
+            app:destination="@id/historialAlquilerDiarioFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -153,6 +160,50 @@
         tools:layout="@layout/fragment_nuevo_alquiler_mensual">
 
     </fragment>
+
+    <fragment
+        android:id="@+id/historialAlquilerDiarioFragment"
+        android:name="com.example.maquirentapp.View.HistorialAlquilerDiarioFragment"
+        android:label="Historial Alquileres Diarios"
+        tools:layout="@layout/fragment_historial_alquiler_mensual"> <action
+        android:id="@+id/action_historialAlquilerDiario_to_nuevoAlquilerDia"
+        app:destination="@id/nuevoAlquilerDiaFragment"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right" />
+        <argument
+            android:name="idGrupo"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nuevoAlquilerDiaFragment"
+        android:name="com.example.maquirentapp.View.NuevoAlquilerDiaFragment"
+        android:label="Alquiler Diario"
+        tools:layout="@layout/fragment_nuevo_alquiler_dia">
+        <argument
+            android:name="idGrupo"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="alquilerId"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+
+<!--    <fragment-->
+<!--        android:id="@+id/nuevoAlquilerFragment"-->
+<!--        android:name="com.example.maquirentapp.View.NuevoAlquilerFragment"-->
+<!--        tools:layout="@layout/fragment_nuevo_alquiler">-->
+<!--        <action-->
+<!--            android:id="@+id/action_nuevoAlquiler_to_nuevoAlquilerDia"-->
+<!--            app:destination="@id/nuevoAlquilerDiaFragment"-->
+<!--            app:enterAnim="@anim/slide_in_right"-->
+<!--            app:exitAnim="@anim/slide_out_left"-->
+<!--            app:popEnterAnim="@anim/slide_in_left"-->
+<!--            app:popExitAnim="@anim/slide_out_right" />-->
+<!--    </fragment>-->
 
     <fragment
         android:id="@+id/mantenimientosFragment"
@@ -319,11 +370,6 @@
         tools:layout="@layout/fragment_gestionar_usuarios">
 
     </fragment>
-
-    <fragment
-        android:id="@+id/nuevoAlquilerFragment"
-        android:name="com.example.maquirentapp.View.NuevoAlquilerDiaFragment"
-        tools:layout="@layout/fragment_fichas_tecnicas" />
 
     <fragment
         android:id="@+id/fichasTecnicasFragment"

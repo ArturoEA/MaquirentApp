@@ -82,7 +82,7 @@ public class AccesorioSeleccionAdapter extends RecyclerView.Adapter<AccesorioSel
                     .into(h.imgIcono);
         }
 
-        // Click en todo el item
+        // Click en t0do el item
         h.itemView.setOnClickListener(v -> {
             if (!clickEnabled) return; // No hacer nada si está deshabilitado
 

@@ -64,7 +64,7 @@ public class FichaTecnica {
         return urlPdf != null && !urlPdf.isEmpty();
     }
 
-    // Método para obtener el tamaño formateado
+    // Mét0do para obtener el tamaño formateado
     public String getTamanioFormateado() {
         if (tamanio < 1024) return tamanio + " B";
         if (tamanio < 1024 * 1024) return String.format("%.2f KB", tamanio / 1024.0);

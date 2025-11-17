@@ -4,11 +4,14 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.example.maquirentapp.Model.Accesorio;
+import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Model.Usuario;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -16,14 +19,20 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class FirebaseServicio {
     private final FirebaseFirestore db;
@@ -271,7 +280,7 @@ public class FirebaseServicio {
         });
     }
 
-    //Métodos para accesorios
+    //Mét0dos para accesorios
     public void getAccesorios(String tipo, OnAccesoriosLoadedListener listener) {
         db.collection("accesorios")
                 .whereEqualTo("tipo", tipo)
@@ -309,7 +318,7 @@ public class FirebaseServicio {
                 .addOnFailureListener(listener::onError);
     }
 
-    //Métodos para alquileres mensuales
+    //Mét0dos para alquileres mensuales
     public void getAlquilerMensualPorId(String id, OnAlquilerMensualLoadedListener listener) {
         db.collection("alquileresMensuales")
                 .document(id)
@@ -371,7 +380,7 @@ public class FirebaseServicio {
                 .addOnFailureListener(listener::onError);
     }
 
-    // Métodos para DetalleMes
+    // Mét0dos para DetalleMes
     public void crearDetalleMes(DetalleMes detalle, OnDetalleMesCreatedListener listener) {
         if (detalle.getIdAlquilerMensual() == null || detalle.getIdAlquilerMensual().isEmpty()) {
             listener.onError(new Exception("idAlquilerMensual no puede estar vacío"));
@@ -609,7 +618,206 @@ public class FirebaseServicio {
                 .addOnFailureListener(listener::onError);
     }
 
+    //MÉT0DOS PARA ALQUILER DIARIO
+    public void crearAlquilerDia(AlquilerDia alquiler, OnAlquilerDiaCreadoListener listener) {
+        db.collection("alquileresDiarios")
+                .add(alquiler)
+                .addOnSuccessListener(documentReference -> {
+                    alquiler.setId(documentReference.getId());
+                    listener.onSuccess(alquiler);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void actualizarAlquilerDia(AlquilerDia alquiler, OnSimpleCallback listener) {
+        if (alquiler.getId() == null || alquiler.getId().isEmpty()) {
+            listener.onError(new Exception("ID de alquiler diario inválido"));
+            return;
+        }
+        db.collection("alquileresDiarios")
+                .document(alquiler.getId())
+                .set(alquiler)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void eliminarAlquilerDia(String id, OnSimpleCallback listener) {
+        if (id == null || id.isEmpty()) {
+            listener.onError(new Exception("ID de alquiler inválido"));
+            return;
+        }
+        db.collection("alquileresDiarios")
+                .document(id)
+                .delete()
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getAlquilerDiaPorId(String id, OnAlquilerDiaLoadedListener listener) {
+        db.collection("alquileresDiarios")
+                .document(id)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        AlquilerDia alquiler = documentSnapshot.toObject(AlquilerDia.class);
+                        if (alquiler != null) {
+                            alquiler.setId(documentSnapshot.getId());
+                            listener.onSuccess(alquiler);
+                        } else {
+                            listener.onError(new Exception("Alquiler no encontrado"));
+                        }
+                    } else {
+                        listener.onError(new Exception("Alquiler no existe"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Mét0do para la pantalla de historial
+    public void getAlquileresDiariosPorGrupo(String idGrupo, int mes, int anio, OnAlquileresDiariosLoadedListener listener) {
+        db.collection("alquileresDiarios")
+                .whereEqualTo("idGrupo", idGrupo)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<AlquilerDia> alquileres = new ArrayList<>();
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        AlquilerDia alquiler = doc.toObject(AlquilerDia.class);
+                        alquiler.setId(doc.getId());
+
+                        try {
+                            if(alquiler.getFechaInicial() == null || alquiler.getFechaInicial().isEmpty()) continue;
+
+                            Date fechaInicio = sdf.parse(alquiler.getFechaInicial());
+                            Calendar cal = Calendar.getInstance();
+                            cal.setTime(fechaInicio);
+                            if (cal.get(Calendar.MONTH) == mes && cal.get(Calendar.YEAR) == anio) {
+                                alquileres.add(alquiler);
+                            }
+                        } catch (Exception e) {
+                            Log.w("FirebaseServicio", "Fecha inválida en alquiler diario: " + doc.getId(), e);
+                        }
+                    }
+                    listener.onSuccess(alquileres);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Mét0do para el Spinner en NuevoAlquilerDiaFragment (cuando viene de Home)
+    public void getGruposParaSpinner(OnGruposLoadedListener listener) {
+        db.collection("gruposElectrogenos")
+                .whereEqualTo("eliminado", false)
+                .orderBy("codigo")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<GrupoElectrogeno> grupos = new ArrayList<>();
+                    for(QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        GrupoElectrogeno g = doc.toObject(GrupoElectrogeno.class);
+                        g.setId(doc.getId());
+                        grupos.add(g);
+                    }
+                    listener.onSuccess(grupos);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    // Mét0do para finalizar y registrar el ingreso prorrateado
+    public void finalizarAlquilerDiario(AlquilerDia alquiler, OnSimpleCallback listener) {
+        // 1. Validar que tengamos toda la info
+        if (alquiler == null || alquiler.getPrecioTotal() == 0 ||
+                alquiler.getFechaInicial() == null || alquiler.getFechaFinal() == null ||
+                alquiler.getFechaInicial().isEmpty() || alquiler.getFechaFinal().isEmpty()) {
+            listener.onError(new Exception("Datos incompletos para prorrateo (Fechas, Precio)"));
+            return;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+        try {
+            Date fechaInicio = sdf.parse(alquiler.getFechaInicial());
+            Date fechaFin = sdf.parse(alquiler.getFechaFinal());
+            if (fechaInicio == null || fechaFin == null || fechaInicio.after(fechaFin)) {
+                listener.onError(new Exception("Fechas inválidas"));
+                return;
+            }
+
+            // 2. Calcular días totales y precio por día
+            long diffMillis = fechaFin.getTime() - fechaInicio.getTime();
+            long diasTotales = TimeUnit.MILLISECONDS.toDays(diffMillis) + 1;
+
+            if (diasTotales <= 0) {
+                listener.onError(new Exception("El período debe ser de al menos 1 día"));
+                return;
+            }
+
+            double precioPorDia = alquiler.getPrecioTotal() / diasTotales;
+            Log.d("Prorrateo", "Dias Totales: " + diasTotales + ", Precio/Día: " + precioPorDia);
+
+            // 3. Crear los documentos de Ingreso Prorrateados en un Lote
+            WriteBatch batch = db.batch();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fechaInicio);
+
+            while (!cal.getTime().after(fechaFin)) {
+                int mesActual = cal.get(Calendar.MONTH) + 1;
+                int anioActual = cal.get(Calendar.YEAR);
+
+                int diasEnEsteMes = 0;
+                while (cal.get(Calendar.MONTH) + 1 == mesActual && !cal.getTime().after(fechaFin)) {
+                    diasEnEsteMes++;
+                    cal.add(Calendar.DAY_OF_YEAR, 1);
+                }
+
+                if (diasEnEsteMes > 0) {
+                    double montoProrrateado = precioPorDia * diasEnEsteMes;
+                    Log.d("Prorrateo", "Mes: " + mesActual + ", Días: " + diasEnEsteMes + ", Monto: " + montoProrrateado);
+
+                    Ingreso ingreso = new Ingreso(
+                            montoProrrateado,
+                            alquiler.getMoneda(),
+                            "Alquiler Diario",
+                            alquiler.getIdGrupo(),
+                            alquiler.getId(),
+                            alquiler.getNombreCliente(),
+                            mesActual,
+                            anioActual
+                    );
+
+                    DocumentReference ingresoRef = db.collection("ingresosRegistrados").document();
+                    batch.set(ingresoRef, ingreso);
+                }
+            }
+
+            // 4. Marcar el alquiler como finalizado
+            DocumentReference alquilerRef = db.collection("alquileresDiarios").document(alquiler.getId());
+            batch.update(alquilerRef, "finalizado", true);
+
+            // 5. Ejecutar todas las tareas
+            batch.commit()
+                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                    .addOnFailureListener(listener::onError);
+
+        } catch (Exception e) {
+            listener.onError(e);
+        }
+    }
+
     // Interfaces para callbacks
+    public interface OnAlquilerDiaCreadoListener {
+        void onSuccess(AlquilerDia alquiler);
+        void onError(Exception e);
+    }
+
+    public interface OnAlquilerDiaLoadedListener {
+        void onSuccess(AlquilerDia alquiler);
+        void onError(Exception e);
+    }
+
+    public interface OnAlquileresDiariosLoadedListener {
+        void onSuccess(List<AlquilerDia> alquileres);
+        void onError(Exception e);
+    }
     public interface OnIngresosLoadedListener {
         void onSuccess(List<Ingreso> ingresos);
 

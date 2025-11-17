@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,7 +25,6 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.PagoPendiente;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +62,7 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        CardView cardNuevoAlquiler = view.findViewById(R.id.cardNuevoAlquiler);
+        CardView cardNuevoAlquiler = view.findViewById(R.id.cardNuevoAlquilerDiario);
         CardView cardCotizaciones = view.findViewById(R.id.cardCotizaciones);
         CardView cardPlanosCambioVoltaje = view.findViewById(R.id.cardPlanosVoltaje);
         CardView cardFichasTecnicas = view.findViewById(R.id.cardFichasTecnicas);

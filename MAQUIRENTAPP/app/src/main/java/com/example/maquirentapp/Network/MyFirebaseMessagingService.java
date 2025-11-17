@@ -58,7 +58,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 Log.w(TAG, "Permiso POST_NOTIFICATIONS denegado. No se mostrará la notificación.");
-                return; // Salir del método
+                return; // Salir del mét0do
             }
         }
 

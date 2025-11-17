@@ -244,13 +244,13 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         });
     }
 
-    // NUEVO MÉTODO: Obtener fecha actual en formato dd/MM/yyyy
+    // NUEVO MÉT0DO: Obtener fecha actual en formato dd/MM/yyyy
     private String obtenerFechaActual() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         return sdf.format(new Date());
     }
 
-    // NUEVO MÉTODO: Deshabilitar solo el inputHorometro
+    // NUEVO MÉT0DO: Deshabilitar solo el inputHorometro
     private void deshabilitarInputHorometro(ViewHolder holder) {
         holder.inputHorometro.setEnabled(false);
         holder.inputHorometro.setFocusable(false);

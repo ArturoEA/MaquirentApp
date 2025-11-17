@@ -1,206 +1,397 @@
 package com.example.maquirentapp.View;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModelProvider;
-
-import com.example.maquirentapp.ViewModel.AlquilerDiaViewModel;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
+import com.example.maquirentapp.Model.Accesorio;
+import com.example.maquirentapp.Model.AlquilerDia;
+import com.example.maquirentapp.Model.GrupoElectrogeno;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-
+import com.google.firebase.auth.FirebaseAuth;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class NuevoAlquilerDiaFragment extends Fragment {
-    // Declaración de vistas
-    private Spinner spinnerGrupo;
-    private TextInputEditText fechaInicialEditText, fechaFinalEditText;
-    private TextInputEditText clienteEditText, ubicacionEditText;
-    private TextInputEditText horometroInicialEditText, horometroFinalEditText, precioDiaEditText;
-    private Button saveButton;
-    private ProgressBar progressBar;
 
-    private AlquilerDiaViewModel viewModel;
-    private final Calendar calendar = Calendar.getInstance();
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private String idGrupo, alquilerId;
+    private boolean modoEdicion = false;
+    private boolean vieneDeHome = false;
+
+    private TextInputEditText inputCliente, inputLugar, inputFechaInicial, inputFechaFinal,
+            inputHorometroInicial, inputHorometroFinal, inputPrecio, inputHorasMaximas;
+    private Spinner spinnerMoneda, spinnerGrupo;
+    private TextView tvSimboloMoneda;
+    private LinearLayout layoutSpinnerGrupo;
+    private Button btnFinalizar;
+    private RecyclerView recyclerAccesorios;
+
+    private AccesorioSeleccionAdapter adapterAccesorios;
+    private FirebaseServicio firebaseServicio;
+    private FirebaseAuth firebaseAuth;
+    private AlquilerDia alquilerActual;
+    private List<GrupoElectrogeno> listaGrupos = new ArrayList<>(); // Para el spinner
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        firebaseServicio = new FirebaseServicio();
+        firebaseAuth = FirebaseAuth.getInstance();
+        if (getArguments() != null) {
+            idGrupo = getArguments().getString("idGrupo");
+            alquilerId = getArguments().getString("alquilerId");
+            modoEdicion = (alquilerId != null);
+            vieneDeHome = (idGrupo == null && !modoEdicion);
+        }
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflar el layout sin View Binding
         return inflater.inflate(R.layout.fragment_nuevo_alquiler_dia, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        inicializarVistas(view);
+        configurarDatePickers();
+        configurarSpinnerMoneda();
+        configurarListeners();
 
-        // Inicializar vistas
+        cargarAccesoriosDiarios();
+
+        if (modoEdicion) {
+            layoutSpinnerGrupo.setVisibility(View.GONE);
+            cargarDatosAlquiler();
+        } else if (vieneDeHome) {
+            layoutSpinnerGrupo.setVisibility(View.VISIBLE);
+            cargarSpinnerGrupos();
+        } else {
+            layoutSpinnerGrupo.setVisibility(View.GONE);
+        }
+    }
+
+    private void inicializarVistas(View view) {
+        layoutSpinnerGrupo = view.findViewById(R.id.layoutSpinnerGrupo);
         spinnerGrupo = view.findViewById(R.id.spinnerGrupo);
-        fechaInicialEditText = view.findViewById(R.id.fechaInicialEditText);
-        fechaFinalEditText = view.findViewById(R.id.fechaFinalEditText);
-        clienteEditText = view.findViewById(R.id.clienteEditText);
-        ubicacionEditText = view.findViewById(R.id.ubicacionEditText);
-        horometroInicialEditText = view.findViewById(R.id.horometroInicialEditText);
-        horometroFinalEditText = view.findViewById(R.id.horometroFinalEditText);
-        precioDiaEditText = view.findViewById(R.id.precioDiaEditText);
-        saveButton = view.findViewById(R.id.saveButton);
-        progressBar = view.findViewById(R.id.progressBar);
+        inputCliente = view.findViewById(R.id.clienteEditText);
+        inputLugar = view.findViewById(R.id.ubicacionEditText);
+        spinnerMoneda = view.findViewById(R.id.spinnerMoneda);
+        tvSimboloMoneda = view.findViewById(R.id.tvSimboloMoneda);
+        inputFechaInicial = view.findViewById(R.id.inputFechaInicial);
+        inputFechaFinal = view.findViewById(R.id.fechaFinalEditText);
+        inputHorometroInicial = view.findViewById(R.id.inputHorometroInicial);
+        inputHorometroFinal = view.findViewById(R.id.horometroFinalEditText);
+        inputPrecio = view.findViewById(R.id.inputPrecioAlquiler);
+        inputHorasMaximas = view.findViewById(R.id.horasMaxDia);
+        btnFinalizar = view.findViewById(R.id.btnFinalizarAlquilerDiario);
 
-        // Inicializar ViewModel
-        viewModel = new ViewModelProvider(this).get(AlquilerDiaViewModel.class);
+        recyclerAccesorios = view.findViewById(R.id.recyclerAccesorios);
+        recyclerAccesorios.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapterAccesorios = new AccesorioSeleccionAdapter();
+        recyclerAccesorios.setAdapter(adapterAccesorios);
 
-        setupUI();
-        setupObservers();
+        inputHorasMaximas.setText("10");
     }
 
-    private void setupUI() {
-        setupSpinner();
-        setupDatePickers();
-        setupFormValidation();
-        setupSaveButton();
-    }
-
-    private void setupSpinner() {
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                requireContext(),
-                R.array.empresas_array,
-                android.R.layout.simple_spinner_item
-        );
+    private void configurarSpinnerMoneda() {
+        List<String> monedas = new ArrayList<>();
+        monedas.add("SOL");
+        monedas.add("USD");
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, monedas);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerGrupo.setAdapter(adapter);
-
-        spinnerGrupo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spinnerMoneda.setAdapter(adapter);
+        spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                viewModel.getIdGrupo().setValue(position + 1);
+                tvSimboloMoneda.setText(monedas.get(position).equals("USD") ? "$" : "S/.");
             }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
 
+    private void configurarDatePickers() {
+        // Lógica para inputFechaInicial
+        inputFechaInicial.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
+                inputFechaInicial.setText(String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year));
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+            dpd.show();
+        });
+
+        // Lógica para inputFechaFinal
+        inputFechaFinal.setOnClickListener(v -> {
+            Calendar cal = Calendar.getInstance();
+            DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
+                inputFechaFinal.setText(String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year));
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+            dpd.show();
+        });
+    }
+
+    private void configurarListeners() {
+        btnFinalizar.setOnClickListener(v -> mostrarDialogoFinalizar());
+    }
+
+    private void cargarSpinnerGrupos() {
+        firebaseServicio.getGruposParaSpinner(new FirebaseServicio.OnGruposLoadedListener() {
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                viewModel.getIdGrupo().setValue(null);
+            public void onSuccess(List<GrupoElectrogeno> grupos) {
+                listaGrupos = grupos;
+                List<String> nombresGrupos = new ArrayList<>();
+                nombresGrupos.add("Seleccione un grupo..."); // Hint
+                for (GrupoElectrogeno g : grupos) {
+                    nombresGrupos.add(g.getCodigo());
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
+                        android.R.layout.simple_spinner_item, nombresGrupos);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerGrupo.setAdapter(adapter);
+            }
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void setupDatePickers() {
-        fechaInicialEditText.setOnClickListener(v -> showDatePicker(true));
-        fechaFinalEditText.setOnClickListener(v -> showDatePicker(false));
+    private void cargarAccesoriosDiarios() {
+        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
+            @Override
+            public void onSuccess(List<Accesorio> accesorios) {
+                adapterAccesorios.setItems(accesorios);
+                // Si estamos editando, seleccionamos los guardados
+                if (modoEdicion && alquilerActual != null && alquilerActual.getAccesoriosIds() != null) {
+                    adapterAccesorios.setAccesoriosSeleccionados(alquilerActual.getAccesoriosIds());
+                }
+            }
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void showDatePicker(boolean isInitialDate) {
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                requireContext(),
-                (view, year, month, dayOfMonth) -> {
-                    calendar.set(year, month, dayOfMonth);
-                    updateDateField(isInitialDate, calendar.getTime());
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-        );
-        datePickerDialog.show();
+    private void cargarDatosAlquiler() {
+        firebaseServicio.getAlquilerDiaPorId(alquilerId, new FirebaseServicio.OnAlquilerDiaLoadedListener() {
+            @Override
+            public void onSuccess(AlquilerDia alquiler) {
+                alquilerActual = alquiler;
+                idGrupo = alquiler.getIdGrupo();
+                inputCliente.setText(alquiler.getNombreCliente());
+                inputLugar.setText(alquiler.getUbicacion());
+                inputFechaInicial.setText(alquiler.getFechaInicial());
+                inputFechaFinal.setText(alquiler.getFechaFinal());
+                inputHorometroInicial.setText(String.valueOf(alquiler.getHorometroInicial()));
+                inputHorometroFinal.setText(String.valueOf(alquiler.getHorometroFinal()));
+                inputPrecio.setText(String.valueOf(alquiler.getPrecioTotal()));
+                inputHorasMaximas.setText(String.valueOf(alquiler.getHorasMaximas()));
+
+                spinnerMoneda.setSelection("USD".equals(alquiler.getMoneda()) ? 1 : 0);
+                adapterAccesorios.setAccesoriosSeleccionados(alquiler.getAccesoriosIds());
+
+                if (alquiler.isFinalizado()) {
+                    deshabilitarCampos();
+                }
+            }
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void updateDateField(boolean isInitialDate, Date date) {
-        String formattedDate = dateFormat.format(date);
-        if (isInitialDate) {
-            fechaInicialEditText.setText(formattedDate);
-            viewModel.getFechaInicial().setValue(date);
-        } else {
-            fechaFinalEditText.setText(formattedDate);
-            viewModel.getFechaFinal().setValue(date);
+    private boolean validarCampos() {
+        if (inputCliente.getText().toString().isEmpty() ||
+                inputLugar.getText().toString().isEmpty() ||
+                inputFechaInicial.getText().toString().isEmpty() ||
+                inputHorometroInicial.getText().toString().isEmpty() ||
+                inputPrecio.getText().toString().isEmpty()) {
+            Toast.makeText(getContext(), "Campos obligatorios: Cliente, Lugar, Fecha Inicio, H. Inicio y Precio", Toast.LENGTH_LONG).show();
+            return false;
         }
-        viewModel.validateForm();
+        if (vieneDeHome && spinnerGrupo.getSelectedItemPosition() == 0) {
+            Toast.makeText(getContext(), "Debe seleccionar un grupo electrógeno", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 
-    private void setupFormValidation() {
-        setupTextInputListener(clienteEditText, text -> viewModel.getCliente().setValue(text));
-        setupTextInputListener(ubicacionEditText, text -> viewModel.getUbicacion().setValue(text));
-        setupTextInputListener(horometroInicialEditText, text -> parseAndSetDouble(text, viewModel.getHorometroInicial()));
-        setupTextInputListener(horometroFinalEditText, text -> parseAndSetDouble(text, viewModel.getHorometroFinal()));
-        setupTextInputListener(precioDiaEditText, text -> parseAndSetDouble(text, viewModel.getPrecioDia()));
-    }
+    private void guardarAlquilerDiario(boolean finalizar) {
+        if (!validarCampos()) {
+            if (finalizar) btnFinalizar.setEnabled(true);
+            return;
+        }
 
-    private void parseAndSetDouble(String text, MutableLiveData<Double> liveData) {
+        if (alquilerActual == null) {
+            alquilerActual = new AlquilerDia();
+        }
+
+        // Obtener el idGrupo
+        if (vieneDeHome) {
+            int pos = spinnerGrupo.getSelectedItemPosition() - 1;
+            idGrupo = listaGrupos.get(pos).getId();
+        }
+        alquilerActual.setIdGrupo(idGrupo);
+
+        alquilerActual.setNombreCliente(inputCliente.getText().toString().trim());
+        alquilerActual.setUbicacion(inputLugar.getText().toString().trim());
+        alquilerActual.setFechaInicial(inputFechaInicial.getText().toString().trim());
+        alquilerActual.setFechaFinal(inputFechaFinal.getText().toString().trim());
+
         try {
-            liveData.setValue(Double.parseDouble(text));
+            alquilerActual.setHorometroInicial(Double.parseDouble(inputHorometroInicial.getText().toString().trim()));
+            String hFinalStr = inputHorometroFinal.getText().toString().trim();
+            alquilerActual.setHorometroFinal(hFinalStr.isEmpty() ? 0 : Double.parseDouble(hFinalStr));
+
+            alquilerActual.setPrecioTotal(Double.parseDouble(inputPrecio.getText().toString().trim()));
+
+            String horasMax = inputHorasMaximas.getText().toString().trim();
+            alquilerActual.setHorasMaximas(horasMax.isEmpty() ? 10 : Double.parseDouble(horasMax));
+
         } catch (NumberFormatException e) {
-            liveData.setValue(null);
+            Toast.makeText(getContext(), "Revise los campos numéricos", Toast.LENGTH_SHORT).show();
+            if (finalizar) btnFinalizar.setEnabled(true);
+            return;
         }
-        viewModel.validateForm();
+
+        alquilerActual.setMoneda(spinnerMoneda.getSelectedItem().toString());
+        alquilerActual.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
+
+        if (!modoEdicion) {
+            alquilerActual.setAdminUid(firebaseAuth.getUid());
+        }
+
+        if (modoEdicion) {
+            firebaseServicio.actualizarAlquilerDia(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
+                @Override public void onSuccess() {
+                    Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
+                    if (!finalizar) Navigation.findNavController(getView()).popBackStack();
+                }
+                @Override public void onError(Exception e) {
+                    Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
+                    if (finalizar) btnFinalizar.setEnabled(true);
+                }
+            });
+        } else {
+            firebaseServicio.crearAlquilerDia(alquilerActual, new FirebaseServicio.OnAlquilerDiaCreadoListener() {
+                @Override public void onSuccess(AlquilerDia alquiler) {
+                    Toast.makeText(getContext(), "Alquiler creado", Toast.LENGTH_SHORT).show();
+                    if (!finalizar) Navigation.findNavController(getView()).popBackStack();
+                    else alquilerActual = alquiler;
+                }
+                @Override public void onError(Exception e) {
+                    Toast.makeText(getContext(), "Error al crear", Toast.LENGTH_SHORT).show();
+                    if (finalizar) btnFinalizar.setEnabled(true);
+                }
+            });
+        }
     }
 
-    private void setupTextInputListener(TextInputEditText editText, OnTextChangedListener listener) {
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                listener.onTextChanged(editText.getText() != null ? editText.getText().toString() : "");
-            }
-        });
+    private void mostrarDialogoFinalizar() {
+        if (inputFechaFinal.getText().toString().isEmpty()) {
+            Toast.makeText(getContext(), "Debe llenar la Fecha Final para poder finalizar", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Finalizar Alquiler")
+                .setMessage("¿Estás seguro de finalizar este alquiler? Se registrará el ingreso y ya no se podrá modificar.")
+                .setPositiveButton("Sí, finalizar", (dialog, which) -> {
+                    btnFinalizar.setText("Finalizando...");
+                    btnFinalizar.setEnabled(false);
+
+                    guardarAlquilerDiario(true);
+
+                    new android.os.Handler().postDelayed(() -> {
+                        if (alquilerActual.getId() == null) { // Falló la creación
+                            btnFinalizar.setText("Finalizar Alquiler");
+                            btnFinalizar.setEnabled(true);
+                            return;
+                        }
+
+                        firebaseServicio.finalizarAlquilerDiario(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
+                            @Override public void onSuccess() {
+                                Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
+                                deshabilitarCampos();
+                                Navigation.findNavController(getView()).popBackStack(); // Volver
+                            }
+                            @Override public void onError(Exception e) {
+                                Toast.makeText(getContext(), "Error al finalizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                btnFinalizar.setText("Finalizar Alquiler");
+                                btnFinalizar.setEnabled(true);
+                            }
+                        });
+                    }, 1500);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
-    private void setupSaveButton() {
-        saveButton.setOnClickListener(v -> viewModel.saveAlquiler());
+    private void deshabilitarCampos() {
+        btnFinalizar.setText("Alquiler Finalizado");
+        btnFinalizar.setEnabled(false);
+        inputCliente.setEnabled(false);
+        inputLugar.setEnabled(false);
+        inputFechaInicial.setEnabled(false);
+        inputFechaFinal.setEnabled(false);
+        inputHorometroInicial.setEnabled(false);
+        inputHorometroFinal.setEnabled(false);
+        inputPrecio.setEnabled(false);
+        inputHorasMaximas.setEnabled(false);
+        spinnerMoneda.setEnabled(false);
+        spinnerGrupo.setEnabled(false);
+        adapterAccesorios.setClickEnabled(false);
+    }
+    private void configurarFabGlobal() {
+        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+        if (fab != null) {
+            fab.setText("Guardar");
+            fab.setIconResource(R.drawable.icon_guardar_blanco);
+            fab.setVisibility(View.VISIBLE);
+            fab.setOnClickListener(v -> guardarAlquilerDiario(false)); // false = solo guardar
+        }
     }
 
-    private void setupObservers() {
-        viewModel.getIsFormValid().observe(getViewLifecycleOwner(), isValid -> {
-            saveButton.setEnabled(Boolean.TRUE.equals(isValid));
-        });
-
-        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), errorMessage -> {
-            if (errorMessage != null && !errorMessage.isEmpty()) {
-                showToast(errorMessage, Toast.LENGTH_LONG);
-            }
-        });
-
-        viewModel.getSaveSuccess().observe(getViewLifecycleOwner(), success -> {
-            if (Boolean.TRUE.equals(success)) {
-                showToast("Alquiler guardado exitosamente", Toast.LENGTH_SHORT);
-                clearForm();
-            }
-        });
-
-        viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
-            if (isLoading != null) {
-                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-                saveButton.setEnabled(!isLoading);
-            }
-        });
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (alquilerActual == null || !alquilerActual.isFinalizado()) {
+            configurarFabGlobal();
+        }
     }
 
-    private void showToast(String message, int duration) {
-        Toast.makeText(requireContext(), message, duration).show();
-    }
-
-    private void clearForm() {
-        clienteEditText.setText("");
-        ubicacionEditText.setText("");
-        horometroInicialEditText.setText("");
-        horometroFinalEditText.setText("");
-        fechaInicialEditText.setText("");
-        fechaFinalEditText.setText("");
-        precioDiaEditText.setText("");
-        spinnerGrupo.setSelection(0);
-    }
-
-    interface OnTextChangedListener {
-        void onTextChanged(String text);
+    @Override
+    public void onPause() {
+        super.onPause();
+        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+        if (fab != null) {
+            fab.setVisibility(View.GONE);
+        }
     }
 }

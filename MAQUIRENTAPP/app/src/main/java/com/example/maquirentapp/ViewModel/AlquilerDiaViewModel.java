@@ -47,7 +47,7 @@ public class AlquilerDiaViewModel extends ViewModel {
     public MutableLiveData<Boolean> getSaveSuccess() { return saveSuccess; }
     public MutableLiveData<Boolean> getIsLoading() { return isLoading; }
 
-    // Método para validar el formulario
+    // Mét0do para validar el formulario
     public void validateForm() {
         boolean isValid = true;
         StringBuilder errorMsg = new StringBuilder();
@@ -81,55 +81,4 @@ public class AlquilerDiaViewModel extends ViewModel {
         isFormValid.setValue(isValid);
     }
 
-    // Método para guardar el alquiler
-    public void saveAlquiler() {
-        validateForm();
-
-        if (Boolean.TRUE.equals(isFormValid.getValue())) {
-            isLoading.setValue(true);
-
-            AlquilerDia alquiler = createAlquilerFromFormData();
-
-            repository.guardarAlquiler(alquiler, new AlquilerDiaRepository.AlquilerCallback() {
-                @Override
-                public void onSuccess(AlquilerDia alquiler) {
-                    isLoading.postValue(false);
-                    saveSuccess.postValue(true);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    isLoading.postValue(false);
-                    errorMessage.postValue("Error al guardar: " + t.getMessage());
-                }
-            });
-        }
-    }
-
-    private AlquilerDia createAlquilerFromFormData() {
-        return new AlquilerDia(
-                0, // ID se generará en el servidor
-                idGrupo.getValue(),
-                cliente.getValue(),
-                ubicacion.getValue(),
-                horometroInicial.getValue(),
-                horometroFinal.getValue(),
-                fechaInicial.getValue(),
-                fechaFinal.getValue(),
-                precioDia.getValue(),
-                false, // varillaTierra
-                false, // cableElectrico
-                false, // tableroDistribucion
-                false, // extensionCaja
-                false, // bidonCombustible
-                false, // llaveHexagonal
-                false, // llavesPuertas
-                false, // tacoMadera
-                false, // manguera
-                false, // embudo
-                false, // fajasSogas
-                false, // pinPerno
-                ""     // comentarios
-        );
-    }
 }

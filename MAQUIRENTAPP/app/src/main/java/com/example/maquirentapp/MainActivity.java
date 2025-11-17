@@ -388,7 +388,7 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderIcon(R.drawable.icon_configuracion_blanco);
                     updateNavigationUI(2);
                     restoreScrollPosition(CONFIGURACION_FRAGMENT_KEY);
-                } else if (dest.getId() == R.id.nuevoAlquilerFragment) {
+                } else if (dest.getId() == R.id.nuevoAlquilerDiaFragment) {
                     setHeaderTitle("Nuevo alquiler por día(s)");
                     setHeaderIcon(R.drawable.icon_contrato_blanco);
                     contentScrollView.scrollTo(0, 0);
@@ -482,7 +482,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Método público para que los fragments puedan acceder a los datos del usuario
+    // Mét0do público para que los fragments puedan acceder a los datos del usuario
     public String getUserRole() {
         return userRole;
     }
@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
             return CGE_FRAGMENT_KEY;
         } else if (destinationId == R.id.configuracionFragment) {
             return CONFIGURACION_FRAGMENT_KEY;
-        } else if (destinationId == R.id.nuevoAlquilerFragment) {
+        } else if (destinationId == R.id.nuevoAlquilerDiaFragment) {
             return NUEVO_ALQUILER_DIA_KEY;
         } else if (destinationId == R.id.planosCambioVoltajeFragment) {
             return PLANOS_CAMBIO_VOLTAJE_KEY;

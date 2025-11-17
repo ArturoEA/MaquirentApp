@@ -1,0 +1,50 @@
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    android:theme="@style/Theme.TextMain">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvCliente"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre Cliente"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:id="@+id/tvFechas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Inicio: 01/01/2025 - Fin: 03/01/2025"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary"/>
+
+        <TextView
+            android:id="@+id/tvPrecio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Monto: S/. 500.00"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary"/>
+
+        <TextView
+            android:id="@+id/tvEstado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Estado: Finalizado"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:textColor="@color/text_secondary"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

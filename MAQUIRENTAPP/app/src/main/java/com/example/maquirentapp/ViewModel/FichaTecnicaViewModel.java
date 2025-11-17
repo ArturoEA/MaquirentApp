@@ -223,7 +223,7 @@ public class FichaTecnicaViewModel extends AndroidViewModel {
                 });
     }
 
-    // Método auxiliar para descargar PDF temporal
+    // Mét0do auxiliar para descargar PDF temporal
     private void descargarPdfTemporal(Context context, FichaTecnica ficha, OnFileDownloadedListener listener) {
         try {
             File tempFile = new File(context.getCacheDir(), ficha.getNombreArchivo());
@@ -241,7 +241,7 @@ public class FichaTecnicaViewModel extends AndroidViewModel {
         }
     }
 
-    // Método auxiliar para obtener nombre del archivo
+    // Mét0do auxiliar para obtener nombre del archivo
     private String obtenerNombreArchivo(Context context, Uri uri) {
         String result = null;
         if (uri.getScheme().equals("content")) {

@@ -705,7 +705,104 @@ exports.limpiarDatosAlquilerMensualEliminado = onDocumentDeleted("alquileresMens
     return { success: false, error: error.message };
   }
 });
+/**
+ * ============================================================
+ * TRIGGER: Notificar a admins cuando se crea un Alquiler DIARIO
+ * ============================================================
+ */
+exports.notificarNuevoAlquilerDiario = onDocumentCreated("alquileresDiarios/{alquilerId}", async (event) => {
+  const db = admin.firestore();
+  const snap = event.data;
+  if (!snap) {
+    logger.warn("No hay datos en el evento de creación de Alquiler Diario.");
+    return null;
+  }
+  
+  const alquiler = snap.data();
+  const creadorUid = alquiler.adminUid;
+  const nombreCliente = alquiler.nombreCliente || "Cliente Desconocido";
 
+  logger.info(`Nuevo alquiler diario creado por ${creadorUid} para ${nombreCliente}.`);
+
+  // 2. Obtener tokens de TODOS los administradores
+  const tokens = [];
+  const adminSnapshot = await db.collection("usuarios")
+    .where("rol", "==", "admin").get();
+
+  if (adminSnapshot.empty) {
+    logger.warn("No se encontraron admins para notificar.");
+    return null;
+  }
+  
+  adminSnapshot.forEach((adminDoc) => {
+    if (adminDoc.id === creadorUid) {
+      return; 
+    }
+    
+    const adminData = adminDoc.data();
+    if (adminData.fcmTokens && Array.isArray(adminData.fcmTokens)) {
+      tokens.push(...adminData.fcmTokens);
+    }
+  });
+
+  if (tokens.length === 0) {
+    logger.info("No hay otros admins a quienes notificar.");
+    return null;
+  }
+
+  // 3. Crear y enviar las notificaciones
+  const messages = tokens.map(token => ({
+    token: token,
+    notification: {
+      title: "Nuevo Alquiler Diario",
+      body: `Se registró un alquiler diario para: ${nombreCliente}`
+    },
+    data: { type: "nuevo_alquiler_diario", alquilerId: snap.id },
+    android: { priority: "high", notification: { channelId: "pagos_pendientes" }},
+    apns: { payload: { aps: { sound: "default", badge: 1 } } }
+  }));
+
+  const response = await admin.messaging().sendEach(messages);
+  
+  // (Opcional: Limpiar tokens fallidos reusando tu función 'limpiarTokensInvalidos')
+  
+  logger.info(`Notificaciones de alquiler diario enviadas: ${response.successCount}`);
+  return { success: true, notificacionesEnviadas: response.successCount };
+});
+
+/**
+ * ============================================================
+ * TRIGGER: Limpiar ingresos si se elimina un Alquiler DIARIO
+ * ============================================================
+ */
+exports.limpiarDatosAlquilerDiarioEliminado = onDocumentDeleted("alquileresDiarios/{alquilerId}", async (event) => {
+  const alquilerId = event.params.alquilerId;
+  const db = admin.firestore();
+  const batch = db.batch();
+
+  logger.info(`Iniciando limpieza de ingresos para alquiler diario: ${alquilerId}`);
+
+  try {
+    const ingresosSnapshot = await db.collection("ingresosRegistrados")
+      .where("idAlquiler", "==", alquilerId)
+      .get();
+
+    if (!ingresosSnapshot.empty) {
+      ingresosSnapshot.forEach(doc => {
+        logger.info(`Borrando ingresoRegistrado: ${doc.id}`);
+        batch.delete(doc.ref);
+      });
+    }
+
+    await batch.commit();
+    logger.info(`Limpieza de ingresos completa para alquiler diario ${alquilerId}.`);
+    return { success: true };
+
+  } catch (error) {
+    logger.error(`Error limpiando ingresos para alquiler diario ${alquilerId}:`, error);
+    return { success: false, error: error.message };
+  }
+});
 
 
 

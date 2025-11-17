@@ -80,6 +80,7 @@ public class GrupoElectrogenoFragment extends Fragment {
 
         CardView cardMantenimientos = view.findViewById(R.id.cardMantenimientos);
         CardView cardHistorialAlquilerMensual = view.findViewById(R.id.cardHistorialAlquilerMensual);
+        CardView cardHistorialAlquilerDiario = view.findViewById(R.id.cardHistorialAlquilerDiario);
 
         cardMantenimientos.setOnClickListener(v -> {
             Bundle args = new Bundle();
@@ -95,6 +96,13 @@ public class GrupoElectrogenoFragment extends Fragment {
             if (idGrupoLocal != null) args.putString("idGrupo", idGrupoLocal);
             Navigation.findNavController(view)
                     .navigate(R.id.action_grupoElectrogeno_to_historialAlquilerMensual, args);
+        });
+
+        cardHistorialAlquilerDiario.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            if (idGrupoLocal != null) args.putString("idGrupo", idGrupoLocal);
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_grupoElectrogeno_to_historialAlquilerDiario, args);
         });
 
         // Cargar totales del mes actual
