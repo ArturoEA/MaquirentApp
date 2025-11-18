@@ -1,11 +1,13 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginBottom="12dp"
+    android:background="@color/black"
+    android:theme="@style/Theme.TextMain"
+    app:cardBackgroundColor="@color/black"
     app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    android:theme="@style/Theme.TextMain">
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,33 +20,142 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Nombre Cliente"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"/>
+            android:textColor="@color/white"
+            android:textSize="20sp" />
 
-        <TextView
-            android:id="@+id/tvFechas"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Inicio: 01/01/2025 - Fin: 03/01/2025"
-            android:textSize="16sp"
-            android:textColor="@color/text_secondary"/>
+            android:layout_marginTop="5dp">
 
-        <TextView
-            android:id="@+id/tvPrecio"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="5dp"
+                android:src="@drawable/icon_ubicacion_blanco" />
+
+            <TextView
+                android:id="@+id/txtUbicacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="San Ignacio"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Monto: S/. 500.00"
-            android:textSize="16sp"
-            android:textColor="@color/text_secondary"/>
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvEstado"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="3dp"
+                android:rotation="90"
+                android:src="@drawable/icon_back_blanco" />
+
+            <TextView
+                android:id="@+id/txtHorasInicio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:text="10597 horas"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="3dp"
+                android:rotation="90"
+                android:src="@drawable/icon_back_blanco" />
+
+            <TextView
+                android:id="@+id/txtFechaInicial"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15/05/2025"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="230dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:src="@drawable/icon_linea_blanco" />
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Estado: Finalizado"
-            android:textSize="14sp"
-            android:textStyle="italic"
-            android:textColor="@color/text_secondary"/>
+            android:layout_marginTop="5dp"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="3dp"
+                android:rotation="-90"
+                android:src="@drawable/icon_back_blanco" />
+
+            <TextView
+                android:id="@+id/txtHorasFinal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:text="13597 horas"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="3dp"
+                android:rotation="-90"
+                android:src="@drawable/icon_back_blanco" />
+
+            <TextView
+                android:id="@+id/txtFechaFinal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="25/08/2025"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvPrecio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="25dp"
+                android:text="Monto: S/. 500.00"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvEstado"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Finalizado"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/contenedorAccesorios"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

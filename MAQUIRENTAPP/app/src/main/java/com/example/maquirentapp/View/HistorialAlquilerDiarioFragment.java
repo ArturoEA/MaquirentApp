@@ -1,11 +1,13 @@
 package com.example.maquirentapp.View;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,13 +18,16 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.maquirentapp.Access.AlquilerDiarioAdapter;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class HistorialAlquilerDiarioFragment extends Fragment {
 
@@ -31,10 +36,11 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     private NavController navController;
     private RecyclerView recyclerView;
     private AlquilerDiarioAdapter adapter;
-    private Spinner spinnerMeses;
-    private TextView tvAnio;
+    private TextView tvMes, tvEmptyState;
+    private ImageButton btnAnterior, btnSiguiente;
     private int mesSeleccionado;
     private int anioActual;
+    private String[] nombresMeses;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,6 +49,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             idGrupo = getArguments().getString("idGrupo");
         }
         firebaseServicio = new FirebaseServicio();
+        nombresMeses = getResources().getStringArray(R.array.months_array);
     }
 
     @Nullable
@@ -57,12 +64,16 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         navController = Navigation.findNavController(view);
 
         recyclerView = view.findViewById(R.id.recyclerHistorialAlquilerDiario);
-        spinnerMeses = view.findViewById(R.id.spinnerMeses);
-        tvAnio = view.findViewById(R.id.tvAnio);
+        tvMes = view.findViewById(R.id.tvMes);
+        btnAnterior = view.findViewById(R.id.btnAnterior);
+        btnSiguiente = view.findViewById(R.id.btnSiguiente);
+        tvEmptyState = view.findViewById(R.id.tvEmptyState);
 
         setupRecyclerView();
         setupFiltros();
         configurarFabGlobal();
+
+        cargarAlquileres();
     }
 
     @Override
@@ -87,27 +98,66 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         Calendar cal = Calendar.getInstance();
         anioActual = cal.get(Calendar.YEAR);
         mesSeleccionado = cal.get(Calendar.MONTH);
-        tvAnio.setText(String.valueOf(anioActual));
 
-        ArrayAdapter<CharSequence> adapterMeses = ArrayAdapter.createFromResource(getContext(),
-                R.array.months_array, android.R.layout.simple_spinner_item);
-        adapterMeses.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerMeses.setAdapter(adapterMeses);
-        spinnerMeses.setSelection(mesSeleccionado);
+        actualizarTextViewMes();
 
-        spinnerMeses.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mesSeleccionado = position;
-                cargarAlquileres();
+        btnAnterior.setOnClickListener(v -> {
+            mesSeleccionado--;
+            if (mesSeleccionado < 0) {
+                mesSeleccionado = 11;
+                anioActual--;
             }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            actualizarTextViewMes();
+            cargarAlquileres();
         });
 
-        // TODO: Añadir listeners a tvAnio para cambiar el año (igual que en Mantenimientos)
+        btnSiguiente.setOnClickListener(v -> {
+            mesSeleccionado++;
+            if (mesSeleccionado > 11) {
+                mesSeleccionado = 0;
+                anioActual++;
+            }
+            actualizarTextViewMes();
+            cargarAlquileres();
+        });
+
+        tvMes.setOnClickListener(v -> mostrarDialogoMesAnio());
     }
 
+    private void mostrarDialogoMesAnio() {
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_month_year_picker, null);
+
+        NumberPicker pickerMes = dialogView.findViewById(R.id.picker_mes);
+        NumberPicker pickerAnio = dialogView.findViewById(R.id.picker_anio);
+
+        pickerMes.setMinValue(0);
+        pickerMes.setMaxValue(11);
+        pickerMes.setDisplayedValues(nombresMeses);
+        pickerMes.setValue(mesSeleccionado);
+
+        pickerAnio.setMinValue(2020);
+        pickerAnio.setMaxValue(2050);
+        pickerAnio.setValue(anioActual);
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Seleccionar Mes y Año")
+                .setView(dialogView)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+                    mesSeleccionado = pickerMes.getValue();
+                    anioActual = pickerAnio.getValue();
+                    actualizarTextViewMes();
+                    cargarAlquileres();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void actualizarTextViewMes() {
+        String textoMes = String.format(Locale.getDefault(), "%s\n%d",
+                nombresMeses[mesSeleccionado], anioActual);
+        tvMes.setText(textoMes);
+    }
     private void cargarAlquileres() {
         if (idGrupo == null) {
             Toast.makeText(getContext(), "Error: ID de Grupo no encontrado", Toast.LENGTH_SHORT).show();
@@ -117,6 +167,13 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             @Override
             public void onSuccess(List<AlquilerDia> alquileres) {
                 adapter.setItems(alquileres);
+                if (alquileres.isEmpty()) {
+                    recyclerView.setVisibility(View.GONE);
+                    tvEmptyState.setVisibility(View.VISIBLE);
+                } else {
+                    recyclerView.setVisibility(View.VISIBLE);
+                    tvEmptyState.setVisibility(View.GONE);
+                }
             }
             @Override
             public void onError(Exception e) {
@@ -126,6 +183,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     }
 
     private void configurarFabGlobal() {
+        if(getActivity() == null) return;
         ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
         if (fab != null) {
             fab.setText("Añadir");
@@ -133,7 +191,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             fab.setVisibility(View.VISIBLE);
             fab.setOnClickListener(v -> {
                 Bundle args = new Bundle();
-                args.putString("idGrupo", idGrupo); // Pasa el idGrupo actual
+                args.putString("idGrupo", idGrupo);
                 navController.navigate(R.id.action_historialAlquilerDiario_to_nuevoAlquilerDia, args);
             });
         }
@@ -142,6 +200,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+        if(getActivity() == null) return;
         ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
         if (fab != null) {
             fab.setVisibility(View.GONE);
