@@ -2,6 +2,7 @@ package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,14 +21,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Access.AlquilerDiarioAdapter;
+import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class HistorialAlquilerDiarioFragment extends Fragment {
 
@@ -41,6 +45,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     private int mesSeleccionado;
     private int anioActual;
     private String[] nombresMeses;
+    private Map<String, String> accesoriosMap = new HashMap<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,14 +78,13 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         setupFiltros();
         configurarFabGlobal();
 
-        cargarAlquileres();
+        cargarAccesorios();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         configurarFabGlobal();
-        cargarAlquileres();
     }
 
     private void setupRecyclerView() {
@@ -88,8 +92,9 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("idGrupo", alquiler.getIdGrupo());
             args.putString("alquilerId", alquiler.getId());
+            args.putBoolean("modoSoloLectura", true);
             navController.navigate(R.id.action_historialAlquilerDiario_to_nuevoAlquilerDia, args);
-        });
+        }, accesoriosMap);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
     }
@@ -108,7 +113,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 anioActual--;
             }
             actualizarTextViewMes();
-            cargarAlquileres();
+//            cargarAlquileres();
         });
 
         btnSiguiente.setOnClickListener(v -> {
@@ -118,12 +123,29 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 anioActual++;
             }
             actualizarTextViewMes();
-            cargarAlquileres();
+//            cargarAlquileres();
         });
 
         tvMes.setOnClickListener(v -> mostrarDialogoMesAnio());
     }
+    private void cargarAccesorios() {
+        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
+            @Override
+            public void onSuccess(List<Accesorio> accesorios) {
+                accesoriosMap.clear();
+                for (Accesorio acc : accesorios) {
+                    accesoriosMap.put(acc.getId(), acc.getNombre());
+                }
+                cargarAlquileres();
+            }
 
+            @Override
+            public void onError(Exception e) {
+                Log.e("HistorialDiario", "Error al cargar accesorios", e);
+                cargarAlquileres();
+            }
+        });
+    }
     private void mostrarDialogoMesAnio() {
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_month_year_picker, null);

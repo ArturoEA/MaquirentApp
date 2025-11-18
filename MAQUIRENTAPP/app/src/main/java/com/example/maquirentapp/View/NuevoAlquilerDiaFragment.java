@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -48,12 +49,16 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     private LinearLayout layoutSpinnerGrupo;
     private Button btnFinalizar;
     private RecyclerView recyclerAccesorios;
+    private View llAccesoriosHeader;
+    private ImageView ivAccChevron;
+    private View accBody;
+    private boolean accesoriosExpanded = true;
 
     private AccesorioSeleccionAdapter adapterAccesorios;
     private FirebaseServicio firebaseServicio;
     private FirebaseAuth firebaseAuth;
     private AlquilerDia alquilerActual;
-    private List<GrupoElectrogeno> listaGrupos = new ArrayList<>(); // Para el spinner
+    private List<GrupoElectrogeno> listaGrupos = new ArrayList<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -115,9 +120,41 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         adapterAccesorios = new AccesorioSeleccionAdapter();
         recyclerAccesorios.setAdapter(adapterAccesorios);
 
+        llAccesoriosHeader = view.findViewById(R.id.llAccesoriosHeader);
+        ivAccChevron = view.findViewById(R.id.ivAccChevron);
+        accBody = view.findViewById(R.id.accBody);
+        accesoriosExpanded = !modoEdicion;
+        setAccesoriosExpanded(accesoriosExpanded, false);
+        llAccesoriosHeader.setOnClickListener(v -> {
+            accesoriosExpanded = !accesoriosExpanded;
+            setAccesoriosExpanded(accesoriosExpanded, true);
+        });
+
         inputHorasMaximas.setText("10");
     }
+    private void setAccesoriosExpanded(boolean expand, boolean animate) {
+        if (accBody == null || ivAccChevron == null) return;
 
+        if (expand) {
+            if (animate) {
+                accBody.setAlpha(0f);
+                accBody.setVisibility(View.VISIBLE);
+                accBody.animate().alpha(1f).setDuration(180).start();
+            } else {
+                accBody.setVisibility(View.VISIBLE);
+            }
+            if (animate) ivAccChevron.animate().rotation(180f).setDuration(180).start();
+            else ivAccChevron.setRotation(180f);
+        } else {
+            if (animate) {
+                accBody.animate().alpha(0f).setDuration(160).withEndAction(() -> accBody.setVisibility(View.GONE)).start();
+            } else {
+                accBody.setVisibility(View.GONE);
+            }
+            if (animate) ivAccChevron.animate().rotation(0f).setDuration(180).start();
+            else ivAccChevron.setRotation(0f);
+        }
+    }
     private void configurarSpinnerMoneda() {
         List<String> monedas = new ArrayList<>();
         monedas.add("SOL");

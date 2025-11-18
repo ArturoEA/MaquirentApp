@@ -150,12 +150,19 @@
                 android:textSize="18sp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/contenedorAccesorios"
-            android:layout_width="wrap_content"
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal" />
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/contenedorAccesorios"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>
