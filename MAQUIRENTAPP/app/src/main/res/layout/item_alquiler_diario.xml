@@ -16,6 +16,16 @@
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/tvGrupo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="CGE-XX"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:visibility="gone"/>
+
+        <TextView
             android:id="@+id/tvCliente"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

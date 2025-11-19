@@ -27,6 +27,7 @@ import com.google.firebase.storage.StorageReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -801,6 +802,35 @@ public class FirebaseServicio {
         } catch (Exception e) {
             listener.onError(e);
         }
+    }
+    public void getAlquileresDiariosActivos(OnAlquileresDiariosLoadedListener listener) {
+        db.collection("alquileresDiarios")
+                .whereEqualTo("finalizado", false)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<AlquilerDia> alquileres = new ArrayList<>();
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        AlquilerDia alquiler = doc.toObject(AlquilerDia.class);
+                        alquiler.setId(doc.getId());
+                        alquileres.add(alquiler);
+                    }
+
+                    Collections.sort(alquileres, (a1, a2) -> {
+                        try {
+                            Date d1 = sdf.parse(a1.getFechaInicial());
+                            Date d2 = sdf.parse(a2.getFechaInicial());
+                            if (d1 != null && d2 != null) {
+                                return d2.compareTo(d1);
+                            }
+                        } catch (Exception e) {}
+                        return 0;
+                    });
+
+                    listener.onSuccess(alquileres);
+                })
+                .addOnFailureListener(listener::onError);
     }
 
     // Interfaces para callbacks

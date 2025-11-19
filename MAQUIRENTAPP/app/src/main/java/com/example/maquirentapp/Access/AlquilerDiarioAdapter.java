@@ -19,6 +19,7 @@ import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,6 +29,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     private List<AlquilerDia> items = new ArrayList<>();
     private OnAlquilerDiaClickListener listener;
     private Context context;
+    private Map<String, String> gruposMap = new HashMap<>();
 
     public interface OnAlquilerDiaClickListener {
         void onAlquilerClick(AlquilerDia alquiler);
@@ -51,6 +53,10 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     public AlquilerDia getItem(int position) {
         return items.get(position);
     }
+    public void setGruposMap(Map<String, String> map) {
+        this.gruposMap = map;
+        notifyDataSetChanged();
+    }
 
     @NonNull
     @Override
@@ -64,7 +70,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AlquilerDia alquiler = items.get(position);
-        holder.bind(alquiler, listener, context);
+        holder.bind(alquiler, listener, context, gruposMap);
     }
 
     @Override
@@ -74,7 +80,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvCliente, tvPrecio, tvEstado, txtUbicacion,
-                txtHorasInicio, txtHorasFinal, txtFechaInicial, txtFechaFinal, tvComentarios;
+                txtHorasInicio, txtHorasFinal, txtFechaInicial, txtFechaFinal, tvComentarios, tvGrupo;
         LinearLayout contenedorAccesorios;
 
         public ViewHolder(@NonNull View itemView) {
@@ -89,9 +95,18 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
             txtFechaInicial = itemView.findViewById(R.id.txtFechaInicial);
             tvComentarios = itemView.findViewById(R.id.tvComentarios);
             contenedorAccesorios = itemView.findViewById(R.id.contenedorAccesorios);
+            tvGrupo = itemView.findViewById(R.id.tvGrupo);
         }
 
-        public void bind(AlquilerDia alquiler, OnAlquilerDiaClickListener listener, Context context) {
+        public void bind(AlquilerDia alquiler, OnAlquilerDiaClickListener listener, Context context, Map<String, String> gruposMap) {
+
+            String codigoGrupo = gruposMap.get(alquiler.getIdGrupo());
+            if (codigoGrupo != null) {
+                tvGrupo.setText(codigoGrupo);
+                tvGrupo.setVisibility(View.VISIBLE);
+            } else {
+                tvGrupo.setText("Cargando...");
+            }
 
             tvCliente.setText(alquiler.getNombreCliente());
             txtUbicacion.setText(alquiler.getUbicacion());

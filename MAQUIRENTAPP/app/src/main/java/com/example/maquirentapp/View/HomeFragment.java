@@ -1,6 +1,12 @@
 package com.example.maquirentapp.View;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,14 +17,10 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import com.example.maquirentapp.Access.AlquilerDiarioAdapter; // Importar Adapter
 import com.example.maquirentapp.Access.PagoPendienteAdapter;
+import com.example.maquirentapp.Model.Accesorio; // Importar Modelo
+import com.example.maquirentapp.Model.AlquilerDia; // Importar Modelo
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
@@ -33,13 +35,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HomeFragment extends Fragment {
-    private RecyclerView recyclerPagosPendientes;
+    private RecyclerView recyclerPagosPendientes, recyclerAlquileresDiarios;
     private PagoPendienteAdapter pagoPendienteAdapter;
+    private AlquilerDiarioAdapter alquilerDiarioAdapter;
     private FirebaseServicio firebaseServicio;
+
     private List<PagoPendiente> pagosPendientesList = new ArrayList<>();
     private Map<String, GrupoElectrogeno> gruposMap = new HashMap<>();
+    private Map<String, String> accesoriosMap = new HashMap<>();
+
     private NavController navController;
-    private TextView emptyStatePagosPendientes;
+    private TextView emptyStatePagosPendientes, emptyStateAlquileresDiarios;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -54,7 +60,6 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -62,24 +67,103 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Inicializar vistas
         CardView cardNuevoAlquiler = view.findViewById(R.id.cardNuevoAlquilerDiario);
         CardView cardCotizaciones = view.findViewById(R.id.cardCotizaciones);
         CardView cardPlanosCambioVoltaje = view.findViewById(R.id.cardPlanosVoltaje);
         CardView cardFichasTecnicas = view.findViewById(R.id.cardFichasTecnicas);
+        emptyStatePagosPendientes = view.findViewById(R.id.emptyStatePagosPendientes);
+        emptyStateAlquileresDiarios = view.findViewById(R.id.emptyStateAlquileresDiarios); // Inicializar
 
         navController = Navigation.findNavController(view);
 
+        // Listeners de botones
         cardNuevoAlquiler.setOnClickListener(v ->
                 navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerFragment));
-//        cardCotizaciones.setOnClickListener(v ->
-//                navController.navigate(R.id.action_homeFragment_to_cotizacionesFragment));
         cardPlanosCambioVoltaje.setOnClickListener(v -> navController.navigate(R.id.action_home_to_PlanosCambioVoltajeFragment));
         cardFichasTecnicas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_FichasTecnicasFragment));
 
-        emptyStatePagosPendientes = view.findViewById(R.id.emptyStatePagosPendientes);
+        // Configurar Recyclers
+        setupAlquileresDiariosRecycler(view); // Configurar alquileres diarios
         setupPagosPendientesRecyclerView(view);
+
+        cargarAccesoriosYAlquileresDiarios();
         cargarPagosPendientes();
     }
+    private void setupAlquileresDiariosRecycler(View view) {
+        recyclerAlquileresDiarios = view.findViewById(R.id.recyclerAlquileresDiarios);
+        recyclerAlquileresDiarios.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+
+        int spaceInPixels = (int) (10 * getResources().getDisplayMetrics().density);
+        recyclerAlquileresDiarios.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull android.graphics.Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                int position = parent.getChildAdapterPosition(view);
+                if (position != parent.getAdapter().getItemCount() - 1) {
+                    outRect.right = spaceInPixels;
+                }
+                if (position == 0) {
+                    outRect.left = spaceInPixels / 10;
+                }
+            }
+        });
+        alquilerDiarioAdapter = new AlquilerDiarioAdapter(alquiler -> {
+            Bundle args = new Bundle();
+            args.putString("idGrupo", alquiler.getIdGrupo());
+            args.putString("alquilerId", alquiler.getId());
+            args.putBoolean("modoSoloLectura", true);
+            navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerFragment, args);
+        });
+
+        recyclerAlquileresDiarios.setAdapter(alquilerDiarioAdapter);
+    }
+    private void cargarAccesoriosYAlquileresDiarios() {
+        // 1. Cargar accesorios primero para llenar el mapa de íconos
+        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
+            @Override
+            public void onSuccess(List<Accesorio> accesorios) {
+                accesoriosMap.clear();
+                for (Accesorio acc : accesorios) {
+                    accesoriosMap.put(acc.getId(), acc.getNombre());
+                }
+                // Una vez tenemos los accesorios, cargamos los alquileres
+                cargarAlquileresDiariosActivos();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("HomeFragment", "Error cargando accesorios", e);
+                // Intentamos cargar alquileres de todas formas
+                cargarAlquileresDiariosActivos();
+            }
+        });
+    }
+
+    private void cargarAlquileresDiariosActivos() {
+        firebaseServicio.getAlquileresDiariosActivos(new FirebaseServicio.OnAlquileresDiariosLoadedListener() {
+            @Override
+            public void onSuccess(List<AlquilerDia> alquileres) {
+                alquilerDiarioAdapter.setItems(alquileres);
+
+                if (alquileres.isEmpty()) {
+                    recyclerAlquileresDiarios.setVisibility(View.GONE);
+                    emptyStateAlquileresDiarios.setVisibility(View.VISIBLE);
+                } else {
+                    recyclerAlquileresDiarios.setVisibility(View.VISIBLE);
+                    emptyStateAlquileresDiarios.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e("HomeFragment", "Error cargando alquileres diarios", e);
+                Toast.makeText(getContext(), "Error al cargar alquileres diarios", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // --- LÓGICA PAGOS PENDIENTES (EXISTENTE) ---
+
     private void setupPagosPendientesRecyclerView(View view) {
         recyclerPagosPendientes = view.findViewById(R.id.recyclerPagosPendientes);
         recyclerPagosPendientes.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
@@ -88,13 +172,12 @@ public class HomeFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("idGrupo", pago.getIdGrupo());
             args.putString("alquilerId", pago.getAlquilerId());
-            args.putBoolean("modoSoloLectura", true);;
+            args.putBoolean("modoSoloLectura", true);
 
             try {
                 navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerMensualFragment, args);
             } catch (Exception e) {
-                Log.e("HomeFragment", "Error al navegar. Asegúrate de que la acción 'action_homeFragment_to_nuevoAlquilerMensualFragment' existe en tu nav_graph.", e);
-                Toast.makeText(getContext(), "Error de navegación", Toast.LENGTH_SHORT).show();
+                Log.e("HomeFragment", "Error nav pagos pendientes", e);
             }
         });
         recyclerPagosPendientes.setAdapter(pagoPendienteAdapter);
@@ -106,10 +189,15 @@ public class HomeFragment extends Fragment {
         firebaseServicio.getGruposElectrogenos(false, new FirebaseServicio.OnGruposLoadedListener() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
+                Map<String, String> mapaCodigos = new HashMap<>();
                 for (GrupoElectrogeno g : grupos) {
                     if (g != null && g.getId() != null) {
                         gruposMap.put(g.getId(), g);
+                        mapaCodigos.put(g.getId(), g.getCodigo());
                     }
+                }
+                if (alquilerDiarioAdapter != null) {
+                    alquilerDiarioAdapter.setGruposMap(mapaCodigos);
                 }
                 cargarAlquileresActivos();
             }
@@ -138,7 +226,6 @@ public class HomeFragment extends Fragment {
                     return;
                 }
 
-                // 3. Para cada alquiler activo, cargar sus detalles de mes
                 AtomicInteger counter = new AtomicInteger(alquileresActivos.size());
                 for (AlquilerMensual alquiler : alquileresActivos) {
                     firebaseServicio.getDetallesMesPorAlquiler(alquiler.getId(), new FirebaseServicio.OnDetallesMesLoadedListener() {
@@ -152,7 +239,6 @@ public class HomeFragment extends Fragment {
 
                         @Override
                         public void onError(Exception e) {
-                            Log.e("HomeFragment", "Error al cargar detalles para alquiler " + alquiler.getId(), e);
                             if (counter.decrementAndGet() == 0) {
                                 actualizarAdaptadorPagos();
                             }
@@ -163,7 +249,6 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Log.e("HomeFragment", "Error al cargar alquileres mensuales", e);
                 actualizarAdaptadorPagos();
             }
         });
@@ -191,7 +276,6 @@ public class HomeFragment extends Fragment {
                 pago.setDetalleMesId(detalle.getId());
                 pago.setIdGrupo(alquiler.getIdGrupo());
 
-                // Lógica de color
                 if (mesPendiente) {
                     pago.setEstadoColor(R.color.red_accent);
                 } else {
@@ -202,11 +286,11 @@ public class HomeFragment extends Fragment {
             }
         }
     }
+
     private void actualizarAdaptadorPagos() {
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 pagoPendienteAdapter.setItems(pagosPendientesList);
-
                 if (pagosPendientesList.isEmpty()) {
                     recyclerPagosPendientes.setVisibility(View.GONE);
                     emptyStatePagosPendientes.setVisibility(View.VISIBLE);
