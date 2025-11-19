@@ -69,5 +69,6 @@ dependencies {
     implementation ("androidx.work:work-runtime:2.8.1")
     implementation ("com.google.guava:guava:31.1-android")
     implementation("it.xabaras.android:recyclerview-swipedecorator:1.4")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 }

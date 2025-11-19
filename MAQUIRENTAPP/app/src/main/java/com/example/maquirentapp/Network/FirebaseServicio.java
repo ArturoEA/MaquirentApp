@@ -9,6 +9,7 @@ import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
+import com.example.maquirentapp.Model.Plano;
 import com.example.maquirentapp.Model.Usuario;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -832,8 +833,73 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+    public void subirPlano(Uri imagenUri, OnSimpleCallback listener) {
+        String nombreArchivo = "plano_" + System.currentTimeMillis() + ".jpg";
+        StorageReference storageRef = storage.getReference().child("planos_voltaje/" + nombreArchivo);
 
+        storageRef.putFile(imagenUri)
+                .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUri -> {
+                            DocumentReference docRef = db.collection("planosVoltaje").document();
+
+                            Plano plano = new Plano(docRef.getId(), downloadUri.toString(), nombreArchivo);
+
+                            docRef.set(plano)
+                                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                                    .addOnFailureListener(listener::onError);
+                        })
+                        .addOnFailureListener(listener::onError))
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getPlanosVoltaje(OnPlanosLoadedListener listener) {
+        db.collection("planosVoltaje")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Plano> planos = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Plano p = doc.toObject(Plano.class);
+                        p.setId(doc.getId());
+                        planos.add(p);
+                    }
+                    listener.onSuccess(planos);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+    public void eliminarPlano(Plano plano, OnSimpleCallback listener) {
+        if (plano == null || plano.getId() == null) {
+            listener.onError(new Exception("Plano inválido"));
+            return;
+        }
+
+        // 1. Eliminar documento de Firestore
+        db.collection("planosVoltaje").document(plano.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    // 2. Intentar eliminar imagen de Storage
+                    if (plano.getUrlImagen() != null && !plano.getUrlImagen().isEmpty()) {
+                        try {
+                            StorageReference photoRef = storage.getReferenceFromUrl(plano.getUrlImagen());
+                            photoRef.delete()
+                                    .addOnSuccessListener(aVoid1 -> listener.onSuccess())
+                                    .addOnFailureListener(e -> {
+                                        Log.w("FirebaseServicio", "No se pudo borrar imagen de Storage: " + e.getMessage());
+                                        listener.onSuccess();
+                                    });
+                        } catch (Exception e) {
+                            listener.onSuccess();
+                        }
+                    } else {
+                        listener.onSuccess();
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
     // Interfaces para callbacks
+    public interface OnPlanosLoadedListener {
+        void onSuccess(List<Plano> planos);
+        void onError(Exception e);
+    }
     public interface OnAlquilerDiaCreadoListener {
         void onSuccess(AlquilerDia alquiler);
         void onError(Exception e);

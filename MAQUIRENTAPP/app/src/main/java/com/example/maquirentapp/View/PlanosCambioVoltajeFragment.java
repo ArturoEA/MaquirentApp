@@ -1,60 +1,74 @@
 package com.example.maquirentapp.View;
 
-import android.app.Activity;
-import android.app.Dialog;
+import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.maquirentapp.Model.Plano;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.ViewModel.PlanosViewModel;
 import com.example.maquirentapp.adaptadores.PlanoAdapter;
+import com.github.chrisbanes.photoview.PhotoView;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-public class PlanosCambioVoltajeFragment extends Fragment implements PlanoAdapter.OnPlanoClickListener {
+public class PlanosCambioVoltajeFragment extends Fragment {
 
-    private PlanosViewModel viewModel;
+    private RecyclerView recyclerPlanos;
+    private ProgressBar progressBar;
     private PlanoAdapter adapter;
-    private final ActivityResultLauncher<Intent> imagePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    Uri imageUri = result.getData().getData();
-                    if (imageUri != null) {
-                        String uniqueID = UUID.randomUUID().toString();
-                        Plano nuevoPlano = new Plano(uniqueID, imageUri.toString(), "Nuevo Plano");
-                        viewModel.addPlano(nuevoPlano);
-                    }
+    private FirebaseServicio firebaseServicio;
+    private List<Plano> listaPlanos = new ArrayList<>();
+
+    private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    subirImagen(uri);
                 }
-            });
+            }
+    );
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(PlanosViewModel.class);
+        firebaseServicio = new FirebaseServicio();
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_planos_cambio_voltaje, container, false);
     }
 
@@ -62,54 +76,205 @@ public class PlanosCambioVoltajeFragment extends Fragment implements PlanoAdapte
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        RecyclerView recyclerView = view.findViewById(R.id.recyclerPlanos);
-        FloatingActionButton btnAdd = view.findViewById(R.id.btnAddPlano);
+        recyclerPlanos = view.findViewById(R.id.recyclerPlanos);
+        progressBar = view.findViewById(R.id.progressBar);
 
-        adapter = new PlanoAdapter(null, this);
-        recyclerView.setAdapter(adapter);
+        recyclerPlanos.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        adapter = new PlanoAdapter(listaPlanos, this::mostrarDialogoPlano);
+        recyclerPlanos.setAdapter(adapter);
 
-        viewModel.getPlanos().observe(getViewLifecycleOwner(), planos -> {
-            if (planos != null) {
-                adapter.updateList(planos);
+        configurarFab();
+        cargarPlanos();
+    }
+
+    private void configurarFab() {
+        if (getActivity() != null) {
+            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) {
+                fab.setText("Añadir");
+                fab.setIconResource(R.drawable.icon_nuevo_blanco);
+                fab.setVisibility(View.VISIBLE);
+                fab.setOnClickListener(v -> galleryLauncher.launch("image/*"));
+            }
+        }
+    }
+
+    private void subirImagen(Uri uri) {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        Toast.makeText(getContext(), "Subiendo imagen...", Toast.LENGTH_SHORT).show();
+
+        firebaseServicio.subirPlano(uri, new FirebaseServicio.OnSimpleCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
+                cargarPlanos();
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
             }
         });
-
-        btnAdd.setOnClickListener(v -> openImagePicker());
     }
 
-    private void openImagePicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        imagePickerLauncher.launch(intent);
+    private void cargarPlanos() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        firebaseServicio.getPlanosVoltaje(new FirebaseServicio.OnPlanosLoadedListener() {
+            @Override
+            public void onSuccess(List<Plano> planos) {
+                listaPlanos = planos;
+                adapter.setItems(planos);
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "Error al cargar planos", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    @Override
-    public void onPlanoClick(Plano plano) {
-        // Acción al hacer clic en un plano (puedes implementar vista ampliada)
-        showFullScreenPreview(plano.getImageUrl());
-    }
+    private void mostrarDialogoPlano(Plano plano) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_plano, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
 
-    @Override
-    public void onDeleteClick(Plano plano) {
-        viewModel.removePlano(plano);
-    }
-    private void showFullScreenPreview(String imageUrl) {
-        Dialog dialog = new Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-        dialog.setContentView(R.layout.dialog_fullscreen_image);
-
-        ImageView fullImageView = dialog.findViewById(R.id.fullImageView);
-        ImageView btnClose = dialog.findViewById(R.id.btnClose);
-
-        // Cargar la imagen en tamaño completo
-        if (imageUrl.startsWith("drawable/")) {
-            int resourceId = requireContext().getResources()
-                    .getIdentifier(imageUrl.replace("drawable/", ""),
-                            "drawable", requireContext().getPackageName());
-            Glide.with(this).load(resourceId).into(fullImageView);
-        } else {
-            Glide.with(this).load(Uri.parse(imageUrl)).into(fullImageView);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
+        // Usar PhotoView para el Zoom
+        PhotoView imgFull = dialogView.findViewById(R.id.imgFull);
+
+        ImageView btnClose = dialogView.findViewById(R.id.btnClose);
+        ImageView btnDelete = dialogView.findViewById(R.id.btnDelete);
+        LinearLayout btnDownload = dialogView.findViewById(R.id.btnDownload);
+        LinearLayout btnShare = dialogView.findViewById(R.id.btnShare);
+
+        // Cargar con Glide en el PhotoView
+        Glide.with(this)
+                .load(plano.getUrlImagen())
+                .placeholder(R.drawable.ilustracion_maquinaria_vacio)
+                .into(imgFull);
+
         btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        btnDelete.setOnClickListener(v -> {
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Eliminar Plano")
+                    .setMessage("¿Estás seguro de eliminar esta imagen?")
+                    .setPositiveButton("Eliminar", (d, w) -> {
+                        if(progressBar != null) progressBar.setVisibility(View.VISIBLE);
+
+                        firebaseServicio.eliminarPlano(plano, new FirebaseServicio.OnSimpleCallback() {
+                            @Override
+                            public void onSuccess() {
+                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getContext(), "Plano eliminado", Toast.LENGTH_SHORT).show();
+                                cargarPlanos();
+                                dialog.dismiss();
+                            }
+                            @Override
+                            public void onError(Exception e) {
+                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+
+        btnDownload.setOnClickListener(v -> descargarImagen(plano.getUrlImagen(), plano.getNombreArchivo()));
+        btnShare.setOnClickListener(v -> compartirImagen(plano));
+
         dialog.show();
+    }
+
+    private void descargarImagen(String url, String nombreArchivo) {
+        try {
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
+            request.setTitle("Descargando Plano");
+            request.setDescription("Descargando " + nombreArchivo);
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, nombreArchivo);
+
+            DownloadManager manager = (DownloadManager) requireContext().getSystemService(Context.DOWNLOAD_SERVICE);
+            if (manager != null) {
+                manager.enqueue(request);
+                Toast.makeText(getContext(), "Descarga iniciada...", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error al descargar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void compartirImagen(Plano plano) {
+        Toast.makeText(getContext(), "Preparando para compartir...", Toast.LENGTH_SHORT).show();
+
+        Glide.with(this)
+                .asBitmap()
+                .load(plano.getUrlImagen())
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        // Usar requireContext() dentro del callback
+                        if (isAdded() && getContext() != null) {
+                            compartirBitmap(resource, "plano_compartido_" + System.currentTimeMillis() + ".jpg");
+                        }
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
+    }
+
+    private void compartirBitmap(Bitmap bitmap, String fileName) {
+        try {
+            File cachePath = new File(requireContext().getCacheDir(), "images");
+            if (!cachePath.exists()) cachePath.mkdirs();
+
+            File newFile = new File(cachePath, fileName);
+            FileOutputStream stream = new FileOutputStream(newFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+            stream.close();
+
+            // Obtener URI segura usando FileProvider
+            Uri contentUri = FileProvider.getUriForFile(requireContext(),
+                    "com.example.maquirentapp.provider", newFile);
+
+            if (contentUri != null) {
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
+                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                startActivity(Intent.createChooser(shareIntent, "Compartir plano vía"));
+            }
+        } catch (IOException | IllegalArgumentException e) {
+            e.printStackTrace();
+            Log.e("Compartir", "Error: " + e.getMessage());
+            Toast.makeText(getContext(), "Error al compartir. Verifique FileProvider.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (getActivity() != null) {
+            View fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) fab.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        configurarFab();
     }
 }
