@@ -2,6 +2,7 @@ package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -41,9 +43,11 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     private String idGrupo, alquilerId;
     private boolean modoEdicion = false;
     private boolean vieneDeHome = false;
+    private boolean modoSoloLectura = false;
+    private boolean editandoActualmente = false;
 
     private TextInputEditText inputCliente, inputLugar, inputFechaInicial, inputFechaFinal,
-            inputHorometroInicial, inputHorometroFinal, inputPrecio, inputHorasMaximas;
+            inputHorometroInicial, inputHorometroFinal, inputPrecio, inputHorasMaximas, inputComentarios;
     private Spinner spinnerMoneda, spinnerGrupo;
     private TextView tvSimboloMoneda;
     private LinearLayout layoutSpinnerGrupo;
@@ -68,6 +72,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
             alquilerId = getArguments().getString("alquilerId");
+            modoSoloLectura = getArguments().getBoolean("modoSoloLectura", false);
             modoEdicion = (alquilerId != null);
             vieneDeHome = (idGrupo == null && !modoEdicion);
         }
@@ -98,6 +103,10 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         } else {
             layoutSpinnerGrupo.setVisibility(View.GONE);
         }
+
+        if (modoSoloLectura) {
+            deshabilitarCampos();
+        }
     }
 
     private void inicializarVistas(View view) {
@@ -113,6 +122,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         inputHorometroFinal = view.findViewById(R.id.horometroFinalEditText);
         inputPrecio = view.findViewById(R.id.inputPrecioAlquiler);
         inputHorasMaximas = view.findViewById(R.id.horasMaxDia);
+        inputComentarios = view.findViewById(R.id.inputComentarios);
         btnFinalizar = view.findViewById(R.id.btnFinalizarAlquilerDiario);
 
         recyclerAccesorios = view.findViewById(R.id.recyclerAccesorios);
@@ -123,8 +133,10 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         llAccesoriosHeader = view.findViewById(R.id.llAccesoriosHeader);
         ivAccChevron = view.findViewById(R.id.ivAccChevron);
         accBody = view.findViewById(R.id.accBody);
+
         accesoriosExpanded = !modoEdicion;
         setAccesoriosExpanded(accesoriosExpanded, false);
+
         llAccesoriosHeader.setOnClickListener(v -> {
             accesoriosExpanded = !accesoriosExpanded;
             setAccesoriosExpanded(accesoriosExpanded, true);
@@ -132,6 +144,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
         inputHorasMaximas.setText("10");
     }
+
     private void setAccesoriosExpanded(boolean expand, boolean animate) {
         if (accBody == null || ivAccChevron == null) return;
 
@@ -142,6 +155,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                 accBody.animate().alpha(1f).setDuration(180).start();
             } else {
                 accBody.setVisibility(View.VISIBLE);
+                accBody.setAlpha(1f);
             }
             if (animate) ivAccChevron.animate().rotation(180f).setDuration(180).start();
             else ivAccChevron.setRotation(180f);
@@ -155,11 +169,25 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             else ivAccChevron.setRotation(0f);
         }
     }
+
     private void configurarSpinnerMoneda() {
         List<String> monedas = new ArrayList<>();
         monedas.add("SOL");
         monedas.add("USD");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, monedas);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, monedas) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                ((TextView) view).setTextColor(Color.BLACK);
+                return view;
+            }
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                ((TextView) view).setTextColor(Color.BLACK);
+                return view;
+            }
+        };
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMoneda.setAdapter(adapter);
         spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -172,7 +200,6 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     }
 
     private void configurarDatePickers() {
-        // Lógica para inputFechaInicial
         inputFechaInicial.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
             DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
@@ -181,7 +208,6 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             dpd.show();
         });
 
-        // Lógica para inputFechaFinal
         inputFechaFinal.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
             DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
@@ -201,12 +227,30 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 listaGrupos = grupos;
                 List<String> nombresGrupos = new ArrayList<>();
-                nombresGrupos.add("Seleccione un grupo..."); // Hint
+                nombresGrupos.add("Seleccione un grupo...");
                 for (GrupoElectrogeno g : grupos) {
                     nombresGrupos.add(g.getCodigo());
                 }
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
-                        android.R.layout.simple_spinner_item, nombresGrupos);
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_item, nombresGrupos) {
+                    @NonNull
+                    @Override
+                    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                        View view = super.getView(position, convertView, parent);
+                        TextView tv = (TextView) view.findViewById(android.R.id.text1);
+                        tv.setTextColor(Color.BLACK);
+                        return view;
+                    }
+
+                    @Override
+                    public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                        View view = super.getDropDownView(position, convertView, parent);
+                        TextView tv = (TextView) view.findViewById(android.R.id.text1);
+                        tv.setTextColor(Color.BLACK);
+                        return view;
+                    }
+                };
+
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerGrupo.setAdapter(adapter);
             }
@@ -222,7 +266,6 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             @Override
             public void onSuccess(List<Accesorio> accesorios) {
                 adapterAccesorios.setItems(accesorios);
-                // Si estamos editando, seleccionamos los guardados
                 if (modoEdicion && alquilerActual != null && alquilerActual.getAccesoriosIds() != null) {
                     adapterAccesorios.setAccesoriosSeleccionados(alquilerActual.getAccesoriosIds());
                 }
@@ -249,11 +292,19 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                 inputPrecio.setText(String.valueOf(alquiler.getPrecioTotal()));
                 inputHorasMaximas.setText(String.valueOf(alquiler.getHorasMaximas()));
 
+                // Cargar comentarios si existen
+                if (alquiler.getComentarios() != null) {
+                    inputComentarios.setText(alquiler.getComentarios());
+                }
+
                 spinnerMoneda.setSelection("USD".equals(alquiler.getMoneda()) ? 1 : 0);
                 adapterAccesorios.setAccesoriosSeleccionados(alquiler.getAccesoriosIds());
 
                 if (alquiler.isFinalizado()) {
                     deshabilitarCampos();
+                    hideGlobalFab();
+                } else {
+                    configureGlobalFab();
                 }
             }
             @Override
@@ -289,13 +340,11 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             alquilerActual = new AlquilerDia();
         }
 
-        // Obtener el idGrupo
         if (vieneDeHome) {
             int pos = spinnerGrupo.getSelectedItemPosition() - 1;
             idGrupo = listaGrupos.get(pos).getId();
         }
         alquilerActual.setIdGrupo(idGrupo);
-
         alquilerActual.setNombreCliente(inputCliente.getText().toString().trim());
         alquilerActual.setUbicacion(inputLugar.getText().toString().trim());
         alquilerActual.setFechaInicial(inputFechaInicial.getText().toString().trim());
@@ -305,12 +354,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             alquilerActual.setHorometroInicial(Double.parseDouble(inputHorometroInicial.getText().toString().trim()));
             String hFinalStr = inputHorometroFinal.getText().toString().trim();
             alquilerActual.setHorometroFinal(hFinalStr.isEmpty() ? 0 : Double.parseDouble(hFinalStr));
-
             alquilerActual.setPrecioTotal(Double.parseDouble(inputPrecio.getText().toString().trim()));
-
             String horasMax = inputHorasMaximas.getText().toString().trim();
             alquilerActual.setHorasMaximas(horasMax.isEmpty() ? 10 : Double.parseDouble(horasMax));
-
         } catch (NumberFormatException e) {
             Toast.makeText(getContext(), "Revise los campos numéricos", Toast.LENGTH_SHORT).show();
             if (finalizar) btnFinalizar.setEnabled(true);
@@ -319,6 +365,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
         alquilerActual.setMoneda(spinnerMoneda.getSelectedItem().toString());
         alquilerActual.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
+        alquilerActual.setComentarios(inputComentarios.getText().toString().trim());
 
         if (!modoEdicion) {
             alquilerActual.setAdminUid(firebaseAuth.getUid());
@@ -328,7 +375,11 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             firebaseServicio.actualizarAlquilerDia(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
                 @Override public void onSuccess() {
                     Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
-                    if (!finalizar) Navigation.findNavController(getView()).popBackStack();
+                    if (!finalizar) {
+                        editandoActualmente = false;
+                        deshabilitarCampos();
+                        configureGlobalFab();
+                    }
                 }
                 @Override public void onError(Exception e) {
                     Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
@@ -351,8 +402,24 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     }
 
     private void mostrarDialogoFinalizar() {
-        if (inputFechaFinal.getText().toString().isEmpty()) {
+        String fechaFinal = inputFechaFinal.getText().toString().trim();
+        String hFinalStr = inputHorometroFinal.getText().toString().trim();
+
+        if (fechaFinal.isEmpty()) {
             Toast.makeText(getContext(), "Debe llenar la Fecha Final para poder finalizar", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        double horometroFinal = 0;
+        try {
+            if (!hFinalStr.isEmpty()) {
+                horometroFinal = Double.parseDouble(hFinalStr);
+            }
+        } catch (NumberFormatException e) {
+        }
+
+        if (hFinalStr.isEmpty() || horometroFinal <= 0) {
+            Toast.makeText(getContext(), "Debe ingresar un Horómetro Final válido", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -366,7 +433,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                     guardarAlquilerDiario(true);
 
                     new android.os.Handler().postDelayed(() -> {
-                        if (alquilerActual.getId() == null) { // Falló la creación
+                        if (alquilerActual.getId() == null) {
                             btnFinalizar.setText("Finalizar Alquiler");
                             btnFinalizar.setEnabled(true);
                             return;
@@ -376,7 +443,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                             @Override public void onSuccess() {
                                 Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
                                 deshabilitarCampos();
-                                Navigation.findNavController(getView()).popBackStack(); // Volver
+                                hideGlobalFab();
+                                Navigation.findNavController(getView()).popBackStack();
                             }
                             @Override public void onError(Exception e) {
                                 Toast.makeText(getContext(), "Error al finalizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -391,8 +459,13 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     }
 
     private void deshabilitarCampos() {
-        btnFinalizar.setText("Alquiler Finalizado");
-        btnFinalizar.setEnabled(false);
+        if (alquilerActual != null && alquilerActual.isFinalizado()) {
+            btnFinalizar.setText("Alquiler Finalizado");
+            btnFinalizar.setEnabled(false);
+        } else {
+            btnFinalizar.setVisibility(View.GONE);
+        }
+
         inputCliente.setEnabled(false);
         inputLugar.setEnabled(false);
         inputFechaInicial.setEnabled(false);
@@ -401,34 +474,80 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         inputHorometroFinal.setEnabled(false);
         inputPrecio.setEnabled(false);
         inputHorasMaximas.setEnabled(false);
+        inputComentarios.setEnabled(false);
         spinnerMoneda.setEnabled(false);
         spinnerGrupo.setEnabled(false);
         adapterAccesorios.setClickEnabled(false);
     }
-    private void configurarFabGlobal() {
-        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-        if (fab != null) {
-            fab.setText("Guardar");
-            fab.setIconResource(R.drawable.icon_guardar_blanco);
-            fab.setVisibility(View.VISIBLE);
-            fab.setOnClickListener(v -> guardarAlquilerDiario(false)); // false = solo guardar
+
+    private void habilitarCampos() {
+        if (alquilerActual != null && alquilerActual.isFinalizado()) return;
+
+        inputCliente.setEnabled(true);
+        inputLugar.setEnabled(true);
+        inputFechaInicial.setEnabled(true);
+        inputFechaFinal.setEnabled(true);
+        inputHorometroInicial.setEnabled(true);
+        inputHorometroFinal.setEnabled(true);
+        inputPrecio.setEnabled(true);
+        inputHorasMaximas.setEnabled(true);
+        inputComentarios.setEnabled(true);
+        spinnerMoneda.setEnabled(true);
+        adapterAccesorios.setClickEnabled(true);
+
+        btnFinalizar.setVisibility(View.VISIBLE);
+        btnFinalizar.setEnabled(true);
+        btnFinalizar.setText("Finalizar alquiler");
+    }
+
+    private void configureGlobalFab() {
+        if (getActivity() == null) return;
+
+        if (alquilerActual != null && alquilerActual.isFinalizado()) {
+            hideGlobalFab();
+            return;
+        }
+
+        if (modoSoloLectura && !editandoActualmente) {
+            // Modo Lectura: Botón editar
+            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) {
+                fab.setText("Editar");
+                fab.setIconResource(R.drawable.icon_editar_blanco);
+                fab.setVisibility(View.VISIBLE);
+                fab.setOnClickListener(v -> {
+                    editandoActualmente = true;
+                    habilitarCampos();
+                    configureGlobalFab();
+                });
+            }
+        } else {
+            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) {
+                fab.setText("Guardar");
+                fab.setIconResource(R.drawable.icon_guardar_blanco);
+                fab.setVisibility(View.VISIBLE);
+                fab.setOnClickListener(v -> guardarAlquilerDiario(false));
+            }
+        }
+    }
+
+    private void hideGlobalFab() {
+        if (getActivity() != null) {
+            View fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) fab.setVisibility(View.GONE);
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (alquilerActual == null || !alquilerActual.isFinalizado()) {
-            configurarFabGlobal();
-        }
+        configureGlobalFab();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-        if (fab != null) {
-            fab.setVisibility(View.GONE);
-        }
+        hideGlobalFab();
     }
 }

@@ -1,7 +1,6 @@
 package com.example.maquirentapp.Access;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
@@ -25,22 +27,29 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
 
     private List<AlquilerDia> items = new ArrayList<>();
     private OnAlquilerDiaClickListener listener;
-    private Map<String, String> accesoriosMap;
     private Context context;
 
     public interface OnAlquilerDiaClickListener {
         void onAlquilerClick(AlquilerDia alquiler);
     }
 
-    public AlquilerDiarioAdapter(OnAlquilerDiaClickListener listener, Map<String, String> accesoriosMap) {
+    public AlquilerDiarioAdapter(OnAlquilerDiaClickListener listener) {
         this.listener = listener;
-        this.accesoriosMap = accesoriosMap;
     }
 
     public void setItems(List<AlquilerDia> nuevos) {
         this.items.clear();
         this.items.addAll(nuevos);
         notifyDataSetChanged();
+    }
+
+    public void removeItem(int position) {
+        items.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public AlquilerDia getItem(int position) {
+        return items.get(position);
     }
 
     @NonNull
@@ -55,7 +64,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AlquilerDia alquiler = items.get(position);
-        holder.bind(alquiler, listener, accesoriosMap, context);
+        holder.bind(alquiler, listener, context);
     }
 
     @Override
@@ -65,7 +74,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvCliente, tvPrecio, tvEstado, txtUbicacion,
-                txtHorasInicio, txtHorasFinal, txtFechaInicial, txtFechaFinal;
+                txtHorasInicio, txtHorasFinal, txtFechaInicial, txtFechaFinal, tvComentarios;
         LinearLayout contenedorAccesorios;
 
         public ViewHolder(@NonNull View itemView) {
@@ -78,11 +87,11 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
             txtHorasFinal = itemView.findViewById(R.id.txtHorasFinal);
             txtFechaFinal = itemView.findViewById(R.id.txtFechaFinal);
             txtFechaInicial = itemView.findViewById(R.id.txtFechaInicial);
+            tvComentarios = itemView.findViewById(R.id.tvComentarios);
             contenedorAccesorios = itemView.findViewById(R.id.contenedorAccesorios);
         }
 
-        public void bind(AlquilerDia alquiler, OnAlquilerDiaClickListener listener,
-                         Map<String, String> accesoriosMap, Context context) {
+        public void bind(AlquilerDia alquiler, OnAlquilerDiaClickListener listener, Context context) {
 
             tvCliente.setText(alquiler.getNombreCliente());
             txtUbicacion.setText(alquiler.getUbicacion());
@@ -107,36 +116,49 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
                 tvEstado.setTextColor(ContextCompat.getColor(context, R.color.yellow_accent));
             }
 
+            if (alquiler.getComentarios() != null && !alquiler.getComentarios().isEmpty()) {
+                tvComentarios.setVisibility(View.VISIBLE);
+                tvComentarios.setText("Nota: " + alquiler.getComentarios());
+            } else {
+                tvComentarios.setVisibility(View.GONE);
+            }
+
             itemView.setOnClickListener(v -> listener.onAlquilerClick(alquiler));
 
             contenedorAccesorios.removeAllViews();
             if (alquiler.getAccesoriosIds() != null && !alquiler.getAccesoriosIds().isEmpty()) {
                 contenedorAccesorios.setVisibility(View.VISIBLE);
+                FirebaseServicio firebaseServicio = new FirebaseServicio();
 
-                for (String id : alquiler.getAccesoriosIds()) {
-                    String nombreAccesorio = accesoriosMap.get(id);
-                    if (nombreAccesorio == null) continue;
+                for (String accesorioId : alquiler.getAccesoriosIds()) {
+                    firebaseServicio.getAccesorioPorId(accesorioId, new FirebaseServicio.OnAccesorioLoadedListener() {
+                        @Override
+                        public void onSuccess(Accesorio accesorio) {
+                            if (context == null) return;
 
-                    String nombreIcono = "icon_" + nombreAccesorio.toLowerCase().replace(" ", "_") + "_blanco";
+                            ImageView icon = new ImageView(context);
+                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(110, 110);
+                            params.setMargins(0, 0, 15, 0);
+                            icon.setLayoutParams(params);
 
-                    int resId = context.getResources().getIdentifier(nombreIcono, "drawable", context.getPackageName());
+                            if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
+                                Glide.with(context)
+                                        .load(accesorio.getIcono())
+                                        .placeholder(R.drawable.icon_extintor_blanco)
+                                        .error(R.drawable.icon_extintor_blanco)
+                                        .into(icon);
+                            } else {
+                                icon.setImageResource(R.drawable.icon_extintor_blanco);
+                            }
 
-                    if (resId != 0) {
-                        ImageView iv = new ImageView(context);
-                        iv.setImageResource(resId);
+                            contenedorAccesorios.addView(icon);
+                        }
 
-                        int sizeInDp = 24;
-                        int marginInDp = 4;
-                        float scale = context.getResources().getDisplayMetrics().density;
-                        int sizeInPixels = (int) (sizeInDp * scale + 0.5f);
-                        int marginInPixels = (int) (marginInDp * scale + 0.5f);
-
-                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizeInPixels, sizeInPixels);
-                        params.setMarginEnd(marginInPixels);
-                        iv.setLayoutParams(params);
-
-                        contenedorAccesorios.addView(iv);
-                    }
+                        @Override
+                        public void onError(Exception e) {
+                            // Fallo silencioso
+                        }
+                    });
                 }
             } else {
                 contenedorAccesorios.setVisibility(View.GONE);

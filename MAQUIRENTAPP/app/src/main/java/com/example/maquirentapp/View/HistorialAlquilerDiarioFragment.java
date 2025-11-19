@@ -1,22 +1,23 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.NumberPicker;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,10 +29,10 @@ import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
+
 
 public class HistorialAlquilerDiarioFragment extends Fragment {
 
@@ -45,7 +46,6 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     private int mesSeleccionado;
     private int anioActual;
     private String[] nombresMeses;
-    private Map<String, String> accesoriosMap = new HashMap<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,9 +76,10 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
 
         setupRecyclerView();
         setupFiltros();
+        setupSwipeToDelete();
         configurarFabGlobal();
 
-        cargarAccesorios();
+        cargarAlquileres();
     }
 
     @Override
@@ -94,9 +95,60 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             args.putString("alquilerId", alquiler.getId());
             args.putBoolean("modoSoloLectura", true);
             navController.navigate(R.id.action_historialAlquilerDiario_to_nuevoAlquilerDia, args);
-        }, accesoriosMap);
+        });
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
+    }
+
+    private void setupSwipeToDelete() {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                AlquilerDia alquiler = adapter.getItem(position);
+
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Eliminar Alquiler")
+                        .setMessage("¿Estás seguro de eliminar este alquiler?")
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            firebaseServicio.eliminarAlquilerDia(alquiler.getId(), new FirebaseServicio.OnSimpleCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    adapter.removeItem(position);
+                                    Toast.makeText(getContext(), "Alquiler eliminado", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    adapter.notifyItemChanged(position);
+                                    Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> {
+                            adapter.notifyItemChanged(position);
+                        })
+                        .show();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .create()
+                        .decorate();
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerView);
     }
 
     private void setupFiltros() {
@@ -113,7 +165,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 anioActual--;
             }
             actualizarTextViewMes();
-//            cargarAlquileres();
+            cargarAlquileres();
         });
 
         btnSiguiente.setOnClickListener(v -> {
@@ -123,29 +175,12 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 anioActual++;
             }
             actualizarTextViewMes();
-//            cargarAlquileres();
+            cargarAlquileres();
         });
 
         tvMes.setOnClickListener(v -> mostrarDialogoMesAnio());
     }
-    private void cargarAccesorios() {
-        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
-            @Override
-            public void onSuccess(List<Accesorio> accesorios) {
-                accesoriosMap.clear();
-                for (Accesorio acc : accesorios) {
-                    accesoriosMap.put(acc.getId(), acc.getNombre());
-                }
-                cargarAlquileres();
-            }
 
-            @Override
-            public void onError(Exception e) {
-                Log.e("HistorialDiario", "Error al cargar accesorios", e);
-                cargarAlquileres();
-            }
-        });
-    }
     private void mostrarDialogoMesAnio() {
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_month_year_picker, null);
@@ -180,6 +215,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 nombresMeses[mesSeleccionado], anioActual);
         tvMes.setText(textoMes);
     }
+
     private void cargarAlquileres() {
         if (idGrupo == null) {
             Toast.makeText(getContext(), "Error: ID de Grupo no encontrado", Toast.LENGTH_SHORT).show();

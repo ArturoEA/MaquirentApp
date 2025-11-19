@@ -214,13 +214,14 @@
                 android:id="@+id/cardAccesorios"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="10dp"
                 android:backgroundTint="@color/background_light"
                 android:clickable="false"
                 android:focusable="false"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeColor="@color/black"
+                android:layout_marginBottom="5dp"
                 app:strokeWidth="2dp">
 
                 <LinearLayout
@@ -282,7 +283,7 @@
                 android:layout_marginEnd="10dp">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/comentarios"
+                    android:id="@+id/inputComentarios"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Comentarios"
@@ -302,6 +303,10 @@
                 android:text="Finalizar alquiler"
                 android:textAllCaps="false"
                 android:textColor="@color/white" />
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="70dp"/>
 
             <ProgressBar
                 android:id="@+id/progressBar"

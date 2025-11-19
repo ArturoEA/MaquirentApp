@@ -20,11 +20,12 @@ public class AlquilerDia implements Serializable {
     private double horasMaximas;
     private List<String> accesoriosIds;
     private boolean finalizado = false;
+    private String comentarios;
 
     public AlquilerDia() {
         // Constructor vacío
         this.accesoriosIds = new ArrayList<>();
-        this.horasMaximas = 10; // Default
+        this.horasMaximas = 10;
     }
 
     public String getId() { return id; }
@@ -68,4 +69,6 @@ public class AlquilerDia implements Serializable {
 
     public boolean isFinalizado() { return finalizado; }
     public void setFinalizado(boolean finalizado) { this.finalizado = finalizado; }
+    public String getComentarios() { return comentarios; }
+    public void setComentarios(String comentarios) { this.comentarios = comentarios; }
 }

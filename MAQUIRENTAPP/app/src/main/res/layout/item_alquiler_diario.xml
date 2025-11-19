@@ -164,5 +164,14 @@
 
         </HorizontalScrollView>
 
+        <TextView
+            android:id="@+id/tvComentarios"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Comentarios..."
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:visibility="gone"/>
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
