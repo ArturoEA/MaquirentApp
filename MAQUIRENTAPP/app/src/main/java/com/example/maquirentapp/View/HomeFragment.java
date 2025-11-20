@@ -114,7 +114,7 @@ public class HomeFragment extends Fragment {
             args.putBoolean("modoSoloLectura", true);
             navController.navigate(R.id.action_homeFragment_to_nuevoAlquilerFragment, args);
         });
-
+        alquilerDiarioAdapter.setCompactMode(true);
         recyclerAlquileresDiarios.setAdapter(alquilerDiarioAdapter);
     }
     private void cargarAccesoriosYAlquileresDiarios() {

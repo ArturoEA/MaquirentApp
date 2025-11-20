@@ -19,7 +19,6 @@ import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,7 +28,8 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     private List<AlquilerDia> items = new ArrayList<>();
     private OnAlquilerDiaClickListener listener;
     private Context context;
-    private Map<String, String> gruposMap = new HashMap<>();
+    private boolean isCompactMode = false;
+    private Map<String, String> gruposMap;
 
     public interface OnAlquilerDiaClickListener {
         void onAlquilerClick(AlquilerDia alquiler);
@@ -37,6 +37,15 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
 
     public AlquilerDiarioAdapter(OnAlquilerDiaClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setCompactMode(boolean isCompact) {
+        this.isCompactMode = isCompact;
+    }
+
+    public void setGruposMap(Map<String, String> map) {
+        this.gruposMap = map;
+        notifyDataSetChanged();
     }
 
     public void setItems(List<AlquilerDia> nuevos) {
@@ -53,10 +62,6 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
     public AlquilerDia getItem(int position) {
         return items.get(position);
     }
-    public void setGruposMap(Map<String, String> map) {
-        this.gruposMap = map;
-        notifyDataSetChanged();
-    }
 
     @NonNull
     @Override
@@ -64,6 +69,15 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
         this.context = parent.getContext();
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_alquiler_diario, parent, false);
+
+        if (isCompactMode) {
+            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+
+            ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+            layoutParams.width = (int) (screenWidth * 0.85);
+            view.setLayoutParams(layoutParams);
+        }
+
         return new ViewHolder(view);
     }
 
@@ -85,6 +99,7 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            tvGrupo = itemView.findViewById(R.id.tvGrupo);
             tvCliente = itemView.findViewById(R.id.tvCliente);
             tvPrecio = itemView.findViewById(R.id.tvPrecio);
             tvEstado = itemView.findViewById(R.id.tvEstado);
@@ -95,17 +110,17 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
             txtFechaInicial = itemView.findViewById(R.id.txtFechaInicial);
             tvComentarios = itemView.findViewById(R.id.tvComentarios);
             contenedorAccesorios = itemView.findViewById(R.id.contenedorAccesorios);
-            tvGrupo = itemView.findViewById(R.id.tvGrupo);
         }
 
         public void bind(AlquilerDia alquiler, OnAlquilerDiaClickListener listener, Context context, Map<String, String> gruposMap) {
 
-            String codigoGrupo = gruposMap.get(alquiler.getIdGrupo());
-            if (codigoGrupo != null) {
-                tvGrupo.setText(codigoGrupo);
-                tvGrupo.setVisibility(View.VISIBLE);
-            } else {
-                tvGrupo.setText("Cargando...");
+            if (tvGrupo != null) {
+                if (gruposMap != null && gruposMap.containsKey(alquiler.getIdGrupo())) {
+                    tvGrupo.setText(gruposMap.get(alquiler.getIdGrupo()));
+                    tvGrupo.setVisibility(View.VISIBLE);
+                } else {
+                    tvGrupo.setVisibility(View.GONE);
+                }
             }
 
             tvCliente.setText(alquiler.getNombreCliente());
