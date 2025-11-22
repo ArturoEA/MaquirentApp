@@ -353,7 +353,7 @@
 
             </androidx.cardview.widget.CardView>
 
-            <!-- Cotizaciones -->
+            <!-- Lista de tareas -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardListaTareas"
                 android:layout_width="0dp"
@@ -483,7 +483,7 @@
             android:orientation="horizontal"
             android:weightSum="3">
 
-            <!-- Valorizaciones -->
+            <!-- Cotizaciones -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardCotizaciones"
                 android:layout_width="0dp"

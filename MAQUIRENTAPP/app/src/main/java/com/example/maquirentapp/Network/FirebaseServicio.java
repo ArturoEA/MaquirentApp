@@ -10,6 +10,7 @@ import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Model.Plano;
+import com.example.maquirentapp.Model.Tarea;
 import com.example.maquirentapp.Model.Usuario;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -895,7 +896,88 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+    // --- SECCIÓN TAREAS ---
+    public void crearTarea(String titulo, OnSimpleCallback listener) {
+        DocumentReference docRef = db.collection("tareas").document();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String fecha = sdf.format(new Date());
+
+        Tarea tarea = new Tarea(docRef.getId(), titulo, fecha, false);
+
+        docRef.set(tarea)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getTareas(OnTareasLoadedListener listener) {
+        db.collection("tareas")
+                .orderBy("fechaCreacion", Query.Direction.DESCENDING)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        listener.onError(error);
+                        return;
+                    }
+                    List<Tarea> tareas = new ArrayList<>();
+                    if (value != null) {
+                        for (QueryDocumentSnapshot doc : value) {
+                            tareas.add(doc.toObject(Tarea.class));
+                        }
+                    }
+                    listener.onSuccess(tareas);
+                });
+    }
+
+    public void completarTarea(String idTarea, List<String> participantesIds, OnSimpleCallback listener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("completada", true);
+        updates.put("participantesIds", participantesIds);
+
+        db.collection("tareas").document(idTarea)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void eliminarTarea(String idTarea, OnSimpleCallback listener) {
+        db.collection("tareas").document(idTarea)
+                .delete()
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void verificarSiEsAdmin(OnAdminCheckListener listener) {
+        if (auth.getCurrentUser() == null) return;
+
+        db.collection("usuarios").document(auth.getCurrentUser().getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String rol = documentSnapshot.getString("rol");
+                        boolean esAdmin = "admin".equalsIgnoreCase(rol) || "administrador".equalsIgnoreCase(rol);
+                        listener.onCheck(esAdmin);
+                    } else {
+                        listener.onCheck(false);
+                    }
+                })
+                .addOnFailureListener(e -> listener.onCheck(false));
+    }
+        // Obtener todos los usuarios activos para la lista de selección
+    public void getUsuariosActivos(OnUsuariosListener listener) {
+        db.collection("usuarios")
+                .whereEqualTo("estado", "activo")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Usuario> usuarios = querySnapshot.toObjects(Usuario.class);
+                    listener.onSuccess(usuarios);
+                })
+                .addOnFailureListener(listener::onError);
+    }
     // Interfaces para callbacks
+    public interface OnAdminCheckListener {
+        void onCheck(boolean isAdmin);
+    }
+    public interface OnTareasLoadedListener {
+        void onSuccess(List<Tarea> tareas);
+        void onError(Exception e);
+    }
     public interface OnPlanosLoadedListener {
         void onSuccess(List<Plano> planos);
         void onError(Exception e);

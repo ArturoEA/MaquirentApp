@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:theme="@style/Theme.TextMain"
+    android:padding="8dp">
+
+    <CheckBox
+        android:id="@+id/checkboxUsuario"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp" />
+
+    <ImageView
+        android:id="@+id/imgPerfilUsuario"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
+        app:tint="@color/black"
+        android:src="@drawable/icon_perfil_blanco" />
+
+    <TextView
+        android:id="@+id/tvNombreUsuario"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre Usuario"
+        android:textColor="@color/black"
+        android:textSize="16sp" />
+
+</LinearLayout>

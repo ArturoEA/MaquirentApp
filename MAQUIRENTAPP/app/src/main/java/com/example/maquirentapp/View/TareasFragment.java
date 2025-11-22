@@ -1,28 +1,266 @@
 package com.example.maquirentapp.View;
 
+import android.app.AlertDialog;
+import android.graphics.Canvas;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.maquirentapp.Access.TareasAdapter;
+import com.example.maquirentapp.Access.UsuariosSeleccionAdapter;
+import com.example.maquirentapp.Model.Tarea;
+import com.example.maquirentapp.Model.Usuario;
+import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class TareasFragment extends Fragment {
-    public TareasFragment() {
-        // Required empty public constructor
-    }
+
+    private RecyclerView recyclerTareas;
+    private TareasAdapter adapter;
+    private FirebaseServicio firebaseServicio;
+    private List<Usuario> listaUsuarios = new ArrayList<>();
+    private Map<String, Usuario> mapaUsuarios = new HashMap<>();
+    private boolean isAdmin = false;
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        firebaseServicio = new FirebaseServicio();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_tareas, container, false);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_tareas, container, false);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        recyclerTareas = view.findViewById(R.id.recyclerTareas);
+        recyclerTareas.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        adapter = new TareasAdapter(this::mostrarDialogoCompletar);
+        recyclerTareas.setAdapter(adapter);
+
+        configurarFab();
+
+        firebaseServicio.verificarSiEsAdmin(esAdmin -> {
+            this.isAdmin = esAdmin;
+        });
+
+        cargarUsuariosYTareas();
+        setupSwipeToDelete();
+    }
+
+    private void setupSwipeToDelete() {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+
+                if (!isAdmin) {
+                    Toast.makeText(getContext(), "Solo los administradores pueden eliminar tareas", Toast.LENGTH_SHORT).show();
+                    adapter.notifyItemChanged(position);
+                    return;
+                }
+
+                Tarea tarea = adapter.getItem(position);
+
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Eliminar Tarea")
+                        .setMessage("¿Estás seguro de eliminar '" + tarea.getTitulo() + "'?")
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            firebaseServicio.eliminarTarea(tarea.getId(), new FirebaseServicio.OnSimpleCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(getContext(), "Tarea eliminada", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
+                                    adapter.notifyItemChanged(position);
+                                }
+                            });
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> {
+                            adapter.notifyItemChanged(position);
+                        })
+                        .show();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .create()
+                        .decorate();
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerTareas);
+    }
+
+    private void cargarUsuariosYTareas() {
+        firebaseServicio.getUsuariosActivos(new FirebaseServicio.OnUsuariosListener() {
+            @Override
+            public void onSuccess(List<Usuario> usuarios) {
+                listaUsuarios = usuarios;
+                mapaUsuarios.clear();
+                for (Usuario u : usuarios) {
+                    mapaUsuarios.put(u.getUid(), u);
+                }
+                adapter.setUsuariosMap(mapaUsuarios);
+                cargarTareas();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar usuarios", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void cargarTareas() {
+        firebaseServicio.getTareas(new FirebaseServicio.OnTareasLoadedListener() {
+            @Override
+            public void onSuccess(List<Tarea> tareas) {
+                adapter.setItems(tareas);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(getContext(), "Error al cargar tareas", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void configurarFab() {
+        if (getActivity() != null) {
+            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) {
+                fab.setText("Añadir");
+                fab.setIconResource(R.drawable.icon_nuevo_blanco);
+                fab.setVisibility(View.VISIBLE);
+                fab.setOnClickListener(v -> mostrarDialogoNuevaTarea());
+            }
+        }
+    }
+
+    private void mostrarDialogoNuevaTarea() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_nueva_tarea, null);
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        TextInputEditText input = view.findViewById(R.id.inputNombreTarea);
+        Button btnGuardar = view.findViewById(R.id.btnGuardarTarea);
+
+        btnGuardar.setOnClickListener(v -> {
+            String titulo = input.getText().toString().trim();
+            if (!titulo.isEmpty()) {
+                firebaseServicio.crearTarea(titulo, new FirebaseServicio.OnSimpleCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Toast.makeText(getContext(), "Tarea creada", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Toast.makeText(getContext(), "Error al crear tarea", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void mostrarDialogoCompletar(Tarea tarea) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_seleccionar_participantes, null);
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        RecyclerView recyclerPart = view.findViewById(R.id.recyclerParticipantes);
+        Button btnCompletar = view.findViewById(R.id.btnCompletarTarea);
+
+        recyclerPart.setLayoutManager(new LinearLayoutManager(getContext()));
+        UsuariosSeleccionAdapter userAdapter = new UsuariosSeleccionAdapter(listaUsuarios);
+        recyclerPart.setAdapter(userAdapter);
+
+        btnCompletar.setOnClickListener(v -> {
+            List<String> seleccionados = userAdapter.getSeleccionados();
+            if (seleccionados.isEmpty()) {
+                Toast.makeText(getContext(), "Selecciona al menos un participante", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            firebaseServicio.completarTarea(tarea.getId(), seleccionados, new FirebaseServicio.OnSimpleCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(getContext(), "Tarea completada", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Toast.makeText(getContext(), "Error al actualizar tarea", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        dialog.show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        configurarFab();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (getActivity() != null) {
+            View fab = getActivity().findViewById(R.id.btnGlobal);
+            if (fab != null) fab.setVisibility(View.GONE);
+        }
     }
 }
