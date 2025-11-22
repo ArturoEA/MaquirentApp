@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Access.AlquilerDiarioAdapter;
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Network.FirebaseServicio;
@@ -241,27 +242,23 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     }
 
     private void configurarFabGlobal() {
-        if(getActivity() == null) return;
-        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-        if (fab != null) {
-            fab.setText("Añadir");
-            fab.setIconResource(R.drawable.icon_nuevo_blanco);
-            fab.setVisibility(View.VISIBLE);
-            fab.setOnClickListener(v -> {
-                Bundle args = new Bundle();
-                args.putString("idGrupo", idGrupo);
-                navController.navigate(R.id.action_historialAlquilerDiario_to_nuevoAlquilerDia, args);
-            });
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showGlobalFab(
+                    "Añadir",
+                    R.drawable.icon_nuevo_blanco,
+                    v -> {
+                        Bundle args = new Bundle();
+                        args.putString("idGrupo", idGrupo);
+                        navController.navigate(R.id.action_historialAlquilerDiario_to_nuevoAlquilerDia, args);
+                    }
+            );
         }
     }
-
     @Override
     public void onPause() {
         super.onPause();
-        if(getActivity() == null) return;
-        ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-        if (fab != null) {
-            fab.setVisibility(View.GONE);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
 }

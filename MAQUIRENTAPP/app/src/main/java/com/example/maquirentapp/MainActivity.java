@@ -369,8 +369,8 @@ public class MainActivity extends AppCompatActivity {
                     configurarUIParaAuth();
                 } else if (dest.getId() == R.id.tareasFragment) {
                     setHeaderTitle("Lista de Tareas");
-                    setHeaderIcon(R.drawable.icon_voltaje_blanco); // Necesitas este ícono
-                    updateNavigationUI(0); // Para empleados será el "home"
+                    setHeaderIcon(R.drawable.icon_voltaje_blanco);
+                    updateNavigationUI(0);
                     restoreScrollPosition("tareas_fragment");
                 } else if (dest.getId() == R.id.homeFragment) {
                     setHeaderTitle("Inicio");
@@ -678,8 +678,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-
-        btnGlobal.animate().cancel();
+        btnGlobal.animate().setListener(null).withEndAction(null).cancel();
 
         if (text != null) {
             btnGlobal.setText(text);
@@ -695,10 +694,13 @@ public class MainActivity extends AppCompatActivity {
 
         btnGlobal.setOnClickListener(listener);
 
-        if (btnGlobal.getVisibility() != View.VISIBLE) {
-            btnGlobal.setAlpha(0f);
+        if (btnGlobal.getVisibility() != View.VISIBLE || btnGlobal.getAlpha() < 1f) {
             btnGlobal.setVisibility(View.VISIBLE);
-            btnGlobal.animate().alpha(1f).setDuration(70).setListener(null).start();
+            btnGlobal.setAlpha(0f);
+            btnGlobal.animate()
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start();
         } else {
             btnGlobal.setAlpha(1f);
         }
@@ -709,16 +711,17 @@ public class MainActivity extends AppCompatActivity {
             btnGlobal = findViewById(R.id.btnGlobal);
             if (btnGlobal == null) return;
         }
-
-        btnGlobal.animate().cancel();
+        btnGlobal.animate().setListener(null).withEndAction(null).cancel();
 
         if (btnGlobal.getVisibility() == View.VISIBLE) {
-            btnGlobal.animate().alpha(0f).setDuration(70).withEndAction(() -> {
-                btnGlobal.setVisibility(View.GONE);
-            }).start();
+            btnGlobal.animate()
+                    .alpha(0f)
+                    .setDuration(100)
+                    .withEndAction(() -> {
+                        btnGlobal.setVisibility(View.GONE);
+                    }).start();
         } else {
             btnGlobal.setVisibility(View.GONE);
         }
     }
-
 }
