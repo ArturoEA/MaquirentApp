@@ -7,6 +7,7 @@ import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.FotoEquipo;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Model.Plano;
@@ -970,7 +971,75 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+    // --- SECCIÓN FOTOS EQUIPO ---
+
+    public void subirFotoEquipo(String idGrupo, Uri imagenUri, OnSimpleCallback listener) {
+        String nombreArchivo = "foto_equipo_" + System.currentTimeMillis() + ".jpg";
+        StorageReference storageRef = storage.getReference().child("grupos/" + idGrupo + "/fotos/" + nombreArchivo);
+
+        storageRef.putFile(imagenUri)
+                .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUri -> {
+                            DocumentReference docRef = db.collection("fotosEquipo").document();
+
+                            FotoEquipo foto = new FotoEquipo(docRef.getId(), downloadUri.toString(), nombreArchivo, idGrupo);
+
+                            docRef.set(foto)
+                                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                                    .addOnFailureListener(listener::onError);
+                        })
+                        .addOnFailureListener(listener::onError))
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void getFotosEquipo(String idGrupo, OnFotosEquipoLoadedListener listener) {
+        db.collection("fotosEquipo")
+                .whereEqualTo("idGrupo", idGrupo)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<FotoEquipo> fotos = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        FotoEquipo f = doc.toObject(FotoEquipo.class);
+                        f.setId(doc.getId());
+                        fotos.add(f);
+                    }
+                    listener.onSuccess(fotos);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void eliminarFotoEquipo(FotoEquipo foto, OnSimpleCallback listener) {
+        if (foto == null || foto.getId() == null) {
+            listener.onError(new Exception("Foto inválida"));
+            return;
+        }
+
+        db.collection("fotosEquipo").document(foto.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    if (foto.getUrlImagen() != null && !foto.getUrlImagen().isEmpty()) {
+                        try {
+                            StorageReference photoRef = storage.getReferenceFromUrl(foto.getUrlImagen());
+                            photoRef.delete()
+                                    .addOnSuccessListener(aVoid1 -> listener.onSuccess())
+                                    .addOnFailureListener(e -> {
+                                        Log.w("FirebaseServicio", "Error borrar storage: " + e.getMessage());
+                                        listener.onSuccess();
+                                    });
+                        } catch (Exception e) {
+                            listener.onSuccess();
+                        }
+                    } else {
+                        listener.onSuccess();
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
     // Interfaces para callbacks
+    public interface OnFotosEquipoLoadedListener {
+        void onSuccess(List<FotoEquipo> fotos);
+        void onError(Exception e);
+    }
     public interface OnAdminCheckListener {
         void onCheck(boolean isAdmin);
     }

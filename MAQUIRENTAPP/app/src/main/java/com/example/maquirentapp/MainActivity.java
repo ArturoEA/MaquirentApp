@@ -38,6 +38,7 @@ import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 
 import android.graphics.drawable.Drawable;
+
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -111,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
         setupBackPressedDispatcher();
         askNotificationPermission();
     }
+
     private void askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
@@ -120,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private void setupBackPressedDispatcher() {
         // Manejar el botón físico/gesture de back
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -163,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
             headerIcon.setImageResource(iconResId);
         }
     }
+
     private void initializeAppCheck() {
         try {
             FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
@@ -413,6 +417,12 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Historial de alquileres\n" + codigo);
+                } else if (dest.getId() == R.id.fotosEquipoFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.icon_imagenes_blanco);
+                    setHeaderTitle("Fotos de equipo\n" + codigo);
                 } else if (dest.getId() == R.id.nuevoAlquilerMensualFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")
@@ -659,6 +669,7 @@ public class MainActivity extends AppCompatActivity {
             headerTitle.setText(title);
         }
     }
+
     public void showGlobalFab(String text, int iconResId, View.OnClickListener listener) {
         if (btnGlobal == null) {
             btnGlobal = findViewById(R.id.btnGlobal);
