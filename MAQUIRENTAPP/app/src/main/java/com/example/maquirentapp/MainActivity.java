@@ -458,10 +458,6 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderIcon(R.drawable.icon_blanco_mantenimientos);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
                     setHeaderTitle("Mantenimientos");
-                } else if (dest.getId() == R.id.datosInformacionGeneralFragment) {
-                    setHeaderIcon(R.drawable.icon_blanco_informacion_general);
-                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
-                    setHeaderTitle("Datos información general");
                 } else if (dest.getId() == R.id.listaGruposElectrogenosFragment) {
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Lista de grupos electrógenos");

@@ -113,10 +113,6 @@
             android:tag="Mantenimientos"/>
 
         <include layout="@layout/item_configuracion"
-            android:id="@+id/item_informacion_general"
-            android:tag="Datos Información General"/>
-
-        <include layout="@layout/item_configuracion"
             android:id="@+id/item_lista_grupos"
             android:tag="Lista de grupos electrógenos"/>
 

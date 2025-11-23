@@ -132,13 +132,6 @@ public class ConfiguracionFragment extends Fragment {
         ((ImageView) itemMantenimientos.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_blanco_mantenimientos);
 
-        // Item Información General
-        View itemInformacionGeneral = view.findViewById(R.id.item_informacion_general);
-        ((TextView) itemInformacionGeneral.findViewById(R.id.text_item_configuracion))
-                .setText("Datos información general");
-        ((ImageView) itemInformacionGeneral.findViewById(R.id.icon_item_configuracion))
-                .setImageResource(R.drawable.icon_blanco_informacion_general);
-
         // Item Lista de Grupos
         View itemListaGrupos = view.findViewById(R.id.item_lista_grupos);
         ((TextView) itemListaGrupos.findViewById(R.id.text_item_configuracion))
@@ -162,7 +155,6 @@ public class ConfiguracionFragment extends Fragment {
         itemAccesoriosDiario.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_accesorios_alquiler_diario));
         itemAccesoriosMensual.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_accesorios_alquiler_mensual));
         itemMantenimientos.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_mantenimientos_configuracion));
-        itemInformacionGeneral.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_datos_informacion_general));
         itemListaGrupos.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_lista_grupos_electrogenos));
         itemGestionarUsuarios.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_gestionar_usuarios));
     }

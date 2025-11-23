@@ -323,14 +323,6 @@
             app:popExitAnim="@anim/slide_out_right"/>
 
         <action
-            android:id="@+id/action_configuracion_to_datos_informacion_general"
-            app:destination="@+id/datosInformacionGeneralFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
-
-        <action
             android:id="@+id/action_configuracion_to_lista_grupos_electrogenos"
             app:destination="@+id/listaGruposElectrogenosFragment"
             app:enterAnim="@anim/slide_in_right"
