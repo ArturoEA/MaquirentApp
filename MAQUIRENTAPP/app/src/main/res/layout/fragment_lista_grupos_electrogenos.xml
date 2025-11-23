@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
+    android:paddingBottom="70dp"
+    android:clipToPadding="true"
     tools:context=".View.ListaGruposElectrogenosFragment">
 
     <!-- RecyclerView para la lista de grupos -->
