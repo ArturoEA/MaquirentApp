@@ -423,6 +423,12 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_imagenes_blanco);
                     setHeaderTitle("Fotos de equipo\n" + codigo);
+                } else if (dest.getId() == R.id.InformacionGeneralFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.icon_informacion_blanco);
+                    setHeaderTitle("Información general\n" + codigo);
                 } else if (dest.getId() == R.id.nuevoAlquilerMensualFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")

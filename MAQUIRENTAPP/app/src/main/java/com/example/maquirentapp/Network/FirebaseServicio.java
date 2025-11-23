@@ -7,7 +7,9 @@ import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.FiltroCategoria;
 import com.example.maquirentapp.Model.FotoEquipo;
+import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Model.Plano;
@@ -1035,7 +1037,101 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+    // SECCIÓN INFORMACIÓN GENERAL (FILTROS Y PLACA)
+    // FILTROS
+    public void crearCategoriaFiltro(FiltroCategoria categoria, OnSimpleCallback listener) {
+        DocumentReference docRef = db.collection("filtrosGrupo").document();
+        categoria.setId(docRef.getId());
+        docRef.set(categoria)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void actualizarCategoriaFiltro(FiltroCategoria categoria, OnSimpleCallback listener) {
+        db.collection("filtrosGrupo").document(categoria.getId())
+                .set(categoria)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void eliminarCategoriaFiltro(String idCategoria, OnSimpleCallback listener) {
+        db.collection("filtrosGrupo").document(idCategoria)
+                .delete()
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void getFiltrosPorGrupo(String idGrupo, OnFiltrosLoadedListener listener) {
+        db.collection("filtrosGrupo")
+                .whereEqualTo("idGrupo", idGrupo)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<FiltroCategoria> lista = new ArrayList<>();
+                    for (com.google.firebase.firestore.QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        lista.add(doc.toObject(FiltroCategoria.class));
+                    }
+                    listener.onSuccess(lista);
+                })
+                .addOnFailureListener(listener::onError);
+    }
+    //INFO PLACA
+    public void getInfoPlaca(String idGrupo, OnInfoPlacaLoadedListener listener) {
+        db.collection("infoPlacaGrupo")
+                .whereEqualTo("idGrupo", idGrupo)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        InfoPlaca info = queryDocumentSnapshots.getDocuments().get(0).toObject(InfoPlaca.class);
+                        listener.onSuccess(info);
+                    } else {
+                        listener.onSuccess(null);
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
+    public void guardarInfoPlaca(InfoPlaca info, OnSimpleCallback listener) {
+        DocumentReference docRef;
+        if (info.getId() == null) {
+            docRef = db.collection("infoPlacaGrupo").document();
+            info.setId(docRef.getId());
+        } else {
+            docRef = db.collection("infoPlacaGrupo").document(info.getId());
+        }
+        docRef.set(info)
+                .addOnSuccessListener(aVoid -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+    public void subirFotoPlaca(String nombreCarpeta, Uri uri, OnUrlUploadedListener listener) {
+        String nombreArchivo = "placa_" + System.currentTimeMillis() + ".jpg";
+
+        StorageReference ref = storage.getReference().child("placas/" + nombreCarpeta + "/" + nombreArchivo);
+
+        ref.putFile(uri).addOnSuccessListener(taskSnapshot ->
+                ref.getDownloadUrl().addOnSuccessListener(uri1 -> listener.onSuccess(uri1.toString()))
+        ).addOnFailureListener(listener::onError);
+    }
+    public void eliminarArchivoStorage(String url, OnSimpleCallback listener) {
+        try {
+            StorageReference ref = storage.getReferenceFromUrl(url);
+            ref.delete()
+                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                    .addOnFailureListener(listener::onError);
+        } catch (Exception e) {
+            listener.onError(e);
+        }
+    }
+
     // Interfaces para callbacks
+    public interface OnFiltrosLoadedListener {
+        void onSuccess(List<FiltroCategoria> categorias);
+        void onError(Exception e);
+    }
+    public interface OnInfoPlacaLoadedListener {
+        void onSuccess(InfoPlaca info);
+        void onError(Exception e);
+    }
+    public interface OnUrlUploadedListener {
+        void onSuccess(String url);
+        void onError(Exception e);
+    }
     public interface OnFotosEquipoLoadedListener {
         void onSuccess(List<FotoEquipo> fotos);
         void onError(Exception e);

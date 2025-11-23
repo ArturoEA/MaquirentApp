@@ -155,6 +155,14 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+
+        <action
+            android:id="@+id/action_grupoElectrogeno_to_informacionGeneral"
+            app:destination="@id/InformacionGeneralFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -375,9 +383,9 @@
     </fragment>
 
     <fragment
-        android:id="@+id/datosInformacionGeneralFragment"
-        android:name="com.example.maquirentapp.View.DatosInformacionGeneralFragment"
-        tools:layout="@layout/fragment_datos_informacion_general">
+        android:id="@+id/InformacionGeneralFragment"
+        android:name="com.example.maquirentapp.View.InformacionGeneralFragment"
+        tools:layout="@layout/fragment_informacion_general">
 
     </fragment>
 
