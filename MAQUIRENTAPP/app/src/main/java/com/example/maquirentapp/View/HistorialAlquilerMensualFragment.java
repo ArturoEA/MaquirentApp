@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
@@ -51,7 +52,8 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     private Calendar calendarioActual;
     private List<AlquilerMensual> todosLosAlquileres = new ArrayList<>();
 
-    public HistorialAlquilerMensualFragment() { }
+    public HistorialAlquilerMensualFragment() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,7 +79,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         // Inicializar vistas
         initViews(view);
         setupRecyclerView();
-        fetchAlquileresMensuales();
     }
 
     private void initViews(View view) {
@@ -112,7 +113,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         adapter = new AlquilerMensualAdapter();
         adapter.setOnItemClickListener(alquiler -> {
             alquilerSeleccionado = alquiler;
-            configureGlobalFab();
             mostrarDetallesAlquiler(alquiler);
         });
         recyclerView.setAdapter(adapter);
@@ -169,6 +169,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         }
         return años;
     }
+
     private int extraerAñoDeFecha(String fecha) {
         try {
             if (fecha == null || fecha.isEmpty()) {
@@ -182,8 +183,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                 if (partes.length == 3) {
                     return Integer.parseInt(partes[2]);
                 }
-            }
-            else if (fecha.contains("-")) {
+            } else if (fecha.contains("-")) {
                 String[] partes = fecha.split("-");
                 if (partes.length == 3) {
                     if (partes[0].length() == 4) {
@@ -192,8 +192,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                         return Integer.parseInt(partes[2]);
                     }
                 }
-            }
-            else if (fecha.contains("T")) {
+            } else if (fecha.contains("T")) {
                 String[] partes = fecha.split("-");
                 if (partes.length >= 1) {
                     return Integer.parseInt(partes[0]);
@@ -204,6 +203,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         }
         return -1;
     }
+
     private void fetchAlquileresMensuales() {
         firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
             @Override
@@ -237,6 +237,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
             }
         });
     }
+
     private void filtrarAlquileresPorAnio() {
         List<AlquilerMensual> alquileresFiltrados = new ArrayList<>();
         int añoSeleccionado = calendarioActual.get(Calendar.YEAR);
@@ -252,6 +253,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
         actualizarUI(alquileresFiltrados);
     }
+
     private void actualizarUI(List<AlquilerMensual> alquileres) {
         adapter.setItems(alquileres);
 
@@ -321,15 +323,15 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void configureGlobalFab() {
-        View hostView = getView();
-        if (hostView == null) return;
-
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+        if (getActivity() instanceof MainActivity) {
+            MainActivity main = (MainActivity) getActivity();
             main.showGlobalFab(
                     "Añadir",
                     R.drawable.icon_nuevo_blanco,
                     v -> {
+                        View hostView = getView();
+                        if (hostView == null) return;
+
                         Bundle args = new Bundle();
                         if (codigo != null) args.putString("codigo", codigo);
                         if (idGrupo != null) args.putString("idGrupo", idGrupo);
@@ -337,24 +339,6 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                                 .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
                     }
             );
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null && activityFab instanceof com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton) {
-                com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fab =
-                        (com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton) activityFab;
-                fab.setText("Añadir");
-                try {
-                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_nuevo_blanco));
-                } catch (Exception ignored) { }
-                fab.setOnClickListener(v -> {
-                    Bundle args = new Bundle();
-                    if (codigo != null) args.putString("codigo", codigo);
-                    if (idGrupo != null) args.putString("idGrupo", idGrupo);
-                    Navigation.findNavController(hostView)
-                            .navigate(R.id.action_historialAlquilerMensual_to_nuevoAlquilerMensual, args);
-                });
-                fab.setVisibility(View.VISIBLE);
-            }
         }
     }
 
@@ -365,15 +349,11 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         configureGlobalFab();
         fetchAlquileresMensuales();
     }
-
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
 }

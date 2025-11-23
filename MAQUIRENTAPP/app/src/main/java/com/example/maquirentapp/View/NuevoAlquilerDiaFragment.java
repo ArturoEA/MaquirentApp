@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -23,7 +24,9 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
@@ -32,6 +35,7 @@ import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -181,6 +185,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                 ((TextView) view).setTextColor(Color.BLACK);
                 return view;
             }
+
             @Override
             public View getDropDownView(int position, View convertView, ViewGroup parent) {
                 View view = super.getDropDownView(position, convertView, parent);
@@ -195,7 +200,10 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 tvSimboloMoneda.setText(monedas.get(position).equals("USD") ? "$" : "S/.");
             }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
     }
 
@@ -254,6 +262,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinnerGrupo.setAdapter(adapter);
             }
+
             @Override
             public void onError(Exception e) {
                 Toast.makeText(getContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
@@ -270,6 +279,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                     adapterAccesorios.setAccesoriosSeleccionados(alquilerActual.getAccesoriosIds());
                 }
             }
+
             @Override
             public void onError(Exception e) {
                 Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -307,6 +317,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                     configureGlobalFab();
                 }
             }
+
             @Override
             public void onError(Exception e) {
                 Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
@@ -373,7 +384,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
         if (modoEdicion) {
             firebaseServicio.actualizarAlquilerDia(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
-                @Override public void onSuccess() {
+                @Override
+                public void onSuccess() {
                     Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
                     if (!finalizar) {
                         editandoActualmente = false;
@@ -381,19 +393,24 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                         configureGlobalFab();
                     }
                 }
-                @Override public void onError(Exception e) {
+
+                @Override
+                public void onError(Exception e) {
                     Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
                     if (finalizar) btnFinalizar.setEnabled(true);
                 }
             });
         } else {
             firebaseServicio.crearAlquilerDia(alquilerActual, new FirebaseServicio.OnAlquilerDiaCreadoListener() {
-                @Override public void onSuccess(AlquilerDia alquiler) {
+                @Override
+                public void onSuccess(AlquilerDia alquiler) {
                     Toast.makeText(getContext(), "Alquiler creado", Toast.LENGTH_SHORT).show();
                     if (!finalizar) Navigation.findNavController(getView()).popBackStack();
                     else alquilerActual = alquiler;
                 }
-                @Override public void onError(Exception e) {
+
+                @Override
+                public void onError(Exception e) {
                     Toast.makeText(getContext(), "Error al crear", Toast.LENGTH_SHORT).show();
                     if (finalizar) btnFinalizar.setEnabled(true);
                 }
@@ -440,13 +457,16 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                         }
 
                         firebaseServicio.finalizarAlquilerDiario(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
-                            @Override public void onSuccess() {
+                            @Override
+                            public void onSuccess() {
                                 Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
                                 deshabilitarCampos();
                                 hideGlobalFab();
                                 Navigation.findNavController(getView()).popBackStack();
                             }
-                            @Override public void onError(Exception e) {
+
+                            @Override
+                            public void onError(Exception e) {
                                 Toast.makeText(getContext(), "Error al finalizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                 btnFinalizar.setText("Finalizar Alquiler");
                                 btnFinalizar.setEnabled(true);
@@ -501,41 +521,37 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     }
 
     private void configureGlobalFab() {
-        if (getActivity() == null) return;
+        if (getActivity() instanceof MainActivity) {
+            MainActivity mainActivity = (MainActivity) getActivity();
 
-        if (alquilerActual != null && alquilerActual.isFinalizado()) {
-            hideGlobalFab();
-            return;
-        }
-
-        if (modoSoloLectura && !editandoActualmente) {
-            // Modo Lectura: Botón editar
-            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) {
-                fab.setText("Editar");
-                fab.setIconResource(R.drawable.icon_editar_blanco);
-                fab.setVisibility(View.VISIBLE);
-                fab.setOnClickListener(v -> {
-                    editandoActualmente = true;
-                    habilitarCampos();
-                    configureGlobalFab();
-                });
+            if (alquilerActual != null && alquilerActual.isFinalizado()) {
+                mainActivity.hideGlobalFab();
+                return;
             }
-        } else {
-            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) {
-                fab.setText("Guardar");
-                fab.setIconResource(R.drawable.icon_guardar_blanco);
-                fab.setVisibility(View.VISIBLE);
-                fab.setOnClickListener(v -> guardarAlquilerDiario(false));
+
+            if (modoSoloLectura && !editandoActualmente) {
+                mainActivity.showGlobalFab(
+                        "Editar",
+                        R.drawable.icon_editar_blanco,
+                        v -> {
+                            editandoActualmente = true;
+                            habilitarCampos();
+                            configureGlobalFab();
+                        }
+                );
+            } else {
+                mainActivity.showGlobalFab(
+                        "Guardar",
+                        R.drawable.icon_guardar_blanco,
+                        v -> guardarAlquilerDiario(false)
+                );
             }
         }
     }
 
     private void hideGlobalFab() {
-        if (getActivity() != null) {
-            View fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) fab.setVisibility(View.GONE);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
 
@@ -548,6 +564,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        hideGlobalFab();
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
+        }
     }
 }

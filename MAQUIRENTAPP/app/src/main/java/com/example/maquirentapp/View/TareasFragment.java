@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Access.TareasAdapter;
 import com.example.maquirentapp.Access.UsuariosSeleccionAdapter;
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Tarea;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.Network.FirebaseServicio;
@@ -165,17 +166,14 @@ public class TareasFragment extends Fragment {
         });
     }
     private void configurarFab() {
-        if (getActivity() != null) {
-            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) {
-                fab.setText("Añadir");
-                fab.setIconResource(R.drawable.icon_nuevo_blanco);
-                fab.setVisibility(View.VISIBLE);
-                fab.setOnClickListener(v -> mostrarDialogoNuevaTarea());
-            }
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showGlobalFab(
+                    "Añadir",
+                    R.drawable.icon_nuevo_blanco,
+                    v -> mostrarDialogoNuevaTarea()
+            );
         }
     }
-
     private void mostrarDialogoNuevaTarea() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_nueva_tarea, null);
@@ -254,13 +252,11 @@ public class TareasFragment extends Fragment {
         super.onResume();
         configurarFab();
     }
-
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity() != null) {
-            View fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) fab.setVisibility(View.GONE);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
 }

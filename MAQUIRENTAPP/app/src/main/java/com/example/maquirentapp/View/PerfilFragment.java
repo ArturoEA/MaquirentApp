@@ -101,34 +101,21 @@ public class PerfilFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null) activityFab.setVisibility(View.GONE);
-        }
+        hideGlobalFab();
     }
     private void configureGlobalFab() {
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
+        if (getActivity() instanceof MainActivity) {
+            MainActivity main = (MainActivity) getActivity();
             main.showGlobalFab(
                     "Guardar",
                     R.drawable.icon_guardar_blanco,
-                    v -> {
-                        guardarCambios();
-                    }
+                    v -> guardarCambios()
             );
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null && activityFab instanceof ExtendedFloatingActionButton) {
-                ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
-                fab.setText("Añadir");
-                try {
-                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_nuevo_blanco));
-                } catch (Exception ignored) {}
-                fab.setOnClickListener(v -> guardarCambios());
-                fab.setVisibility(View.VISIBLE);
-            }
+        }
+    }
+    private void hideGlobalFab() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
     @Override

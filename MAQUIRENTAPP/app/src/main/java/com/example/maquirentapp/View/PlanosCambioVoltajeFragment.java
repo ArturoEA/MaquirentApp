@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Plano;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
@@ -86,16 +87,13 @@ public class PlanosCambioVoltajeFragment extends Fragment {
         configurarFab();
         cargarPlanos();
     }
-
     private void configurarFab() {
-        if (getActivity() != null) {
-            ExtendedFloatingActionButton fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) {
-                fab.setText("Añadir");
-                fab.setIconResource(R.drawable.icon_nuevo_blanco);
-                fab.setVisibility(View.VISIBLE);
-                fab.setOnClickListener(v -> galleryLauncher.launch("image/*"));
-            }
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showGlobalFab(
+                    "Añadir",
+                    R.drawable.icon_nuevo_blanco,
+                    v -> galleryLauncher.launch("image/*")
+            );
         }
     }
 
@@ -262,13 +260,11 @@ public class PlanosCambioVoltajeFragment extends Fragment {
             Toast.makeText(getContext(), "Error al compartir. Verifique FileProvider.", Toast.LENGTH_LONG).show();
         }
     }
-
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity() != null) {
-            View fab = getActivity().findViewById(R.id.btnGlobal);
-            if (fab != null) fab.setVisibility(View.GONE);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
 
