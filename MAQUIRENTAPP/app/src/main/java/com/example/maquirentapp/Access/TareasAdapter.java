@@ -7,20 +7,22 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.example.maquirentapp.Model.Tarea;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Map;
+import java.util.Objects;
 
-public class TareasAdapter extends RecyclerView.Adapter<TareasAdapter.ViewHolder> {
-
-    private List<Tarea> lista = new ArrayList<>();
+public class TareasAdapter extends ListAdapter<Tarea, TareasAdapter.ViewHolder> {
     private Map<String, Usuario> usuariosMap;
     private OnTareaClickListener listener;
     private Context context;
@@ -29,21 +31,38 @@ public class TareasAdapter extends RecyclerView.Adapter<TareasAdapter.ViewHolder
         void onTareaClick(Tarea tarea);
     }
 
-    public TareasAdapter(OnTareaClickListener listener) {
-        this.listener = listener;
-    }
+    private static final DiffUtil.ItemCallback<Tarea> DIFF_CALLBACK = new DiffUtil.ItemCallback<Tarea>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Tarea oldItem, @NonNull Tarea newItem) {
+            return oldItem.getId().equals(newItem.getId());
+        }
 
-    public void setItems(List<Tarea> items) {
-        this.lista = items;
-        notifyDataSetChanged();
+        @Override
+        public boolean areContentsTheSame(@NonNull Tarea oldItem, @NonNull Tarea newItem) {
+            return oldItem.getTitulo().equals(newItem.getTitulo()) &&
+                    oldItem.getFechaCreacion().equals(newItem.getFechaCreacion()) &&
+                    oldItem.isCompletada() == newItem.isCompletada() &&
+                    Objects.equals(oldItem.getParticipantesIds(), newItem.getParticipantesIds());
+        }
+    };
+
+    public TareasAdapter(OnTareaClickListener listener) {
+        super(DIFF_CALLBACK);
+        this.listener = listener;
     }
 
     public void setUsuariosMap(Map<String, Usuario> map) {
         this.usuariosMap = map;
         notifyDataSetChanged();
     }
+
+    public void setItems(java.util.List<Tarea> nuevosItems) {
+        submitList(new java.util.ArrayList<>(nuevosItems));
+    }
+
+    @Override
     public Tarea getItem(int position) {
-        return lista.get(position);
+        return super.getItem(position);
     }
 
     @NonNull
@@ -56,13 +75,9 @@ public class TareasAdapter extends RecyclerView.Adapter<TareasAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Tarea tarea = lista.get(position);
+        Tarea tarea = getItem(position);
         holder.bind(tarea, listener, context, usuariosMap);
     }
-
-    @Override
-    public int getItemCount() { return lista.size(); }
-
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvFecha;
         ImageView ivEstado;
@@ -78,17 +93,17 @@ public class TareasAdapter extends RecyclerView.Adapter<TareasAdapter.ViewHolder
         }
 
         public void bind(Tarea tarea, OnTareaClickListener listener, Context context, Map<String, Usuario> usuariosMap) {
+            itemView.setTranslationX(0f);
+            itemView.setAlpha(1f);
+
             tvTitulo.setText(tarea.getTitulo());
             tvFecha.setText(tarea.getFechaCreacion());
 
-            // 1. Configurar Colores y Estado
             if (tarea.isCompletada()) {
-                // Verde
                 ly_background_item.setBackgroundColor(ContextCompat.getColor(context, R.color.green_accent));
                 ivEstado.setColorFilter(ContextCompat.getColor(context, R.color.white));
                 containerParticipantes.setVisibility(View.VISIBLE);
 
-                // 2. Llenar fotos de participantes
                 containerParticipantes.removeAllViews();
 
                 if (tarea.getParticipantesIds() != null && usuariosMap != null) {
@@ -114,7 +129,7 @@ public class TareasAdapter extends RecyclerView.Adapter<TareasAdapter.ViewHolder
                 }
 
             } else {
-                ly_background_item.setBackgroundColor(ContextCompat.getColor(context, R.    color.red_accent));
+                ly_background_item.setBackgroundColor(ContextCompat.getColor(context, R.color.red_accent));
                 ivEstado.setColorFilter(ContextCompat.getColor(context, R.color.red_accent));
                 containerParticipantes.setVisibility(View.GONE);
             }

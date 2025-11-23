@@ -3,6 +3,7 @@ package com.example.maquirentapp.View;
 import android.app.AlertDialog;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,6 @@ public class TareasFragment extends Fragment {
         cargarUsuariosYTareas();
         setupSwipeToDelete();
     }
-
     private void setupSwipeToDelete() {
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             @Override
@@ -85,6 +85,8 @@ public class TareasFragment extends Fragment {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getAdapterPosition();
+
+                if (position == RecyclerView.NO_POSITION) return;
 
                 if (!isAdmin) {
                     Toast.makeText(getContext(), "Solo los administradores pueden eliminar tareas", Toast.LENGTH_SHORT).show();
@@ -102,6 +104,17 @@ public class TareasFragment extends Fragment {
                                 @Override
                                 public void onSuccess() {
                                     Toast.makeText(getContext(), "Tarea eliminada", Toast.LENGTH_SHORT).show();
+
+                                    List<Tarea> listaActualizada = new ArrayList<>(adapter.getCurrentList());
+
+                                    for (int i = 0; i < listaActualizada.size(); i++) {
+                                        if (listaActualizada.get(i).getId().equals(tarea.getId())) {
+                                            listaActualizada.remove(i);
+                                            break;
+                                        }
+                                    }
+
+                                    adapter.submitList(listaActualizada);
                                 }
 
                                 @Override
@@ -114,6 +127,7 @@ public class TareasFragment extends Fragment {
                         .setNegativeButton("Cancelar", (dialog, which) -> {
                             adapter.notifyItemChanged(position);
                         })
+                        .setOnCancelListener(dialog -> adapter.notifyItemChanged(position))
                         .show();
             }
 
@@ -141,13 +155,16 @@ public class TareasFragment extends Fragment {
                 for (Usuario u : usuarios) {
                     mapaUsuarios.put(u.getUid(), u);
                 }
-                adapter.setUsuariosMap(mapaUsuarios);
+                if (adapter != null) {
+                    adapter.setUsuariosMap(mapaUsuarios);
+                }
                 cargarTareas();
             }
 
             @Override
             public void onError(Exception e) {
                 Toast.makeText(getContext(), "Error al cargar usuarios", Toast.LENGTH_SHORT).show();
+                cargarTareas();
             }
         });
     }
@@ -156,7 +173,9 @@ public class TareasFragment extends Fragment {
         firebaseServicio.getTareas(new FirebaseServicio.OnTareasLoadedListener() {
             @Override
             public void onSuccess(List<Tarea> tareas) {
-                adapter.setItems(tareas);
+                List<Tarea> nuevaLista = new ArrayList<>(tareas);
+                adapter.submitList(nuevaLista);
+                Log.d("DEBUG", "Tareas cargadas: " + tareas.size());
             }
 
             @Override
@@ -165,6 +184,7 @@ public class TareasFragment extends Fragment {
             }
         });
     }
+
     private void configurarFab() {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).showGlobalFab(
@@ -174,6 +194,7 @@ public class TareasFragment extends Fragment {
             );
         }
     }
+
     private void mostrarDialogoNuevaTarea() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_nueva_tarea, null);
@@ -252,6 +273,7 @@ public class TareasFragment extends Fragment {
         super.onResume();
         configurarFab();
     }
+
     @Override
     public void onPause() {
         super.onPause();
