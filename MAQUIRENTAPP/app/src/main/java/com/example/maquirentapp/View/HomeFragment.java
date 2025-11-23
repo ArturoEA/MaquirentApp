@@ -84,9 +84,10 @@ public class HomeFragment extends Fragment {
         cardPlanosCambioVoltaje.setOnClickListener(v -> navController.navigate(R.id.action_home_to_PlanosCambioVoltajeFragment));
         cardFichasTecnicas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_FichasTecnicasFragment));
         cardListaTareas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_TareasFragment));
+        cardCotizaciones.setOnClickListener(v -> navController.navigate(R.id.action_home_to_NuevaCotizacionFragment));
 
         // Configurar Recyclers
-        setupAlquileresDiariosRecycler(view); // Configurar alquileres diarios
+        setupAlquileresDiariosRecycler(view);
         setupPagosPendientesRecyclerView(view);
 
         cargarAccesoriosYAlquileresDiarios();

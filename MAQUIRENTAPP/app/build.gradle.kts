@@ -75,4 +75,7 @@ dependencies {
     implementation("it.xabaras.android:recyclerview-swipedecorator:1.4")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
+
+    // Apache POI para Word (.docx)
+    implementation("org.apache.poi:poi-ooxml:5.2.3")
 }
