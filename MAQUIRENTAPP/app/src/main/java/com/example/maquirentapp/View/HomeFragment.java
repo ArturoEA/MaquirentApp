@@ -73,6 +73,7 @@ public class HomeFragment extends Fragment {
         CardView cardPlanosCambioVoltaje = view.findViewById(R.id.cardPlanosVoltaje);
         CardView cardFichasTecnicas = view.findViewById(R.id.cardFichasTecnicas);
         CardView cardListaTareas = view.findViewById(R.id.cardListaTareas);
+        CardView cardCertificados = view.findViewById(R.id.cardCertificadosOperatividad);
         emptyStatePagosPendientes = view.findViewById(R.id.emptyStatePagosPendientes);
         emptyStateAlquileresDiarios = view.findViewById(R.id.emptyStateAlquileresDiarios); // Inicializar
 
@@ -85,6 +86,7 @@ public class HomeFragment extends Fragment {
         cardFichasTecnicas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_FichasTecnicasFragment));
         cardListaTareas.setOnClickListener(v -> navController.navigate(R.id.action_home_to_TareasFragment));
         cardCotizaciones.setOnClickListener(v -> navController.navigate(R.id.action_home_to_HistorialCotizacionesFragment));
+        cardCertificados.setOnClickListener(v -> navController.navigate(R.id.action_home_to_NuevoCertificadoFragment));
 
         // Configurar Recyclers
         setupAlquileresDiariosRecycler(view);

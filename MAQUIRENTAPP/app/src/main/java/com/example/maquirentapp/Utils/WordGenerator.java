@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
+import com.example.maquirentapp.Model.CertificadoOperatividad;
 import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Model.ItemCotizacion;
 
@@ -219,5 +220,51 @@ public class WordGenerator {
         } catch (Exception e) {
             Log.e("CacheLimpieza", "Error limpiando cache", e);
         }
+    }
+
+    public File generarCertificadoWord(Context context, CertificadoOperatividad cert, String codigoGrupo) throws IOException {
+        // 1. Cargar plantilla
+        InputStream inputStream = context.getAssets().open("plantilla_certificado.docx");
+        XWPFDocument document = new XWPFDocument(inputStream);
+
+        // 2. Mapear datos
+        Map<String, String> datos = new HashMap<>();
+        datos.put("{{CLIENTE}}", cert.getCliente());
+        datos.put("{{FECHA}}", cert.getFechaEmision());
+        datos.put("{{POT_SB}}", cert.getPotencia());
+        datos.put("{{COD_GRUPO}}", codigoGrupo != null ? codigoGrupo : "---");
+
+        datos.put("{{MARCA_GRUPO}}", cert.getMarcaGrupo());
+        datos.put("{{MODELO_GRUPO}}", cert.getModeloGrupo());
+        datos.put("{{SERIE_GRUPO}}", cert.getSerieGrupo());
+
+        datos.put("{{MARCA_MOTOR}}", cert.getMarcaMotor());
+        datos.put("{{MODELO_MOTOR}}", cert.getModeloMotor());
+        datos.put("{{SERIE_MOTOR}}", cert.getSerieMotor());
+
+        datos.put("{{MARCA_GEN}}", cert.getMarcaGenerador());
+        datos.put("{{MODELO_GEN}}", cert.getModeloGenerador());
+        datos.put("{{SERIE_GEN}}", cert.getSerieGenerador());
+
+        // 3. Reemplazar
+        for (XWPFParagraph p : document.getParagraphs()) {
+            reemplazarEnParrafo(p, datos);
+        }
+        for (XWPFTable table : document.getTables()) {
+            reemplazarEnTabla(table, datos);
+        }
+
+        // 4. Guardar en caché
+        String nombreArchivo = "Certificado_" + cert.getNumeroCertificado() + ".docx";
+        File carpetaCache = new File(context.getCacheDir(), "documentos");
+        if (!carpetaCache.exists()) carpetaCache.mkdirs();
+
+        File archivoFinal = new File(carpetaCache, nombreArchivo);
+        FileOutputStream out = new FileOutputStream(archivoFinal);
+        document.write(out);
+        out.close();
+        document.close();
+
+        return archivoFinal;
     }
 }
