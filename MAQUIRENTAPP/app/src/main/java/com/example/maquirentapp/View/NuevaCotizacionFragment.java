@@ -198,13 +198,10 @@ public class NuevaCotizacionFragment extends Fragment {
             cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
 
             if (itemExistente != null) {
-                itemExistente.setDescripcionEquipo(desc);
-                itemExistente.setPotencia(pot);
-                itemExistente.setMarca(marca);
-                itemExistente.setModoTrabajo(modo);
-                itemExistente.setIncluye(incluye);
-                itemExistente.setPrecioMensual(precio);
-                itemExistente.setPrecioHoraExtra(precioHE);
+                int index = cotizacionActual.getItems().indexOf(itemExistente);
+                ItemCotizacion itemEditado = new ItemCotizacion(desc, pot, modo, marca, precio, precioHE);
+                itemEditado.setIncluye(incluye);
+                cotizacionActual.getItems().set(index, itemEditado);
             } else {
                 ItemCotizacion nuevoItem = new ItemCotizacion(desc, pot, modo, marca, precio, precioHE);
                 nuevoItem.setIncluye(incluye);

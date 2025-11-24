@@ -159,7 +159,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Equipos a Cotizar"
+                android:text="Equipos a cotizar"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -253,7 +253,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0.00"
-                    android:textColor="@color/selection_indicator"
+                    android:textColor="@color/black"
                     android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
