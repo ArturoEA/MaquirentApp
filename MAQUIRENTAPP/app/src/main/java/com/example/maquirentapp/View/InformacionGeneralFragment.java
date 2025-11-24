@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -68,6 +69,10 @@ public class InformacionGeneralFragment extends Fragment {
     private InfoPlaca infoPlacaActual;
     private FotosSimpleAdapter fotosAdapter;
     private SpecsPlacaAdapter specsAdapter;
+    private TextInputEditText inputPotenciaSB, inputPotenciaC, inputMarcaG, inputModeloG, inputSerieG;
+    private TextInputEditText inputMarcaM, inputModeloM, inputSerieM;
+    private TextInputEditText inputMarcaGen, inputModeloGen, inputSerieGen;
+    private Button btnGuardarTecnicos;
 
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -103,6 +108,40 @@ public class InformacionGeneralFragment extends Fragment {
         recyclerFotosPlaca = view.findViewById(R.id.recyclerFotosPlaca);
         recyclerSpecsPlaca = view.findViewById(R.id.recyclerSpecsPlaca);
         btnAddSpecPlaca = view.findViewById(R.id.btnAddSpecPlaca);
+
+        inputPotenciaSB = view.findViewById(R.id.inputPotenciaStandBy);
+        inputPotenciaC = view.findViewById(R.id.inputPotenciaContinua);
+        inputMarcaG = view.findViewById(R.id.inputMarcaGrupo);
+        inputModeloG = view.findViewById(R.id.inputModeloGrupo);
+        inputSerieG = view.findViewById(R.id.inputSerieGrupo);
+
+        inputMarcaM = view.findViewById(R.id.inputMarcaMotor);
+        inputModeloM = view.findViewById(R.id.inputModeloMotor);
+        inputSerieM = view.findViewById(R.id.inputSerieMotor);
+
+        inputMarcaGen = view.findViewById(R.id.inputMarcaGen);
+        inputModeloGen = view.findViewById(R.id.inputModeloGen);
+        inputSerieGen = view.findViewById(R.id.inputSerieGen);
+
+        btnGuardarTecnicos = view.findViewById(R.id.btnGuardarDatosTecnicos);
+
+        btnGuardarTecnicos.setOnClickListener(v -> guardarDatosTecnicos());
+
+        LinearLayout header = view.findViewById(R.id.llDatosTecnicosHeader);
+        LinearLayout body = view.findViewById(R.id.llDatosTecnicosBody);
+        ImageView chevron = view.findViewById(R.id.ivChevronDatosTecnicos);
+        body.setVisibility(View.GONE);
+        chevron.setRotation(0);
+
+        header.setOnClickListener(v -> {
+            if (body.getVisibility() == View.VISIBLE) {
+                body.setVisibility(View.GONE);
+                chevron.animate().rotation(0).setDuration(200).start();
+            } else {
+                body.setVisibility(View.VISIBLE);
+                chevron.animate().rotation(180).setDuration(200).start();
+            }
+        });
 
         setupFiltros();
         setupPlaca();
@@ -286,6 +325,21 @@ public class InformacionGeneralFragment extends Fragment {
 
     private void actualizarUIPlaca() {
         if (infoPlacaActual == null) return;
+        inputPotenciaSB.setText(infoPlacaActual.getPotenciaStandBy());
+        inputPotenciaC.setText(infoPlacaActual.getPotenciaContinua());
+
+        inputMarcaG.setText(infoPlacaActual.getMarcaGrupo());
+        inputModeloG.setText(infoPlacaActual.getModeloGrupo());
+        inputSerieG.setText(infoPlacaActual.getSerieGrupo());
+
+        inputMarcaM.setText(infoPlacaActual.getMarcaMotor());
+        inputModeloM.setText(infoPlacaActual.getModeloMotor());
+        inputSerieM.setText(infoPlacaActual.getSerieMotor());
+
+        inputMarcaGen.setText(infoPlacaActual.getMarcaGenerador());
+        inputModeloGen.setText(infoPlacaActual.getModeloGenerador());
+        inputSerieGen.setText(infoPlacaActual.getSerieGenerador());
+
         if (fotosAdapter == null) {
             fotosAdapter = new FotosSimpleAdapter(infoPlacaActual.getImagenesUrls(), new FotosSimpleAdapter.OnFotoActionListener() {
                 @Override
@@ -405,7 +459,6 @@ public class InformacionGeneralFragment extends Fragment {
                 specExistente.put("clave", clave);
                 specExistente.put("valor", valor);
             } else {
-                // NUEVO
                 Map<String, String> nuevaSpec = new HashMap<>();
                 nuevaSpec.put("clave", clave);
                 nuevaSpec.put("valor", valor);
@@ -527,5 +580,29 @@ public class InformacionGeneralFragment extends Fragment {
         } catch (IOException e) {
             Toast.makeText(getContext(), "Error al compartir", Toast.LENGTH_SHORT).show();
         }
+    }
+    private void guardarDatosTecnicos() {
+        if (infoPlacaActual == null) {
+            infoPlacaActual = new InfoPlaca();
+            infoPlacaActual.setIdGrupo(idGrupo);
+        }
+
+        infoPlacaActual.setPotenciaStandBy(inputPotenciaSB.getText().toString().trim());
+        infoPlacaActual.setPotenciaContinua(inputPotenciaC.getText().toString().trim());
+
+        infoPlacaActual.setMarcaGrupo(inputMarcaG.getText().toString().trim());
+        infoPlacaActual.setModeloGrupo(inputModeloG.getText().toString().trim());
+        infoPlacaActual.setSerieGrupo(inputSerieG.getText().toString().trim());
+
+        infoPlacaActual.setMarcaMotor(inputMarcaM.getText().toString().trim());
+        infoPlacaActual.setModeloMotor(inputModeloM.getText().toString().trim());
+        infoPlacaActual.setSerieMotor(inputSerieM.getText().toString().trim());
+
+        infoPlacaActual.setMarcaGenerador(inputMarcaGen.getText().toString().trim());
+        infoPlacaActual.setModeloGenerador(inputModeloGen.getText().toString().trim());
+        infoPlacaActual.setSerieGenerador(inputSerieGen.getText().toString().trim());
+
+        Toast.makeText(getContext(), "Guardando...", Toast.LENGTH_SHORT).show();
+        guardarPlacaSinRecargar();
     }
 }
