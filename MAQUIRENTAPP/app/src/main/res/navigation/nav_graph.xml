@@ -88,8 +88,8 @@
             app:popExitAnim="@anim/slide_out_right"/>
 
         <action
-            android:id="@+id/action_home_to_NuevaCotizacionFragment"
-            app:destination="@+id/NuevaCotizacionFragment"
+            android:id="@+id/action_home_to_HistorialCotizacionesFragment"
+            app:destination="@+id/HistorialCotizacionesFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
@@ -100,6 +100,21 @@
         android:id="@+id/NuevaCotizacionFragment"
         android:name="com.example.maquirentapp.View.NuevaCotizacionFragment"
         tools:layout="@layout/fragment_nueva_cotizacion">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/HistorialCotizacionesFragment"
+        android:name="com.example.maquirentapp.View.HistorialCotizacionesFragment"
+        tools:layout="@layout/fragment_historial_cotizaciones">
+
+        <action
+            android:id="@+id/action_historialCotizaciones_to_nuevaCotizacion"
+            app:destination="@+id/NuevaCotizacionFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
 
     </fragment>
 

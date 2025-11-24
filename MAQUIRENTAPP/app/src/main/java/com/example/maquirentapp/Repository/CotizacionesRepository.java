@@ -77,4 +77,25 @@ public class CotizacionesRepository {
                 })
                 .addOnFailureListener(callback::onError);
     }
+    public void getCotizaciones(Callback<List<Cotizacion>> callback) {
+        db.collection(COL_COTIZACIONES)
+                .orderBy("numeroCotizacion", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Cotizacion> lista = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        Cotizacion c = doc.toObject(Cotizacion.class);
+                        c.setId(doc.getId());
+                        lista.add(c);
+                    }
+                    callback.onSuccess(lista);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+    public void eliminarCotizacion(String idCotizacion, Callback<Void> callback) {
+        db.collection(COL_COTIZACIONES).document(idCotizacion)
+                .delete()
+                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onError);
+    }
 }

@@ -507,7 +507,7 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginBottom="8dp"
-                        android:src="@drawable/icon_valorizacion_blanco" />
+                        android:src="@drawable/icon_cotizacion_blanco" />
 
                     <TextView
                         android:layout_width="wrap_content"

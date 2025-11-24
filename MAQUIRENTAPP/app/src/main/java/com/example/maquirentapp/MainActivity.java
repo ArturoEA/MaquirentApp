@@ -461,6 +461,12 @@ public class MainActivity extends AppCompatActivity {
                 } else if (dest.getId() == R.id.listaGruposElectrogenosFragment) {
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Lista de grupos electrógenos");
+                }else if (dest.getId() == R.id.HistorialCotizacionesFragment) {
+                    setHeaderIcon(R.drawable.icon_cotizacion_blanco);
+                    setHeaderTitle("Historial de cotizaciones");
+                }else if (dest.getId() == R.id.NuevaCotizacionFragment) {
+                    setHeaderIcon(R.drawable.icon_cotizacion_blanco);
+                    setHeaderTitle("Nueva cotización");
                 }
 
 

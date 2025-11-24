@@ -5,6 +5,9 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     android:theme="@style/Theme.TextMain"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:background="@color/black"
+    android:backgroundTint="@color/black"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 

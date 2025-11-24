@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="Datos del Cliente"
+            android:text="Datos del cliente"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -39,7 +39,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
@@ -267,7 +266,7 @@
             android:layout_marginTop="24dp"
             android:layout_marginBottom="32dp"
             android:backgroundTint="@color/selection_indicator"
-            android:text="Generar Cotización (Word)"
+            android:text="Generar cotización"
             android:textColor="@color/white"
             android:textSize="16sp" />
 
