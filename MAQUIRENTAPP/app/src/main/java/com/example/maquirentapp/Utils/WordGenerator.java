@@ -87,10 +87,13 @@ public class WordGenerator {
 
         XWPFTableRow filaPlantilla = table.getRow(filaPlantillaIndex);
 
-        // Insertar los datos
-        for (ItemCotizacion item : items) {
-            XWPFTableRow nuevaFila = table.createRow();
-            copiarEstiloFila(filaPlantilla, nuevaFila);
+        for (int i = 0; i < items.size(); i++) {
+            ItemCotizacion item = items.get(i);
+
+            XWPFTableRow nuevaFila = table.insertNewTableRow(filaPlantillaIndex + 1 + i);
+            while (nuevaFila.getTableCells().size() < filaPlantilla.getTableCells().size()) {
+                nuevaFila.createCell();
+            }
 
             Map<String, String> datosItem = new HashMap<>();
             datosItem.put("{{EQUIPO}}", item.getDescripcionEquipo());
@@ -101,22 +104,23 @@ public class WordGenerator {
             datosItem.put("{{PRECIO_PARCIAL}}", simbolo + " " + String.format(Locale.US, "%.2f", item.getPrecioMensual()));
             datosItem.put("{{PRECIO_IGV}}", simbolo + " " + String.format(Locale.US, "%.2f", item.getTotalConIgv()));
 
-            while (nuevaFila.getTableCells().size() < filaPlantilla.getTableCells().size()) {
-                nuevaFila.createCell();
-            }
-
-            for (int i = 0; i < filaPlantilla.getTableCells().size(); i++) {
-                String textoPlantilla = filaPlantilla.getCell(i).getText();
+            for (int j = 0; j < filaPlantilla.getTableCells().size(); j++) {
+                String textoPlantilla = filaPlantilla.getCell(j).getText();
                 for (Map.Entry<String, String> entry : datosItem.entrySet()) {
                     if (textoPlantilla.contains(entry.getKey())) {
                         textoPlantilla = textoPlantilla.replace(entry.getKey(), entry.getValue());
                     }
                 }
-                nuevaFila.getCell(i).setText(textoPlantilla);
+                nuevaFila.getCell(j).setText(textoPlantilla);
             }
         }
 
         table.removeRow(filaPlantillaIndex);
+        try {
+            XWPFParagraph paragraph = table.getBody().insertNewParagraph(table.getCTTbl().newCursor());
+            paragraph.createRun().addBreak();
+        } catch (Exception e) {
+        }
     }
 
     private void llenarTablaHorasExtras(XWPFTable table, List<ItemCotizacion> items, String simbolo) {
