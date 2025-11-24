@@ -87,6 +87,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
         configurarFab();
         cargarPlanos();
     }
+
     private void configurarFab() {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).showGlobalFab(
@@ -166,19 +167,20 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                     .setTitle("Eliminar Plano")
                     .setMessage("¿Estás seguro de eliminar esta imagen?")
                     .setPositiveButton("Eliminar", (d, w) -> {
-                        if(progressBar != null) progressBar.setVisibility(View.VISIBLE);
+                        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
 
                         firebaseServicio.eliminarPlano(plano, new FirebaseServicio.OnSimpleCallback() {
                             @Override
                             public void onSuccess() {
-                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "Plano eliminado", Toast.LENGTH_SHORT).show();
                                 cargarPlanos();
                                 dialog.dismiss();
                             }
+
                             @Override
                             public void onError(Exception e) {
-                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -222,13 +224,16 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         // Usar requireContext() dentro del callback
-                        if (isAdded() && getContext() != null) {
-                            compartirBitmap(resource, "plano_compartido_" + System.currentTimeMillis() + ".jpg");
-                        }
+                        new Thread(() -> {
+                            if (isAdded() && getContext() != null) {
+                                compartirBitmap(resource, "plano_compartido_" + System.currentTimeMillis() + ".jpg");
+                            }
+                        }).start();
                     }
 
                     @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
                 });
     }
 
@@ -252,7 +257,9 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
                 shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-                startActivity(Intent.createChooser(shareIntent, "Compartir plano vía"));
+                requireActivity().runOnUiThread(() -> {
+                    startActivity(Intent.createChooser(shareIntent, "Compartir plano vía"));
+                });
             }
         } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
@@ -260,6 +267,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
             Toast.makeText(getContext(), "Error al compartir. Verifique FileProvider.", Toast.LENGTH_LONG).show();
         }
     }
+
     @Override
     public void onPause() {
         super.onPause();

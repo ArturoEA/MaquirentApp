@@ -146,6 +146,7 @@ public class FotosEquipoFragment extends Fragment {
             }
         });
     }
+
     private void mostrarDialogoFoto(FotoEquipo foto) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_plano, null);
@@ -174,18 +175,19 @@ public class FotosEquipoFragment extends Fragment {
                     .setTitle("Eliminar Foto")
                     .setMessage("¿Estás seguro?")
                     .setPositiveButton("Eliminar", (d, w) -> {
-                        if(progressBar != null) progressBar.setVisibility(View.VISIBLE);
+                        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
                         firebaseServicio.eliminarFotoEquipo(foto, new FirebaseServicio.OnSimpleCallback() {
                             @Override
                             public void onSuccess() {
-                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "Eliminado", Toast.LENGTH_SHORT).show();
                                 cargarFotos();
                                 dialog.dismiss();
                             }
+
                             @Override
                             public void onError(Exception e) {
-                                if(progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -226,11 +228,16 @@ public class FotosEquipoFragment extends Fragment {
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        if (isAdded() && getContext() != null) {
-                            compartirBitmap(resource, "foto_equipo_share.jpg");
-                        }
+                        new Thread(() -> {
+                            if (isAdded() && getContext() != null) {
+                                compartirBitmap(resource, "foto_equipo_share.jpg");
+                            }
+                        }).start();
                     }
-                    @Override public void onLoadCleared(@Nullable Drawable placeholder) {}
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
                 });
     }
 
@@ -252,7 +259,9 @@ public class FotosEquipoFragment extends Fragment {
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
                 shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-                startActivity(Intent.createChooser(shareIntent, "Compartir vía"));
+                requireActivity().runOnUiThread(() -> {
+                    startActivity(Intent.createChooser(shareIntent, "Compartir vía"));
+                });
             }
         } catch (IOException e) {
             Toast.makeText(getContext(), "Error al compartir", Toast.LENGTH_SHORT).show();
