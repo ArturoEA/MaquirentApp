@@ -36,6 +36,7 @@ public class WordGenerator {
         Map<String, String> datos = new HashMap<>();
         datos.put("{{FECHA}}", cotizacion.getFechaEmision());
         datos.put("{{CLIENTE}}", cotizacion.getClienteNombre());
+        datos.put("{{HORAS}}", String.valueOf(cotizacion.getHorasMinimas()));
         datos.put("{{CLIENTE_RUC}}", cotizacion.getClienteRuc());
         datos.put("{{LUGAR_TRABAJO}}", cotizacion.getLugarTrabajo());
 
@@ -65,7 +66,12 @@ public class WordGenerator {
 
         // 5. Guardar el archivo generado
         String nombreArchivo = "Cotizacion_" + cotizacion.getNumeroCotizacion() + ".docx";
-        File archivoFinal = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), nombreArchivo);
+        File carpetaCache = new File(context.getCacheDir(), "documentos");
+        if (!carpetaCache.exists()) {
+            carpetaCache.mkdirs();
+        }
+
+        File archivoFinal = new File(carpetaCache, nombreArchivo);
 
         FileOutputStream out = new FileOutputStream(archivoFinal);
         document.write(out);
@@ -190,10 +196,28 @@ public class WordGenerator {
         }
         return false;
     }
+    public static void limpiarCacheAntiguo(Context context) {
+        try {
+            File carpetaCache = new File(context.getCacheDir(), "documentos");
+            if (carpetaCache.exists() && carpetaCache.isDirectory()) {
+                File[] archivos = carpetaCache.listFiles();
+                if (archivos != null) {
+                    long tiempoActual = System.currentTimeMillis();
+                    long tiempoMaximo = 24 * 60 * 60 * 1000;
 
-    private void copiarEstiloFila(XWPFTableRow origen, XWPFTableRow destino) {
-        // TODO: REVISAR ESTE MET0DO
-        // Copiar propiedades básicas (altura, etc.) si fuera necesario
-        // POI Android es limitado en estilos profundos, pero el texto simple funciona bien.
+                    for (File archivo : archivos) {
+                        long diferencia = tiempoActual - archivo.lastModified();
+                        if (diferencia > tiempoMaximo) {
+                            boolean borrado = archivo.delete();
+                            if (borrado) {
+                                Log.d("CacheLimpieza", "Archivo antiguo borrado: " + archivo.getName());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("CacheLimpieza", "Error limpiando cache", e);
+        }
     }
 }

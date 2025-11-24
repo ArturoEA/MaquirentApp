@@ -48,6 +48,11 @@ public class NuevaCotizacionFragment extends Fragment {
         super.onCreate(savedInstanceState);
         repository = new CotizacionesRepository();
         cotizacionActual = new Cotizacion();
+        new Thread(() -> {
+            if (getContext() != null) {
+                WordGenerator.limpiarCacheAntiguo(requireContext());
+            }
+        }).start();
     }
 
     @Override
@@ -147,6 +152,12 @@ public class NuevaCotizacionFragment extends Fragment {
             });
         }
 
+        inputPrecio.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                calcularHoraExtraAutomatica(inputPrecio, inputPrecioHE);
+            }
+        });
+
         if (itemExistente != null) {
             autoDesc.setText(itemExistente.getDescripcionEquipo());
             inputPotencia.setText(itemExistente.getPotencia());
@@ -184,6 +195,8 @@ public class NuevaCotizacionFragment extends Fragment {
                 return;
             }
 
+            cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+
             if (itemExistente != null) {
                 itemExistente.setDescripcionEquipo(desc);
                 itemExistente.setPotencia(pot);
@@ -203,6 +216,23 @@ public class NuevaCotizacionFragment extends Fragment {
         });
 
         dialog.show();
+    }
+
+    private void calcularHoraExtraAutomatica(TextInputEditText inputPrecio, TextInputEditText inputHE) {
+        try {
+            String precioStr = inputPrecio.getText().toString();
+            if (precioStr.isEmpty()) return;
+
+            double precioMensual = Double.parseDouble(precioStr);
+            int horas = getHorasMinimasActuales();
+
+            if (horas > 0) {
+                // Fórmula: (Precio / Horas) * 0.75
+                double precioHE = (precioMensual / horas) * 0.75;
+                inputHE.setText(String.format(Locale.US, "%.2f", precioHE));
+            }
+        } catch (Exception e) {
+        }
     }
 
     private void actualizarListaYTotales() {
@@ -230,6 +260,7 @@ public class NuevaCotizacionFragment extends Fragment {
         cotizacionActual.setLugarTrabajo(binding.inputLugar.getText().toString());
         cotizacionActual.setFechaEmision(binding.inputFecha.getText().toString());
         cotizacionActual.setMoneda(binding.radioSol.isChecked() ? "SOL" : "USD");
+        cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
 
         binding.btnGenerarCotizacion.setEnabled(false);
         binding.btnGenerarCotizacion.setText("Guardando...");
@@ -237,6 +268,7 @@ public class NuevaCotizacionFragment extends Fragment {
         repository.crearCotizacion(cotizacionActual, new CotizacionesRepository.Callback<String>() {
             @Override
             public void onSuccess(String numeroCotizacion) {
+                if (getContext() == null) return;
                 Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " guardada.", Toast.LENGTH_SHORT).show();
 
                 binding.btnGenerarCotizacion.setText("Generando archivo...");
@@ -271,6 +303,7 @@ public class NuevaCotizacionFragment extends Fragment {
             }
         });
     }
+
     private void abrirOCompartirDocumento(File archivo) {
         try {
             Uri uri = androidx.core.content.FileProvider.getUriForFile(
@@ -290,6 +323,16 @@ public class NuevaCotizacionFragment extends Fragment {
             Toast.makeText(getContext(), "No tienes una app para abrir Word instalada.", Toast.LENGTH_LONG).show();
         }
     }
+
+    private int getHorasMinimasActuales() {
+        try {
+            String val = binding.inputHorasMinimas.getText().toString();
+            return val.isEmpty() ? 200 : Integer.parseInt(val);
+        } catch (NumberFormatException e) {
+            return 200;
+        }
+    }
+
     private void mostrarDatePicker() {
         Calendar cal = Calendar.getInstance();
         new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
