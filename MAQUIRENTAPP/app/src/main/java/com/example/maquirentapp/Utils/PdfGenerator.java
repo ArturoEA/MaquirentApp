@@ -24,21 +24,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class PdfGenerator {
-
-    // A4 en puntos (72 dpi)
     private static final int A4_WIDTH_PTS = 595;
     private static final int A4_HEIGHT_PTS = 842;
-
-    // Usamos una densidad fija de 2.0 (xhdpi) para simular alta calidad pero controlada.
-    // Con densidad 2.0, 1dp = 2px.
-    // Ancho objetivo en px = 595 * 2 = 1190px.
     private static final int RENDER_WIDTH_PX = 1190;
     private static final float TARGET_DENSITY = 2.0f;
 
     public File generarCertificadoPdf(Context context, CertificadoOperatividad cert, String codigoGrupo, String urlFoto) throws Exception {
 
-        // 1. CREAR CONTEXTO CON DENSIDAD CONTROLADA (Truco clave)
-        // Esto asegura que 12sp se vea igual en un Samsung S24 que en un pixel antiguo.
+        // 1. CREAR CONTEXTO CON DENSIDAD CONTROLADA
         Context pdfContext = createContextWithDensity(context, TARGET_DENSITY);
 
         // 2. Inflar usando este contexto especial
@@ -62,10 +55,6 @@ public class PdfGenerator {
         // 6. Crear PDF
         PdfDocument document = new PdfDocument();
 
-        // Calculamos la escala inversa: Si dibujamos en 1190px y el PDF mide 595pt,
-        // necesitamos escalar al 50% (0.5).
-        // Como forzamos la densidad a 2.0, los textos de 12sp se renderizaron a 24px.
-        // 24px * 0.5 = 12pt. ¡Tamaño perfecto de lectura!
         float scale = (float) A4_WIDTH_PTS / RENDER_WIDTH_PX;
 
         // Calcular altura de página en píxeles
@@ -77,12 +66,10 @@ public class PdfGenerator {
             PdfDocument.Page page = document.startPage(pageInfo);
             Canvas canvas = page.getCanvas();
 
-            // Fondo blanco
             Paint paint = new Paint();
             paint.setColor(Color.WHITE);
             canvas.drawRect(0, 0, A4_WIDTH_PTS, A4_HEIGHT_PTS, paint);
 
-            // Escalar y Trasladar
             canvas.save();
             canvas.scale(scale, scale);
             canvas.translate(0, -i * pageHeightInPixels);
@@ -108,7 +95,6 @@ public class PdfGenerator {
             document.close();
             fos.close();
         } catch (IOException e) {
-            // Fallback a caché si falla escritura pública
             File cacheDir = new File(context.getCacheDir(), "certificados");
             if (!cacheDir.exists()) cacheDir.mkdirs();
             archivoFinal = new File(cacheDir, nombreArchivo);
@@ -120,19 +106,14 @@ public class PdfGenerator {
 
         return archivoFinal;
     }
-
-    /**
-     * Crea un contexto wrapper con la densidad y configuración forzada para impresión.
-     */
     private Context createContextWithDensity(Context context, float densityScale) {
         Configuration configuration = new Configuration(context.getResources().getConfiguration());
-        configuration.densityDpi = (int) (densityScale * 160); // 160 es la base (mdpi)
-        configuration.fontScale = 1.0f; // Forzar escala de fuente normal (ignorar configuración de usuario de letra grande)
+        configuration.densityDpi = (int) (densityScale * 160);
+        configuration.fontScale = 1.0f;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return context.createConfigurationContext(configuration);
         } else {
-            // Fallback para versiones muy viejas (no debería ser tu caso)
             return context;
         }
     }
