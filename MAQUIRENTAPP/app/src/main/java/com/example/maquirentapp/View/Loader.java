@@ -12,6 +12,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.UpdateManager;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class Loader extends AppCompatActivity {
 
@@ -20,13 +22,16 @@ public class Loader extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ly_loader);
 
-//         Espera 1.5 segundos antes de lanzar la actividad principal
+        UpdateManager updateManager = new UpdateManager(this);
+        updateManager.checkForUpdates(() -> {
+            iniciarAppNormalmente();
+        });
+    }
+    private void iniciarAppNormalmente() {
         new Handler().postDelayed(() -> {
             Intent intent = new Intent(Loader.this, MainActivity.class);
             startActivity(intent);
             finish();
-        }, 1500);
+        }, 1200);
     }
-
-
 }
