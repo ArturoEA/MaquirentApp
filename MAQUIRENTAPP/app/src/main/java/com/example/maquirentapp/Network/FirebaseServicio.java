@@ -728,6 +728,24 @@ public class FirebaseServicio {
                 })
                 .addOnFailureListener(listener::onError);
     }
+    public void getGrupoPorId(String idGrupo, OnGrupoLoadedListener listener) {
+        db.collection("gruposElectrogenos").document(idGrupo)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        GrupoElectrogeno grupo = documentSnapshot.toObject(GrupoElectrogeno.class);
+                        if (grupo != null) {
+                            grupo.setId(documentSnapshot.getId());
+                            listener.onSuccess(grupo);
+                        } else {
+                            listener.onError(new Exception("Error al convertir el grupo"));
+                        }
+                    } else {
+                        listener.onError(new Exception("El grupo no existe"));
+                    }
+                })
+                .addOnFailureListener(listener::onError);
+    }
 
     // Mét0do para finalizar y registrar el ingreso prorrateado
     public void finalizarAlquilerDiario(AlquilerDia alquiler, OnSimpleCallback listener) {
@@ -1121,6 +1139,10 @@ public class FirebaseServicio {
     }
 
     // Interfaces para callbacks
+    public interface OnGrupoLoadedListener {
+        void onSuccess(GrupoElectrogeno grupo);
+        void onError(Exception e);
+    }
     public interface OnFiltrosLoadedListener {
         void onSuccess(List<FiltroCategoria> categorias);
         void onError(Exception e);

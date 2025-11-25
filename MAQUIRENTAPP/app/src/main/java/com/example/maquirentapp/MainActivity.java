@@ -476,6 +476,9 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_mantenimiento_blanco);
                     setHeaderTitle("Nuevo mantenimiento\n" + codigo);
+                } else if (dest.getId() == R.id.listaClientesValorizaciones) {
+                    setHeaderIcon(R.drawable.icon_valorizacion_blanco);
+                    setHeaderTitle("Lista de clientes");
                 }
 
 

@@ -19,15 +19,53 @@
     </fragment>
 
     <fragment
+        android:id="@+id/listaClientesValorizaciones"
+        android:name="com.example.maquirentapp.View.ListaClientesValorizacionFragment"
+        tools:layout="@layout/fragment_lista_clientes_valorizacion">
+
+        <action
+            android:id="@+id/action_listaClientes_to_historialValorizacionesCliente"
+            app:destination="@id/historialValorizacionesClienteFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/historialValorizacionesClienteFragment"
+        android:name="com.example.maquirentapp.View.HistorialValorizacionesClienteFragment"
+        tools:layout="@layout/fragment_historial_valorizaciones_cliente" >
+
+        <action
+            android:id="@+id/action_historialValClien_to_NuevaValorizacionFragment"
+            app:destination="@id/nuevaValorizacionFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nuevaValorizacionFragment"
+        android:name="com.example.maquirentapp.View.NuevaValorizacionFragment"
+        tools:layout="@layout/fragment_nueva_valorizacion" >
+
+
+    </fragment>
+
+
+    <fragment
         android:id="@+id/nuevoMantenimientoFragment"
         android:name="com.example.maquirentapp.View.NuevoMantenimientoFragment"
-        tools:layout="@layout/fragment_nuevo_mantenimiento"/>
+        tools:layout="@layout/fragment_nuevo_mantenimiento" />
 
     <fragment
         android:id="@+id/tareasFragment"
         android:name="com.example.maquirentapp.View.TareasFragment"
         android:label="Tareas"
-        tools:layout="@layout/fragment_tareas"/>
+        tools:layout="@layout/fragment_tareas" />
 
     <fragment
         android:id="@+id/homeFragment"
@@ -40,7 +78,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_home_to_CGE"
@@ -48,7 +86,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_homeFragment_to_nuevoAlquilerFragment"
@@ -56,7 +94,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_home_to_Perfil"
@@ -64,7 +102,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_home_to_PlanosCambioVoltajeFragment"
@@ -72,7 +110,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
 
         <action
@@ -81,7 +119,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
 
         <action
@@ -90,7 +128,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_home_to_HistorialCotizacionesFragment"
@@ -98,7 +136,15 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
+
+        <action
+            android:id="@+id/action_home_to_listaClientesValorizacionFragment"
+            app:destination="@+id/listaClientesValorizaciones"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_home_to_NuevoCertificadoFragment"
@@ -106,7 +152,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -134,7 +180,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
     </fragment>
 
@@ -149,7 +195,7 @@
             app:enterAnim="@anim/slide_in_left"
             app:exitAnim="@anim/slide_out_right"
             app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left"/>
+            app:popExitAnim="@anim/slide_out_left" />
 
         <action
             android:id="@+id/action_cge_to_Perfil"
@@ -157,7 +203,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_cge_to_grupoElectrogeno"
@@ -165,8 +211,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"
-            />
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -182,14 +227,14 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_grupoElectrogeno_to_historialAlquilerMensual"
             app:destination="@+id/historialAlquilerMensualFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
         <action
             android:id="@+id/action_grupoElectrogeno_to_historialAlquilerDiario"
             app:destination="@id/historialAlquilerDiarioFragment"
@@ -233,7 +278,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -247,13 +292,14 @@
         android:id="@+id/historialAlquilerDiarioFragment"
         android:name="com.example.maquirentapp.View.HistorialAlquilerDiarioFragment"
         android:label="Historial Alquileres Diarios"
-        tools:layout="@layout/fragment_historial_alquiler_mensual"> <action
-        android:id="@+id/action_historialAlquilerDiario_to_nuevoAlquilerDia"
-        app:destination="@id/nuevoAlquilerDiaFragment"
-        app:enterAnim="@anim/slide_in_right"
-        app:exitAnim="@anim/slide_out_left"
-        app:popEnterAnim="@anim/slide_in_left"
-        app:popExitAnim="@anim/slide_out_right" />
+        tools:layout="@layout/fragment_historial_alquiler_mensual">
+        <action
+            android:id="@+id/action_historialAlquilerDiario_to_nuevoAlquilerDia"
+            app:destination="@id/nuevoAlquilerDiaFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
         <argument
             android:name="idGrupo"
             app:argType="string" />
@@ -274,18 +320,18 @@
             app:nullable="true" />
     </fragment>
 
-<!--    <fragment-->
-<!--        android:id="@+id/nuevoAlquilerFragment"-->
-<!--        android:name="com.example.maquirentapp.View.NuevoAlquilerFragment"-->
-<!--        tools:layout="@layout/fragment_nuevo_alquiler">-->
-<!--        <action-->
-<!--            android:id="@+id/action_nuevoAlquiler_to_nuevoAlquilerDia"-->
-<!--            app:destination="@id/nuevoAlquilerDiaFragment"-->
-<!--            app:enterAnim="@anim/slide_in_right"-->
-<!--            app:exitAnim="@anim/slide_out_left"-->
-<!--            app:popEnterAnim="@anim/slide_in_left"-->
-<!--            app:popExitAnim="@anim/slide_out_right" />-->
-<!--    </fragment>-->
+    <!--    <fragment-->
+    <!--        android:id="@+id/nuevoAlquilerFragment"-->
+    <!--        android:name="com.example.maquirentapp.View.NuevoAlquilerFragment"-->
+    <!--        tools:layout="@layout/fragment_nuevo_alquiler">-->
+    <!--        <action-->
+    <!--            android:id="@+id/action_nuevoAlquiler_to_nuevoAlquilerDia"-->
+    <!--            app:destination="@id/nuevoAlquilerDiaFragment"-->
+    <!--            app:enterAnim="@anim/slide_in_right"-->
+    <!--            app:exitAnim="@anim/slide_out_left"-->
+    <!--            app:popEnterAnim="@anim/slide_in_left"-->
+    <!--            app:popExitAnim="@anim/slide_out_right" />-->
+    <!--    </fragment>-->
 
     <fragment
         android:id="@+id/mantenimientosFragment"
@@ -314,7 +360,7 @@
             app:enterAnim="@anim/slide_in_left"
             app:exitAnim="@anim/slide_out_right"
             app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left"/>
+            app:popExitAnim="@anim/slide_out_left" />
 
         <action
             android:id="@+id/action_perfil_to_cge"
@@ -322,7 +368,7 @@
             app:enterAnim="@anim/slide_in_left"
             app:exitAnim="@anim/slide_out_right"
             app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left"/>
+            app:popExitAnim="@anim/slide_out_left" />
 
         <action
             android:id="@+id/action_perfil_to_auth"
@@ -330,7 +376,7 @@
             app:enterAnim="@anim/slide_in_left"
             app:exitAnim="@anim/slide_out_right"
             app:popEnterAnim="@anim/slide_in_right"
-            app:popExitAnim="@anim/slide_out_left"/>
+            app:popExitAnim="@anim/slide_out_left" />
 
         <action
             android:id="@+id/action_configuracion_to_perfil"
@@ -338,7 +384,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_historial_ingresos"
@@ -346,7 +392,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_accesorios_alquiler_diario"
@@ -354,7 +400,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_accesorios_alquiler_mensual"
@@ -362,7 +408,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_mantenimientos_configuracion"
@@ -370,7 +416,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_lista_grupos_electrogenos"
@@ -378,7 +424,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
 
         <action
             android:id="@+id/action_configuracion_to_gestionar_usuarios"
@@ -386,7 +432,7 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -448,6 +494,6 @@
     <fragment
         android:id="@+id/fichasTecnicasFragment"
         android:name="com.example.maquirentapp.View.FichasTecnicasFragment"
-        tools:layout="@layout/fragment_fichas_tecnicas"/>
+        tools:layout="@layout/fragment_fichas_tecnicas" />
 
 </navigation>
