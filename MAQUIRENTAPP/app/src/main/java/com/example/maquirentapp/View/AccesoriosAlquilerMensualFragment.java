@@ -1,12 +1,15 @@
 package com.example.maquirentapp.View;
 
 import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -205,6 +208,17 @@ public class AccesoriosAlquilerMensualFragment extends Fragment {
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_nuevo_accesorio, null);
         dialog.setContentView(dialogView);
+
+        if (dialog.getWindow() != null) {
+
+            Window window = dialog.getWindow();
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+            int margen = (int) (24 * getResources().getDisplayMetrics().density); // 24dp
+            window.getDecorView().setPadding(margen, margen, margen, margen);
+        }
 
         TextView tvTitulo = dialogView.findViewById(R.id.tvTituloDialog);
         dialogImagePreview = dialogView.findViewById(R.id.imgIconoPreview);

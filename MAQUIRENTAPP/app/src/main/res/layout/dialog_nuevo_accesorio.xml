@@ -5,6 +5,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="24dp"
+    android:layout_margin="50dp"
+    android:background="@drawable/dialog_rounded_white_background"
     android:theme="@style/Theme.TextMain">
 
     <TextView
@@ -56,6 +58,7 @@
             android:id="@+id/inputNombreAccesorio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="textCapSentences"
             android:textColor="@color/black" />
 
     </com.google.android.material.textfield.TextInputLayout>

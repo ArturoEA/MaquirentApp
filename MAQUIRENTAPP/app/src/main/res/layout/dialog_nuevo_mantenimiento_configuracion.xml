@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/dialog_rounded_white_background"
     android:orientation="vertical"
     android:padding="24dp"
     android:theme="@style/Theme.TextMain">
@@ -11,12 +12,12 @@
         android:id="@+id/tvTituloDialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nuevo Item Mantenimiento"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
         android:layout_gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:text="Nuevo Item Mantenimiento"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <!-- Vista previa del ícono -->
     <ImageView
@@ -24,36 +25,37 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_gravity="center"
-        android:src="@drawable/icon_mantenimiento_blanco"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/shape_circular"
         android:backgroundTint="@color/black"
         android:padding="16dp"
-        android:layout_marginBottom="16dp" />
+        android:src="@drawable/icon_mantenimiento_blanco" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSeleccionarIcono"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@color/selection_indicator"
         android:text="Seleccionar Ícono"
         android:textColor="@color/white"
-        android:backgroundTint="@color/selection_indicator"
         app:cornerRadius="12dp"
         app:icon="@drawable/icon_editar_blanco"
-        app:iconTint="@color/white"
-        android:layout_marginBottom="16dp"
-        style="@style/Widget.Material3.Button.OutlinedButton" />
+        app:iconTint="@color/white" />
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre del mantenimiento"
-        style="@style/CustomTextInputLayout"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        android:hint="Nombre del mantenimiento">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputNombreMantenimientoConfiguracion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:inputType="textCapSentences"
             android:textColor="@color/black" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -62,26 +64,26 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end">
+        android:gravity="end"
+        android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelarDialog"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancelar"
-            android:textColor="@color/text_secondary"
+            android:layout_marginEnd="8dp"
             android:backgroundTint="@android:color/transparent"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_marginEnd="8dp" />
+            android:text="Cancelar"
+            android:textColor="@color/text_secondary" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGuardarDialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/selection_indicator"
             android:text="Guardar"
             android:textColor="@color/white"
-            android:backgroundTint="@color/selection_indicator"
             app:cornerRadius="12dp" />
 
     </LinearLayout>

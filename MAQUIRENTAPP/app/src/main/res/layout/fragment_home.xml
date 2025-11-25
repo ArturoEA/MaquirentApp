@@ -613,6 +613,7 @@
                 android:clickable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
+                android:visibility="gone"
                 app:cardElevation="4dp">
 
                 <LinearLayout
