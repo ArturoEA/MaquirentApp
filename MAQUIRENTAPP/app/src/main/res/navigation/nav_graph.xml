@@ -19,6 +19,11 @@
     </fragment>
 
     <fragment
+        android:id="@+id/nuevoMantenimientoFragment"
+        android:name="com.example.maquirentapp.View.NuevoMantenimientoFragment"
+        tools:layout="@layout/fragment_nuevo_mantenimiento"/>
+
+    <fragment
         android:id="@+id/tareasFragment"
         android:name="com.example.maquirentapp.View.TareasFragment"
         android:label="Tareas"

@@ -1,5 +1,6 @@
 package com.example.maquirentapp.Access;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -22,24 +24,34 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.ViewHolder> {
     private final List<DetalleMes> items = new ArrayList<>();
     private OnDetalleMesListener listener;
     private boolean modoSoloLectura = false;
+    private double precioMensualBase = 0;
 
     public interface OnDetalleMesListener {
         void onHorometroChanged(DetalleMes detalle, double nuevoHorometro);
+
         void onPagoMesConfirmado(DetalleMes detalle, int position);
+
         void onPagoHEConfirmado(DetalleMes detalle, int position);
-        void onGenerarValorizacion(DetalleMes detalle);
+
+        void onFechaFinModificada(DetalleMes detalle);
     }
 
     public void setOnDetalleMesListener(OnDetalleMesListener listener) {
         this.listener = listener;
+    }
+
+    public void setPrecioMensualBase(double precio) {
+        this.precioMensualBase = precio;
     }
 
     public void setItems(List<DetalleMes> nuevos) {
@@ -69,6 +81,9 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         holder.tvTituloPeriodo.setText(detalle.getTituloPeriodo());
 
+        double montoAMostrar = detalle.getMontoMes() > 0 ? detalle.getMontoMes() : precioMensualBase;
+        holder.tvMontoMes.setText(String.format(Locale.US, "Monto Mes: %.2f", detalle.getMontoMes()));
+
         if (detalle.getFechaFin() != null && !detalle.getFechaFin().isEmpty()) {
             holder.textInputHorometro.setHint("Horómetro al " + detalle.getFechaFin());
         }
@@ -77,26 +92,33 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                 String.valueOf(detalle.getHorometro()) : "");
 
         holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
+        holder.inputPrecioHE.setText(String.format(Locale.US, "%.2f", detalle.getPrecioHorasExtras()));
 
-        holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
 
         configurarConfirmaciones(holder, detalle);
-
         actualizarEstadoBotones(holder, detalle);
         actualizarColorFranja(holder, detalle);
 
         holder.btnExpandir.setRotation(detalle.isExpandido() ? 180f : 0f);
         holder.layoutContenido.setVisibility(detalle.isExpandido() ? View.VISIBLE : View.GONE);
 
-        holder.itemView.setOnClickListener(v -> {
+        View.OnClickListener expandListener = v -> {
             ocultarTeclado(v);
             quitarFocoDeInputs(holder);
-
             v.postDelayed(() -> {
                 detalle.setExpandido(!detalle.isExpandido());
                 notifyItemChanged(position);
             }, 50);
-        });
+        };
+        holder.itemView.setOnClickListener(expandListener);
+        holder.btnExpandir.setOnClickListener(expandListener);
+
+        if (!modoSoloLectura) {
+            holder.btnEditarFechaFin.setVisibility(View.VISIBLE);
+            holder.btnEditarFechaFin.setOnClickListener(v -> mostrarDatePickerFechaFin(holder.itemView.getContext(), detalle, position));
+        } else {
+            holder.btnEditarFechaFin.setVisibility(View.GONE);
+        }
 
         if (modoSoloLectura) {
             deshabilitarCampos(holder);
@@ -108,6 +130,85 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             }
         }
     }
+
+    private void mostrarDatePickerFechaFin(Context context, DetalleMes detalle, int position) {
+        Calendar calFin = Calendar.getInstance();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+        try {
+            if (detalle.getFechaFin() != null) {
+                calFin.setTime(sdf.parse(detalle.getFechaFin()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        DatePickerDialog dpd = new DatePickerDialog(context, (view, year, month, day) -> {
+            // 1. Nueva Fecha Fin
+            String nuevaFechaFin = String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year);
+            detalle.setFechaFin(nuevaFechaFin);
+
+            // 2. Calcular Días Reales
+            long dias = calcularDiferenciaDias(detalle.getFechaInicio(), nuevaFechaFin);
+
+            if (dias <= 0) {
+                Toast.makeText(context, "La fecha final debe ser mayor a la inicial", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 3. Calcular Precio Prorrateado
+            if (dias < 30) {
+                double precioDiario = precioMensualBase / 30.0;
+                double nuevoMonto = precioDiario * dias;
+
+                detalle.setMontoMes(nuevoMonto);
+                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s) [%d días]",
+                        detalle.getNumeroMes(), detalle.getFechaInicio(), nuevaFechaFin, dias));
+            } else {
+                detalle.setMontoMes(precioMensualBase);
+                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s)",
+                        detalle.getNumeroMes(), detalle.getFechaInicio(), nuevaFechaFin));
+            }
+
+            // 4. Notificar cambios
+            if (listener != null) {
+                listener.onFechaFinModificada(detalle);
+            }
+            notifyItemChanged(position);
+
+        }, calFin.get(Calendar.YEAR), calFin.get(Calendar.MONTH), calFin.get(Calendar.DAY_OF_MONTH));
+
+        try {
+            Date fechaInicio = sdf.parse(detalle.getFechaInicio());
+            if (fechaInicio != null) {
+                dpd.getDatePicker().setMinDate(fechaInicio.getTime());
+            }
+        } catch (Exception e) {
+        }
+
+        dpd.show();
+    }
+
+    private long calcularDiferenciaDias(String inicio, String fin) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+        try {
+            Date d1 = sdf.parse(inicio);
+            Date d2 = sdf.parse(fin);
+
+            if (d1 == null || d2 == null) return 30;
+
+            if (d2.before(d1)) return 1;
+
+            long diff = d2.getTime() - d1.getTime();
+            long dias = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+
+            return dias + 1;
+
+        } catch (Exception e) {
+            return 30;
+        }
+    }
+
     public void forzarGuardadoDatosVisibles(RecyclerView recyclerView) {
         if (recyclerView == null) return;
         Log.d("DetalleMesAdapter", "Iniciando guardado forzado de horómetros...");
@@ -122,8 +223,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         }
         Log.d("DetalleMesAdapter", "Guardado forzado completado.");
     }
+
     private void configurarConfirmaciones(ViewHolder holder, DetalleMes detalle) {
-        // Confirmación de pago de mes
         if (detalle.isPagoMesConfirmado() && detalle.getFechaConfirmacionPagoMes() != null) {
             holder.tvConfirmacionPagoMes.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoMes());
             holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
@@ -131,7 +232,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             holder.tvConfirmacionPagoMes.setVisibility(View.GONE);
         }
 
-        // Confirmación de pago de HE
         if (detalle.isPagoHEConfirmado() && detalle.getFechaConfirmacionPagoHE() != null) {
             holder.tvConfirmacionPagoHE.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoHE());
             holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
@@ -146,10 +246,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             for (Object payload : payloads) {
                 if (payload.equals("CALCULATED_FIELDS")) {
                     DetalleMes detalle = items.get(position);
-
                     holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
-                    holder.inputPrecioHE.setText(String.format("%.2f", detalle.getPrecioHorasExtras()));
-
+                    holder.inputPrecioHE.setText(String.format(Locale.US, "%.2f", detalle.getPrecioHorasExtras()));
                     actualizarEstadoBotones(holder, detalle);
                     actualizarColorFranja(holder, detalle);
                     return;
@@ -163,7 +261,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setOnFocusChangeListener(null);
         holder.inputHorometro.setOnEditorActionListener(null);
 
-        // Listener para el botón "Done" del teclado
         holder.inputHorometro.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
                 ocultarTeclado(v);
@@ -174,7 +271,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             return false;
         });
 
-        // FocusChangeListener
         holder.inputHorometro.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
                 procesarYActualizarHorometro(holder, detalle, position);
@@ -187,21 +283,14 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                         .setTitle("Confirmar Pago")
                         .setMessage("¿Estás seguro de confirmar el pago del mes?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            // NUEVO: Obtener fecha actual
                             String fechaActual = obtenerFechaActual();
-
                             detalle.setPagoMesConfirmado(true);
-                            detalle.setFechaConfirmacionPagoMes(fechaActual); // Guardar fecha
-
+                            detalle.setFechaConfirmacionPagoMes(fechaActual);
                             actualizarEstadoBotones(holder, detalle);
                             actualizarColorFranja(holder, detalle);
-
-                            // NUEVO: Mostrar confirmación inmediatamente
                             holder.tvConfirmacionPagoMes.setText("Pago realizado el " + fechaActual);
                             holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
-
                             deshabilitarInputHorometro(holder);
-
                             listener.onPagoMesConfirmado(detalle, position);
                         })
                         .setNegativeButton("No", null)
@@ -215,58 +304,41 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                         .setTitle("Confirmar Pago")
                         .setMessage("¿Estás seguro de confirmar el pago de horas extras?")
                         .setPositiveButton("Sí", (dialog, which) -> {
-                            // NUEVO: Obtener fecha actual
                             String fechaActual = obtenerFechaActual();
-
                             detalle.setPagoHEConfirmado(true);
-                            detalle.setFechaConfirmacionPagoHE(fechaActual); // Guardar fecha
-
+                            detalle.setFechaConfirmacionPagoHE(fechaActual);
                             actualizarEstadoBotones(holder, detalle);
                             actualizarColorFranja(holder, detalle);
-
-                            // NUEVO: Mostrar confirmación inmediatamente
                             holder.tvConfirmacionPagoHE.setText("Pago realizado el " + fechaActual);
                             holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
-
                             deshabilitarInputHorometro(holder);
-
                             listener.onPagoHEConfirmado(detalle, position);
                         })
                         .setNegativeButton("No", null)
                         .show();
             }
         });
-
-        holder.btnValorizacion.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onGenerarValorizacion(detalle);
-            }
-        });
     }
 
-    // NUEVO MÉT0DO: Obtener fecha actual en formato dd/MM/yyyy
     private String obtenerFechaActual() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         return sdf.format(new Date());
     }
 
-    // NUEVO MÉT0DO: Deshabilitar solo el inputHorometro
     private void deshabilitarInputHorometro(ViewHolder holder) {
         holder.inputHorometro.setEnabled(false);
         holder.inputHorometro.setFocusable(false);
         holder.inputHorometro.setFocusableInTouchMode(false);
-
-        // Limpiar listeners para evitar ediciones futuras
         holder.inputHorometro.setOnFocusChangeListener(null);
         holder.inputHorometro.setOnEditorActionListener(null);
     }
+
     private void guardarValorHorometroEnModelo(ViewHolder holder, DetalleMes detalle) {
         String nuevoValor = holder.inputHorometro.getText().toString().trim();
         if (nuevoValor.isEmpty()) {
             detalle.setHorometro(0);
             return;
         }
-
         try {
             double horometro = Double.parseDouble(nuevoValor);
             detalle.setHorometro(horometro);
@@ -274,11 +346,10 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             Log.e("DetalleMesAdapter", "Número inválido al forzar guardado");
         }
     }
+
     private void procesarYActualizarHorometro(ViewHolder holder, DetalleMes detalle, int position) {
         double horometroAntes = detalle.getHorometro();
-
         guardarValorHorometroEnModelo(holder, detalle);
-
         double horometroDespues = detalle.getHorometro();
 
         if (horometroAntes != horometroDespues && listener != null) {
@@ -288,21 +359,12 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             }, 100);
         }
     }
+
     private void habilitarCamposEdicion(ViewHolder holder) {
         holder.inputHorometro.setEnabled(true);
         holder.inputHorometro.setFocusable(true);
         holder.inputHorometro.setFocusableInTouchMode(true);
-
         holder.inputHorometro.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
-
-        // Estos campos son SOLO LECTURA incluso en modo edición
-        holder.inputHorasExtras.setEnabled(false);
-        holder.inputHorasExtras.setFocusable(false);
-        holder.inputHorasExtras.setFocusableInTouchMode(false);
-
-        holder.inputPrecioHE.setEnabled(false);
-        holder.inputPrecioHE.setFocusable(false);
-        holder.inputPrecioHE.setFocusableInTouchMode(false);
     }
 
     private void ocultarTeclado(View view) {
@@ -314,26 +376,14 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
     private void quitarFocoDeInputs(ViewHolder holder) {
         holder.inputHorometro.clearFocus();
-        holder.inputHorasExtras.clearFocus();
-        holder.inputPrecioHE.clearFocus();
     }
 
     private void deshabilitarCampos(ViewHolder holder) {
         holder.inputHorometro.setEnabled(false);
         holder.inputHorometro.setFocusable(false);
-        holder.inputHorometro.setFocusableInTouchMode(false);
-
-        holder.inputHorasExtras.setEnabled(false);
-        holder.inputHorasExtras.setFocusable(false);
-        holder.inputHorasExtras.setFocusableInTouchMode(false);
-
-        holder.inputPrecioHE.setEnabled(false);
-        holder.inputPrecioHE.setFocusable(false);
-        holder.inputPrecioHE.setFocusableInTouchMode(false);
-
         holder.btnConfirmarPagoMes.setEnabled(false);
         holder.btnConfirmarPagoHE.setEnabled(false);
-        holder.btnValorizacion.setEnabled(false);
+        // btnValorizacion eliminado
     }
 
     public List<DetalleMes> getItems() {
@@ -353,13 +403,10 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         holder.btnConfirmarPagoMes.setEnabled(habilitarBotones && !detalle.isPagoMesConfirmado());
         holder.btnConfirmarPagoMes.setAlpha(detalle.isPagoMesConfirmado() ? 0.5f : 1f);
-
-        holder.btnValorizacion.setEnabled(habilitarBotones);
     }
 
     private void actualizarColorFranja(ViewHolder holder, DetalleMes detalle) {
         int color;
-
         if (detalle.getHorasExtras() > 0) {
             if (detalle.isPagoMesConfirmado() && detalle.isPagoHEConfirmado()) {
                 color = ContextCompat.getColor(holder.itemView.getContext(), R.color.green_accent);
@@ -375,7 +422,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                 color = ContextCompat.getColor(holder.itemView.getContext(), R.color.red_accent);
             }
         }
-
         holder.franjaColor.setBackgroundColor(color);
     }
 
@@ -385,19 +431,23 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTituloPeriodo;
-        ImageView btnExpandir;
+        TextView tvTituloPeriodo, tvMontoMes;
+        ImageView btnExpandir, btnEditarFechaFin;
         LinearLayout layoutContenido;
         View franjaColor;
         TextInputLayout textInputHorometro;
         TextInputEditText inputHorometro, inputHorasExtras, inputPrecioHE;
-        Button btnConfirmarPagoMes, btnConfirmarPagoHE, btnValorizacion;
+        Button btnConfirmarPagoMes, btnConfirmarPagoHE;
         TextView tvConfirmacionPagoMes, tvConfirmacionPagoHE;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvTituloPeriodo = itemView.findViewById(R.id.tvTituloPeriodo);
+            tvMontoMes = itemView.findViewById(R.id.tvMontoMes);
+
             btnExpandir = itemView.findViewById(R.id.btnExpandir);
+            btnEditarFechaFin = itemView.findViewById(R.id.btnEditarFechaFin);
+
             layoutContenido = itemView.findViewById(R.id.layoutContenido);
             franjaColor = itemView.findViewById(R.id.franjaColor);
             textInputHorometro = itemView.findViewById(R.id.textInputHorometro);
@@ -406,7 +456,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             inputPrecioHE = itemView.findViewById(R.id.inputPrecioHE);
             btnConfirmarPagoMes = itemView.findViewById(R.id.btnConfirmarPagoMes);
             btnConfirmarPagoHE = itemView.findViewById(R.id.btnConfirmarPagoHE);
-            btnValorizacion = itemView.findViewById(R.id.btnValorizacion);
             tvConfirmacionPagoMes = itemView.findViewById(R.id.tvConfirmacionPagoMes);
             tvConfirmacionPagoHE = itemView.findViewById(R.id.tvConfirmacionPagoHE);
         }

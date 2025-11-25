@@ -470,6 +470,12 @@ public class MainActivity extends AppCompatActivity {
                 } else if (dest.getId() == R.id.NuevoCertificadoFragment) {
                     setHeaderIcon(R.drawable.icon_certificado_blanco);
                     setHeaderTitle("Nuevo certificado de operatividad");
+                }  else if (dest.getId() == R.id.nuevoMantenimientoFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.icon_mantenimiento_blanco);
+                    setHeaderTitle("Nuevo mantenimiento\n" + codigo);
                 }
 
 

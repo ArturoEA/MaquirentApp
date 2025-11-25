@@ -2,9 +2,8 @@ package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,22 +20,24 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
+import com.example.maquirentapp.Access.DetalleMesAdapter;
+import com.example.maquirentapp.MainActivity; // Importar MainActivity
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.DetalleMesAdapter;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,6 +51,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class NuevoAlquilerMensualFragment extends Fragment {
+    private static final String TAG = "NuevoAlquilerMensual";
+
     private String idGrupo, alquilerId;
     private boolean modoEdicion = false;
     private boolean modoSoloLectura = false;
@@ -73,7 +76,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private String monedaSeleccionada = "SOL";
     private AlquilerMensual alquilerActual;
-    private ExtendedFloatingActionButton fabGlobal;
     private FirebaseAuth firebaseAuth;
 
     @Override
@@ -99,10 +101,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         firebaseServicio = new FirebaseServicio();
         firebaseAuth = FirebaseAuth.getInstance();
 
-        if (getActivity() != null) {
-            fabGlobal = getActivity().findViewById(R.id.btnGlobal);
-        }
-
         inicializarVistas(view);
         configurarSpinnerMoneda();
         configurarDatePickers();
@@ -116,6 +114,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (modoSoloLectura) {
             deshabilitarCampos();
         }
+
+        configureGlobalFab();
     }
 
     private void inicializarVistas(View view) {
@@ -169,10 +169,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
-                android.R.layout.simple_spinner_item,
+                R.layout.spinner_item_white,
                 monedas
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(R.layout.spinner_item_white);
         spinnerMoneda.setAdapter(adapter);
 
         spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -180,7 +180,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 monedaSeleccionada = monedas.get(position);
                 tvSimboloMoneda.setText(monedaSeleccionada.equals("USD") ? "$" : "S/.");
-
                 String precioStr = inputPrecioAlquiler.getText().toString().trim();
                 if (!precioStr.isEmpty()) {
                     calcularPrecioHoraExtra();
@@ -215,6 +214,39 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             @Override
             public void onHorometroChanged(DetalleMes detalle, double nuevoHorometro) {
                 calcularHorasExtras(detalle, nuevoHorometro);
+                int position = adapterDetallesMes.getItems().indexOf(detalle);
+                if (position != -1) {
+                    adapterDetallesMes.notifyItemChanged(position, "CALCULATED_FIELDS");
+                }
+                actualizarDetalleMes(detalle);
+            }
+
+            @Override
+            public void onPagoMesConfirmado(DetalleMes detalle, int position) {
+                actualizarDetalleMes(detalle);
+                registrarIngresoProrrateado(
+                        // Usar el monto específico del mes (prorrateado o full)
+                        detalle.getMontoMes() > 0 ? detalle.getMontoMes() : alquilerActual.getPrecioAlquiler(),
+                        "Alquiler Mensual",
+                        detalle
+                );
+                Toast.makeText(getContext(), "Pago del mes confirmado", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPagoHEConfirmado(DetalleMes detalle, int position) {
+                actualizarDetalleMes(detalle);
+                registrarIngresoProrrateado(
+                        detalle.getPrecioHorasExtras(),
+                        "Horas Extras",
+                        detalle
+                );
+                Toast.makeText(getContext(), "Pago de horas extras confirmado", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFechaFinModificada(DetalleMes detalle) {
+                calcularHorasExtras(detalle, detalle.getHorometro());
 
                 int position = adapterDetallesMes.getItems().indexOf(detalle);
                 if (position != -1) {
@@ -223,37 +255,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                 actualizarDetalleMes(detalle);
             }
-
-            @Override
-            public void onPagoMesConfirmado(DetalleMes detalle, int position) {
-                actualizarDetalleMes(detalle);
-
-                registrarIngresoProrrateado(
-                        alquilerActual.getPrecioAlquiler(),
-                        "Alquiler Mensual",
-                        detalle
-                );
-
-                Toast.makeText(getContext(), "Pago del mes confirmado correctamente", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onPagoHEConfirmado(DetalleMes detalle, int position) {
-                actualizarDetalleMes(detalle);
-
-                registrarIngresoProrrateado(
-                        detalle.getPrecioHorasExtras(),
-                        "Horas Extras",
-                        detalle
-                );
-
-                Toast.makeText(getContext(), "Pago de horas extras confirmado correctamente", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onGenerarValorizacion(DetalleMes detalle) {
-                Toast.makeText(getContext(), "Funcionalidad de valorización próximamente", Toast.LENGTH_SHORT).show();
-            }
         });
 
         btnFinalizarAlquiler.setOnClickListener(v -> mostrarDialogoConfirmarEnvio());
@@ -261,33 +262,42 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private void calcularPrecioHoraExtra() {
         String precioStr = inputPrecioAlquiler.getText().toString().trim();
-        if (!precioStr.isEmpty()) {
+        String horasStr = inputHorasMinimas.getText().toString().trim();
+
+        if (!precioStr.isEmpty() && !horasStr.isEmpty()) {
             try {
                 double precio = Double.parseDouble(precioStr);
-                // Fórmula: precio/30/8*0.75
-                double precioHoraExtra = (precio / 30.0 / 8.0) * 0.75;
-                inputPrecioHoraExtra.setText(String.format(Locale.US, "%.2f", precioHoraExtra));
+                double horas = Double.parseDouble(horasStr);
+
+                if (horas > 0) {
+                    double precioHoraExtra = (precio / horas) * 0.75;
+                    inputPrecioHoraExtra.setText(String.format(Locale.US, "%.2f", precioHoraExtra));
+                }
             } catch (NumberFormatException e) {
-                // Ignorar error
             }
         }
     }
+
     private void registrarIngresoProrrateado(double montoTotal, String tipo, DetalleMes detalle) {
         if (alquilerActual == null || montoTotal == 0) return;
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        final double DIAS_MES_COMERCIAL = 30.0;
 
         try {
             Date fechaInicio = sdf.parse(detalle.getFechaInicio());
             Date fechaFin = sdf.parse(detalle.getFechaFin());
             if (fechaInicio == null || fechaFin == null) return;
 
+            long diff = fechaFin.getTime() - fechaInicio.getTime();
+            long totalDiasPeriodo = java.util.concurrent.TimeUnit.DAYS.convert(diff, java.util.concurrent.TimeUnit.MILLISECONDS) + 1;
+
+            double valorDiario = montoTotal / totalDiasPeriodo;
+
             Calendar cal = Calendar.getInstance();
             cal.setTime(fechaInicio);
 
             while (!cal.getTime().after(fechaFin)) {
-                int mesActual = cal.get(Calendar.MONTH); // 0-11
+                int mesActual = cal.get(Calendar.MONTH);
                 int anioActual = cal.get(Calendar.YEAR);
 
                 int diasEnEsteMes = 0;
@@ -297,10 +307,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 }
 
                 if (diasEnEsteMes > 0) {
-                    double montoProrrateado = (diasEnEsteMes / DIAS_MES_COMERCIAL) * montoTotal;
+                    double montoParaEsteMes = valorDiario * diasEnEsteMes;
 
                     Ingreso ingreso = new Ingreso(
-                            montoProrrateado,
+                            montoParaEsteMes,
                             alquilerActual.getMoneda(),
                             tipo,
                             alquilerActual.getIdGrupo(),
@@ -318,16 +328,17 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             Log.e("NuevoAlquiler", "Error al prorratear ingreso", e);
         }
     }
+
     private void enviarIngresoAFirebase(Ingreso ingreso) {
         firebaseServicio.registrarIngreso(ingreso, new FirebaseServicio.OnIngresoRegistradoListener() {
             @Override
             public void onSuccess(String id) {
-                Log.i("NuevoAlquiler", "Ingreso prorrateado registrado (Mes: " + ingreso.getMes() + "): " + id);
+                Log.i("NuevoAlquiler", "Ingreso registrado: " + id);
             }
 
             @Override
             public void onError(Exception e) {
-                Log.e("NuevoAlquiler", "Error al registrar ingreso prorrateado (Mes: " + ingreso.getMes() + ")", e);
+                Log.e("NuevoAlquiler", "Error ingreso", e);
             }
         });
     }
@@ -336,31 +347,58 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (alquilerActual == null) return;
 
         try {
-            // Obtener horómetro anterior
             double horometroAnterior;
             if (detalle.getNumeroMes() == 1) {
                 horometroAnterior = alquilerActual.getHorometroInicial();
             } else {
-                // Buscar el mes anterior en la lista actual
                 horometroAnterior = obtenerHorometroMesAnterior(detalle.getNumeroMes() - 1);
             }
 
-            // Calcular horas trabajadas
+            if (horometroActual < horometroAnterior) {
+                detalle.setHorometro(horometroActual);
+                detalle.setHorasExtras(0);
+                detalle.setPrecioHorasExtras(0);
+                return;
+            }
+
             double horasTrabajadas = horometroActual - horometroAnterior;
 
-            // Calcular horas extras
-            double horasMinimas = alquilerActual.getHorasMinimas();
-            double horasExtras = Math.max(0, horasTrabajadas - horasMinimas);
+            double horasPermitidasDelPeriodo;
+
+            long diasPeriodo = calcularDiasEntreFechas(detalle.getFechaInicio(), detalle.getFechaFin());
+
+            if (diasPeriodo >= 30) {
+                horasPermitidasDelPeriodo = alquilerActual.getHorasMinimas();
+            } else {
+                horasPermitidasDelPeriodo = (alquilerActual.getHorasMinimas() / 30.0) * diasPeriodo;
+            }
+
+            double horasExtras = Math.max(0, horasTrabajadas - horasPermitidasDelPeriodo);
 
             detalle.setHorometro(horometroActual);
             detalle.setHorasExtras(horasExtras);
 
-            // Calcular precio de horas extras
             double precioHE = horasExtras * alquilerActual.getPrecioHoraExtra();
             detalle.setPrecioHorasExtras(precioHE);
 
         } catch (Exception e) {
             Log.e("NuevoAlquilerMensual", "Error calculando horas extras", e);
+        }
+    }
+
+    private long calcularDiasEntreFechas(String inicio, String fin) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        try {
+            Date d1 = sdf.parse(inicio);
+            Date d2 = sdf.parse(fin);
+            if (d1 == null || d2 == null) return 30;
+
+            long diff = d2.getTime() - d1.getTime();
+            long dias = java.util.concurrent.TimeUnit.DAYS.convert(diff, java.util.concurrent.TimeUnit.MILLISECONDS);
+
+            return dias + 1;
+        } catch (ParseException e) {
+            return 30;
         }
     }
 
@@ -370,7 +408,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 return detalle.getHorometro();
             }
         }
-        return 0; // Fallback
+        return 0;
     }
 
     private void configurarDatePickers() {
@@ -424,6 +462,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             @Override
             public void onSuccess(AlquilerMensual alquiler) {
                 alquilerActual = alquiler;
+                idGrupo = alquiler.getIdGrupo();
                 inputEmpresa.setText(alquiler.getNombreCliente());
                 inputUbicacion.setText(alquiler.getUbicacion());
                 inputFechaInicial.setText(formatearFecha(alquiler.getFechaInicial()));
@@ -434,7 +473,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 inputHorasMinimas.setText(String.valueOf(alquiler.getHorasMinimas()));
                 inputPrecioHoraExtra.setText(String.valueOf(alquiler.getPrecioHoraExtra()));
 
-                // Configurar moneda
                 String moneda = alquiler.getMoneda() != null ? alquiler.getMoneda() : "SOL";
                 spinnerMoneda.setSelection(moneda.equals("USD") ? 1 : 0);
 
@@ -442,27 +480,27 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     adapterAccesorios.setAccesoriosSeleccionados(alquiler.getAccesoriosIds());
                 }
 
-                // Cargar detalles de mes
+                adapterDetallesMes.setPrecioMensualBase(alquiler.getPrecioAlquiler());
+
                 cargarDetallesMes();
 
                 if (alquiler.isFinalizado()) {
                     deshabilitarCampos();
-                    if (fabGlobal != null) {
-                        fabGlobal.setVisibility(View.GONE);
-                    }
+                    hideGlobalFab();
+                } else {
+                    configureGlobalFab();
                 }
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar datos: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void cargarDetallesMes() {
         if (alquilerId == null) return;
-
         firebaseServicio.getDetallesMesPorAlquiler(alquilerId, new FirebaseServicio.OnDetallesMesLoadedListener() {
             @Override
             public void onSuccess(List<DetalleMes> detalles) {
@@ -472,20 +510,18 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar detalles: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error al cargar detalles", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private String formatearFecha(String fechaOriginal) {
         if (fechaOriginal == null || fechaOriginal.isEmpty()) return "";
-
         try {
             SimpleDateFormat formatoEntrada = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
             SimpleDateFormat formatoSalida = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             return formatoSalida.format(formatoEntrada.parse(fechaOriginal));
         } catch (Exception e) {
-            // Si ya está en formato dd/MM/yyyy, devolver tal cual
             return fechaOriginal;
         }
     }
@@ -514,37 +550,50 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         }
     }
 
-    private void deshabilitarCampos() {
-        inputEmpresa.setEnabled(false);
-        inputUbicacion.setEnabled(false);
-        inputFechaInicial.setEnabled(false);
-        inputFechaFinal.setEnabled(false);
-        inputHorometroInicial.setEnabled(false);
-        inputHorometroFinal.setEnabled(false);
-        inputPrecioAlquiler.setEnabled(false);
-        inputHorasMinimas.setEnabled(false);
-        inputPrecioHoraExtra.setEnabled(false);
-        spinnerMoneda.setEnabled(false);
-        adapterAccesorios.setClickEnabled(false);
-        btnFinalizarAlquiler.setVisibility(View.GONE);
+    private void configureGlobalFab() {
+        if (getActivity() instanceof MainActivity) {
+            MainActivity mainActivity = (MainActivity) getActivity();
+
+            if (alquilerActual != null && alquilerActual.isFinalizado()) {
+                mainActivity.hideGlobalFab();
+                return;
+            }
+
+            if (modoSoloLectura && !editandoActualmente) {
+                configurarFabEditar();
+            } else {
+                configurarFabGuardar();
+            }
+        }
     }
 
-    private void habilitarCampos() {
-        inputEmpresa.setEnabled(true);
-        inputUbicacion.setEnabled(true);
-        inputFechaInicial.setEnabled(true);
-        inputFechaFinal.setEnabled(true);
-        inputHorometroInicial.setEnabled(true);
-        inputHorometroFinal.setEnabled(true);
-        inputPrecioAlquiler.setEnabled(true);
-        inputHorasMinimas.setEnabled(true);
-        inputPrecioHoraExtra.setEnabled(true);
-        spinnerMoneda.setEnabled(true);
-        adapterAccesorios.setClickEnabled(true);
-        adapterDetallesMes.setModoSoloLectura(false);
-        if (alquilerActual == null || !alquilerActual.isFinalizado()) {
-            btnFinalizarAlquiler.setVisibility(View.VISIBLE);
-            btnFinalizarAlquiler.setEnabled(true);
+    private void hideGlobalFab() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).hideGlobalFab();
+        }
+    }
+
+    private void configurarFabEditar() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showGlobalFab(
+                    "Editar",
+                    R.drawable.icon_editar_blanco,
+                    v -> {
+                        editandoActualmente = true;
+                        habilitarCampos();
+                        configureGlobalFab();
+                    }
+            );
+        }
+    }
+
+    private void configurarFabGuardar() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showGlobalFab(
+                    "Guardar",
+                    R.drawable.icon_guardar_blanco,
+                    v -> guardarAlquilerMensual()
+            );
         }
     }
 
@@ -621,7 +670,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             firebaseServicio.crearAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerCreatedListener() {
                 @Override
                 public void onSuccess(AlquilerMensual alquilerCreado) {
-                    // Generar primer DetalleMes
                     generarPrimerDetalleMes(alquilerCreado);
                     Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
                     requireActivity().onBackPressed();
@@ -657,6 +705,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             primerMes.setNumeroMes(1);
             primerMes.setFechaInicio(strFechaInicio);
             primerMes.setFechaFin(strFechaFin);
+            // Precio full por defecto
+            primerMes.setMontoMes(alquiler.getPrecioAlquiler());
             primerMes.setTituloPeriodo("Mes 1: " + strFechaInicio + " - " + strFechaFin);
 
             firebaseServicio.crearDetalleMes(primerMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
@@ -752,6 +802,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
+
     private void confirmarFinalizacion(String codigo) {
         String fechaFinalManual = inputFechaFinal.getText().toString().trim();
         String horometroFinalManualStr = inputHorometroFinal.getText().toString().trim();
@@ -763,6 +814,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         procederConFinalizacion(codigo, fechaFinalManual, horometroFinalManualStr);
     }
+
     private void procederConFinalizacion(String codigo, String fechaFinalManual, String horometroFinalManualStr) {
         double horometroFinal;
         String fechaFinal = fechaFinalManual;
@@ -793,9 +845,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                         Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
                         alquilerActual.setFinalizado(true);
                         deshabilitarCampos();
-                        if (fabGlobal != null) {
-                            fabGlobal.setVisibility(View.GONE);
-                        }
+                        hideGlobalFab();
                     }
 
                     @Override
@@ -804,76 +854,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     }
                 }
         );
-    }
-    private void configureGlobalFab() {
-        View hostView = getView();
-        if (hostView == null) return;
-
-        if (alquilerActual != null && alquilerActual.isFinalizado()) {
-            hideGlobalFab();
-            return;
-        }
-
-        if (modoSoloLectura && !editandoActualmente) {
-            configurarFabEditar();
-        } else {
-            configurarFabGuardar();
-        }
-    }
-
-    private void hideGlobalFab() {
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null) activityFab.setVisibility(View.GONE);
-        }
-    }
-
-    private void configurarFabEditar() {
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
-            main.showGlobalFab("Editar", R.drawable.icon_editar_blanco, v -> {
-                editandoActualmente = true;
-                habilitarCampos();
-                configureGlobalFab();
-            });
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab instanceof ExtendedFloatingActionButton) {
-                ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
-                fab.setText("Editar");
-                try {
-                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_editar_blanco));
-                } catch (Exception ignored) {
-                }
-                fab.setOnClickListener(v -> {
-                    editandoActualmente = true;
-                    habilitarCampos();
-                    configureGlobalFab();
-                });
-                fab.setVisibility(View.VISIBLE);
-            }
-        }
-    }
-
-    private void configurarFabGuardar() {
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
-            main.showGlobalFab("Guardar", R.drawable.icon_guardar_blanco, v -> guardarAlquilerMensual());
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab instanceof ExtendedFloatingActionButton) {
-                ExtendedFloatingActionButton fab = (ExtendedFloatingActionButton) activityFab;
-                fab.setText("Guardar");
-                try {
-                    fab.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.icon_guardar_blanco));
-                } catch (Exception ignored) {
-                }
-                fab.setOnClickListener(v -> guardarAlquilerMensual());
-                fab.setVisibility(View.VISIBLE);
-            }
-        }
     }
 
     @Override
@@ -885,11 +865,40 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
-            ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
-        } else {
-            View activityFab = getActivity() != null ? getActivity().findViewById(R.id.btnGlobal) : null;
-            if (activityFab != null) activityFab.setVisibility(View.GONE);
+        hideGlobalFab();
+    }
+
+    private void deshabilitarCampos() {
+        inputEmpresa.setEnabled(false);
+        inputUbicacion.setEnabled(false);
+        inputFechaInicial.setEnabled(false);
+        inputFechaFinal.setEnabled(false);
+        inputHorometroInicial.setEnabled(false);
+        inputHorometroFinal.setEnabled(false);
+        inputPrecioAlquiler.setEnabled(false);
+        inputHorasMinimas.setEnabled(false);
+        inputPrecioHoraExtra.setEnabled(false);
+        spinnerMoneda.setEnabled(false);
+        adapterAccesorios.setClickEnabled(false);
+        btnFinalizarAlquiler.setVisibility(View.GONE);
+    }
+
+    private void habilitarCampos() {
+        inputEmpresa.setEnabled(true);
+        inputUbicacion.setEnabled(true);
+        inputFechaInicial.setEnabled(true);
+        inputFechaFinal.setEnabled(true);
+        inputHorometroInicial.setEnabled(true);
+        inputHorometroFinal.setEnabled(true);
+        inputPrecioAlquiler.setEnabled(true);
+        inputHorasMinimas.setEnabled(true);
+        inputPrecioHoraExtra.setEnabled(true);
+        spinnerMoneda.setEnabled(true);
+        adapterAccesorios.setClickEnabled(true);
+        adapterDetallesMes.setModoSoloLectura(false);
+        if (alquilerActual == null || !alquilerActual.isFinalizado()) {
+            btnFinalizarAlquiler.setVisibility(View.VISIBLE);
+            btnFinalizarAlquiler.setEnabled(true);
         }
     }
 }

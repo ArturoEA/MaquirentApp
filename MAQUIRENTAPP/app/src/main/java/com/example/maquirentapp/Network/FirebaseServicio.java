@@ -457,6 +457,7 @@ public class FirebaseServicio {
         updates.put("numeroMes", detalle.getNumeroMes());
         updates.put("fechaConfirmacionPagoMes", detalle.getFechaConfirmacionPagoMes());
         updates.put("fechaConfirmacionPagoHE", detalle.getFechaConfirmacionPagoHE());
+        updates.put("montoMes", detalle.getMontoMes());
 
         db.collection("detallesMes")
                 .document(detalle.getId())
