@@ -178,22 +178,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         List<String> monedas = new ArrayList<>();
         monedas.add("SOL");
         monedas.add("USD");
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, monedas) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                ((TextView) view).setTextColor(Color.BLACK);
-                return view;
-            }
-
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                View view = super.getDropDownView(position, convertView, parent);
-                ((TextView) view).setTextColor(Color.BLACK);
-                return view;
-            }
-        };
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_white, monedas);
+        adapter.setDropDownViewResource(R.layout.spinner_item_white);
         spinnerMoneda.setAdapter(adapter);
         spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -240,26 +226,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                     nombresGrupos.add(g.getCodigo());
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_item, nombresGrupos) {
-                    @NonNull
-                    @Override
-                    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                        View view = super.getView(position, convertView, parent);
-                        TextView tv = (TextView) view.findViewById(android.R.id.text1);
-                        tv.setTextColor(Color.BLACK);
-                        return view;
-                    }
-
-                    @Override
-                    public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                        View view = super.getDropDownView(position, convertView, parent);
-                        TextView tv = (TextView) view.findViewById(android.R.id.text1);
-                        tv.setTextColor(Color.BLACK);
-                        return view;
-                    }
-                };
-
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item_white, nombresGrupos);
+                adapter.setDropDownViewResource(R.layout.spinner_item_white);
                 spinnerGrupo.setAdapter(adapter);
             }
 

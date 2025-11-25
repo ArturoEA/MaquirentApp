@@ -12,6 +12,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeWidth="2dp"
+        app:boxCornerRadiusBottomEnd="22dp"
+        app:boxCornerRadiusBottomStart="22dp"
+        app:boxCornerRadiusTopEnd="22dp"
+        app:boxCornerRadiusTopStart="22dp"
+        app:boxStrokeColor="@color/input_stroke_color"
+        android:textColorHint="@color/colorHints"
+        app:cursorColor="@color/black"
+        app:boxBackgroundColor="@color/background_light"
+        app:endIconTint="@color/black"
+        app:hintTextColor="@color/black"
         android:hint="Seleccionar grupo electrógeno">
 
         <AutoCompleteTextView
@@ -19,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="none"
-            android:textColor="@color/black"/>
+            android:textColor="@color/black" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -32,12 +44,6 @@
         android:text="Verificando datos técnicos..."
         android:textColor="@color/text_secondary" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
 
     <com.google.android.material.textfield.TextInputLayout
         style="@style/CustomTextInputLayout"
@@ -51,53 +57,56 @@
             android:textColor="@color/black" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <LinearLayout
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
+        android:hint="Fecha de Emisión">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/inputFecha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="false"
+            android:textColor="@color/black" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomTextInputLayout"
+        android:layout_width="match_parent"
+        android:hint="Potencia">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/inputPotencia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/CustomTextInputLayout"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:hint="Fecha de Emisión">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputFecha"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="false"
-                android:textColor="@color/black" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/CustomTextInputLayout"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:hint="Potencia">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputPotencia"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/black" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-    </LinearLayout>
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/black"
+        android:visibility="gone" />
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="70dp" />
 
     <Button
         android:id="@+id/btnGenerarCertificado"
         android:layout_width="match_parent"
         android:layout_height="55dp"
         android:backgroundTint="@color/selection_indicator"
-        android:textColor="@color/black"
-        android:text="Generar certificado" />
+        android:text="Generar certificado"
+        android:textColor="@color/black" />
+
+    <View
+        android:layout_width="wrap_content"
+        android:layout_height="100dp" />
 
 </LinearLayout>

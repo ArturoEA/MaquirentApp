@@ -24,20 +24,13 @@
                 android:layout_marginBottom="5dp"
                 android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="Selecciona el grupo a alquilar"
-                    android:textColor="@color/black"
-                    android:textSize="14sp" />
-
                 <Spinner
                     android:id="@+id/spinnerGrupo"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/spinner_background"
-                    android:theme="@style/SpinnerTheme" />
+                    android:layout_height="54dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/spinner_background" />
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout style="@style/CustomTextInputLayout">

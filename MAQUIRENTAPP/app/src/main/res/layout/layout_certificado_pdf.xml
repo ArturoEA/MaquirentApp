@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pdfContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="30dp"
+        android:paddingEnd="30dp"
+        android:paddingStart="30dp"
+        android:paddingBottom="0dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/logo_horizontal" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:text="CERTIFICADO DE OPERATIVIDAD"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cliente: "
+                android:textColor="@android:color/black"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPdfCliente"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="{{CLIENTE}}"
+                android:textColor="@android:color/black"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha: "
+                android:textColor="@android:color/black"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPdfFecha"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="{{FECHA}}"
+                android:textColor="@android:color/black"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPdfParrafo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:justificationMode="inter_word"
+            android:text="El presente documento certifica el correcto funcionamiento, buenas condiciones para su operación y el mantenimiento preventivo del grupo electrógeno de potencia {{POT_SB}} ({{COD_GRUPO}}) hasta por tres (3) meses, sin embargo, cualquier falla en el equipo durante el uso del cliente, anula este certificado y se debe certificar nuevamente. "
+            android:textColor="@android:color/black"
+            android:textSize="10sp" />
+
+        <TableLayout
+            android:id="@+id/tableDatosTecnicos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:stretchColumns="1,2,3">
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="EQUIPO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="MARCA" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="MODELO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="SERIE" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCellBold"
+                    android:text="GRUPO ELECTRÓGENO" />
+
+                <TextView
+                    android:id="@+id/tvPdfMarcaGrupo"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfModGrupo"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfSerieGrupo"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCellBold"
+                    android:text="MOTOR" />
+
+                <TextView
+                    android:id="@+id/tvPdfMarcaMotor"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfModMotor"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfSerieMotor"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCellBold"
+                    android:text="GENERADOR" />
+
+                <TextView
+                    android:id="@+id/tvPdfMarcaGen"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfModGen"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvPdfSerieGen"
+                    style="@style/PdfCell"
+                    android:textAlignment="center" />
+            </TableRow>
+        </TableLayout>
+
+        <TableLayout
+            android:id="@+id/tableSistemaElectrico"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:stretchColumns="0">
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="SISTEMA ELÉCTRICO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="OPERATIVO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="INOPERATIVO" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Estado de interruptores, tomas y bornes" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Panel de instrumentos y cableado" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Estado de cables de potencia" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Estado de la batería y conexionado" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+        </TableLayout>
+
+        <TableLayout
+            android:id="@+id/tableSistemaMecanico"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:stretchColumns="0">
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="SISTEMA MECÁNICO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="SÍ" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="NO" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Fugas en sistema de refrigeración" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Fugas en sistema de lubricación" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Fugas en sistema de combustible" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Correcto anclaje de componentes" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Correcto nivel de refrigerante y aceite" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Buen estado del extintor" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Correcto estado de los conos de señalización" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Adecuado estado del techo, puertas, guardas, llantas y estructura" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Bandeja antiderrame cumple con el 110% del volumen del tanque" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+        </TableLayout>
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="0">
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:text="PRUEBAS OPERATIVAS" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="OPERATIVO" />
+
+                <TextView
+                    style="@style/PdfHeaderCell"
+                    android:gravity="center"
+                    android:text="INOPERATIVO" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Sistema de arranque" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/PdfCell"
+                    android:text="Lectura de parámetros de acuerdo a la placa" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="X" />
+
+                <TextView
+                    style="@style/PdfCellCenter"
+                    android:text="" />
+            </TableRow>
+
+        </TableLayout>
+
+
+<!--        <ImageView-->
+<!--            android:id="@+id/ivPdfFotoEquipo"-->
+<!--            android:layout_width="350dp"-->
+<!--            android:layout_height="200dp"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:layout_marginBottom="30dp"-->
+<!--            android:background="@drawable/collage_grupos"-->
+<!--            android:scaleType="centerCrop" />-->
+
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center_horizontal"-->
+<!--            android:text='"Energía que impulsa tus proyectos"' />-->
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_gravity="end"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="20dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/logo" />
+
+</LinearLayout>

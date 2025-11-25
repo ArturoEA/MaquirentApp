@@ -38,6 +38,27 @@
         <item name="android:windowExitAnimation">@anim/fade_out</item>
     </style>
 
+    <style name="PdfCell">
+        <item name="android:background">@drawable/bg_table_border</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:padding">4dp</item>
+    </style>
+
+    <style name="PdfCellBold" parent="PdfCell">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="PdfCellCenter" parent="PdfCell">
+        <item name="android:gravity">center</item>
+        <item name="android:width">60dp</item>
+    </style>
+
+    <style name="PdfHeaderCell" parent="PdfCellBold">
+        <item name="android:background">@color/selection_indicator</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
 
 
 </resources>
