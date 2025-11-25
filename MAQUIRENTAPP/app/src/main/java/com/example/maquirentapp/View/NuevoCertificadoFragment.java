@@ -143,6 +143,7 @@ public class NuevoCertificadoFragment extends Fragment {
                     }
 
                     String resumen = "Datos técnicos listos:\n" +
+                            "Equipo: " + (result.getMarcaGrupo() != null ? result.getMarcaGrupo() : "-") + "\n" +
                             "Motor: " + (result.getMarcaMotor() != null ? result.getMarcaMotor() : "-") + "\n" +
                             "Generador: " + (result.getMarcaGenerador() != null ? result.getMarcaGenerador() : "-");
 

@@ -4,6 +4,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:paddingHorizontal="8dp"
+    android:foreground="?android:attr/selectableItemBackground"
     android:theme="@style/Theme.TextMain">
 
     <ImageView

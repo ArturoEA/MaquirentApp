@@ -4,6 +4,7 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
+    android:foreground="?android:attr/selectableItemBackground"
     android:orientation="horizontal"
     android:theme="@style/Theme.TextMain"
     android:padding="8dp">

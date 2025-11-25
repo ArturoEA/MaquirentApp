@@ -6,6 +6,7 @@
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="23dp"
     android:backgroundTint="#1E1E1E"
+    android:foreground="?android:attr/selectableItemBackground"
     android:theme="@style/Theme.TextMain">
 
     <LinearLayout
@@ -21,7 +22,8 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/icon_extintor_blanco" />
+            android:src="@drawable/icon_blanco_accesorios_diario"
+            app:tint="@color/white"/>
 
         <LinearLayout
             android:orientation="horizontal"

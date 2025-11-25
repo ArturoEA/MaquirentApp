@@ -6,6 +6,7 @@
     android:background="@color/black"
     android:theme="@style/Theme.TextMain"
     app:cardBackgroundColor="@color/black"
+    android:foreground="?android:attr/selectableItemBackground"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp">
 
