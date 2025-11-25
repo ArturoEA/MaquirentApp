@@ -122,7 +122,6 @@ public class NuevoCertificadoFragment extends Fragment {
             cargarDatosTecnicos(idGrupoSeleccionado);
         }
     }
-
     private void cargarDatosTecnicos(String idGrupo) {
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.btnGenerarCertificado.setEnabled(false);
@@ -138,17 +137,22 @@ public class NuevoCertificadoFragment extends Fragment {
                     binding.tvResumenTecnico.setText("Este grupo no tiene Información General registrada.");
                     mostrarAlertaFaltanDatos();
                 } else {
-                    if (result.getPotenciaStandBy() != null) {
-                        binding.inputPotencia.setText(result.getPotenciaStandBy());
+                    if (!camposTecnicosValidos(result)) {
+                        binding.tvResumenTecnico.setText("Datos técnicos incompletos (Motor, Generador o Grupo vacíos).");
+                        mostrarAlertaFaltanDatos();
+                    } else {
+                        if (result.getPotenciaStandBy() != null) {
+                            binding.inputPotencia.setText(result.getPotenciaStandBy());
+                        }
+
+                        String resumen = "Datos técnicos listos:\n" +
+                                "Equipo: " + result.getMarcaGrupo() + "\n" +
+                                "Motor: " + result.getMarcaMotor() + "\n" +
+                                "Generador: " + result.getMarcaGenerador();
+
+                        binding.tvResumenTecnico.setText(resumen);
+                        binding.btnGenerarCertificado.setEnabled(true);
                     }
-
-                    String resumen = "Datos técnicos listos:\n" +
-                            "Equipo: " + (result.getMarcaGrupo() != null ? result.getMarcaGrupo() : "-") + "\n" +
-                            "Motor: " + (result.getMarcaMotor() != null ? result.getMarcaMotor() : "-") + "\n" +
-                            "Generador: " + (result.getMarcaGenerador() != null ? result.getMarcaGenerador() : "-");
-
-                    binding.tvResumenTecnico.setText(resumen);
-                    binding.btnGenerarCertificado.setEnabled(true);
                 }
             }
 
@@ -159,7 +163,15 @@ public class NuevoCertificadoFragment extends Fragment {
             }
         });
     }
+    private boolean camposTecnicosValidos(InfoPlaca info) {
+        return esValido(info.getMarcaGrupo()) && esValido(info.getModeloGrupo()) && esValido(info.getSerieGrupo()) &&
+                esValido(info.getMarcaMotor()) && esValido(info.getModeloMotor()) && esValido(info.getSerieMotor()) &&
+                esValido(info.getMarcaGenerador()) && esValido(info.getModeloGenerador()) && esValido(info.getSerieGenerador());
+    }
 
+    private boolean esValido(String texto) {
+        return texto != null && !texto.trim().isEmpty();
+    }
     private void mostrarAlertaFaltanDatos() {
         new AlertDialog.Builder(getContext())
                 .setTitle("Datos Incompletos")
