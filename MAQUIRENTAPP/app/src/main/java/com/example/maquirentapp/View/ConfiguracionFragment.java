@@ -1,6 +1,5 @@
 package com.example.maquirentapp.View;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -12,13 +11,11 @@ import androidx.navigation.Navigation;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -34,27 +31,64 @@ public class ConfiguracionFragment extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_configuracion, container, false);
-
-        return view;
+        return inflater.inflate(R.layout.fragment_configuracion, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Cargar datos del usuario
+        // 1. Cargar datos del usuario
         cargarDatosUsuario(view);
 
-        // Configurar items de menú
+        // 2. Configurar navegación de items
         configurarItems(view);
+
+        // 3. Verificar permisos y ocultar si es empleado
+        verificarPermisosUsuario(view);
+    }
+
+    private void verificarPermisosUsuario(View view) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        FirebaseFirestore.getInstance().collection("usuarios")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String tipo = documentSnapshot.getString("rol");
+
+                        if ("empleado".equals(tipo)) {
+                            ocultarOpcionesAdmin(view);
+                        }
+                    }
+                });
+    }
+
+    private void ocultarOpcionesAdmin(View view) {
+        // Ocultar Títulos (Headers)
+        if (view.findViewById(R.id.tvHeaderFinanzas) != null)
+            view.findViewById(R.id.tvHeaderFinanzas).setVisibility(View.GONE);
+
+        if (view.findViewById(R.id.tvHeaderAccesorios) != null)
+            view.findViewById(R.id.tvHeaderAccesorios).setVisibility(View.GONE);
+
+        if (view.findViewById(R.id.tvHeaderGrupos) != null)
+            view.findViewById(R.id.tvHeaderGrupos).setVisibility(View.GONE);
+
+        if (view.findViewById(R.id.tvHeaderUsuarios) != null)
+            view.findViewById(R.id.tvHeaderUsuarios).setVisibility(View.GONE);
+
+        // Ocultar Items de Menú
+        view.findViewById(R.id.item_historial).setVisibility(View.GONE);
+        view.findViewById(R.id.item_accesorios_diario).setVisibility(View.GONE);
+        view.findViewById(R.id.item_accesorios_mensual).setVisibility(View.GONE);
+        view.findViewById(R.id.item_mantenimientos).setVisibility(View.GONE);
+        view.findViewById(R.id.item_lista_grupos).setVisibility(View.GONE);
+        view.findViewById(R.id.item_gestionar_usuarios).setVisibility(View.GONE);
     }
 
     private void cargarDatosUsuario(View view) {
@@ -76,7 +110,6 @@ public class ConfiguracionFragment extends Fragment {
                         nombreUsuario.setText("Usuario sin nombre");
                     }
 
-                    // Obtener fotoPerfil de forma segura
                     String fotoPerfil = "";
                     try {
                         Object fotoObj = documentSnapshot.get("fotoPerfil");
@@ -84,10 +117,9 @@ public class ConfiguracionFragment extends Fragment {
                             fotoPerfil = (String) fotoObj;
                         }
                     } catch (Exception e) {
-                        android.util.Log.e("PerfilFragment", "Error obteniendo foto", e);
+                        e.printStackTrace();
                     }
 
-                    // Cargar foto de perfil si existe
                     if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
                         Glide.with(this)
                                 .load(fotoPerfil)
@@ -104,6 +136,7 @@ public class ConfiguracionFragment extends Fragment {
             nombreUsuario.setText("No hay sesión activa");
         }
     }
+
     private void configurarItems(View view) {
         // Item Historial
         View itemHistorial = view.findViewById(R.id.item_historial);
@@ -149,6 +182,7 @@ public class ConfiguracionFragment extends Fragment {
                 .setImageResource(R.drawable.icon_blanco_gestionar_usuarios);
 
         LinearLayout itemPerfil = view.findViewById(R.id.itemPerfil);
+
         // Click listener para secciones
         itemPerfil.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_perfil));
         itemHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_configuracion_to_historial_ingresos));

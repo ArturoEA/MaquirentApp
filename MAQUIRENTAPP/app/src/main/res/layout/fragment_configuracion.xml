@@ -12,7 +12,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- SECCIÓN PERFIL -->
         <LinearLayout
             android:id="@+id/itemPerfil"
             android:layout_width="match_parent"
@@ -28,8 +27,7 @@
                 android:src="@drawable/icon_perfil_blanco"
                 android:scaleType="centerCrop"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/shape_circular"
-                />
+                android:background="@drawable/shape_circular" />
 
             <LinearLayout
                 android:orientation="vertical"
@@ -61,8 +59,8 @@
                 android:rotation="270"/>
         </LinearLayout>
 
-        <!-- FINANZAS -->
         <TextView
+            android:id="@+id/tvHeaderFinanzas"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Finanzas"
@@ -72,14 +70,12 @@
             android:layout_marginBottom="6dp"
             android:textColor="#000000"/>
 
-        <!-- ITEM: Historial de ingresos -->
         <include layout="@layout/item_configuracion"
             android:id="@+id/item_historial"
-            android:tag="Historial de ingresos"
-            />
+            android:tag="Historial de ingresos" />
 
-        <!-- ACCESORIOS -->
         <TextView
+            android:id="@+id/tvHeaderAccesorios"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Accesorios"
@@ -97,8 +93,8 @@
             android:id="@+id/item_accesorios_mensual"
             android:tag="Accesorios alquiler mensual"/>
 
-        <!-- GRUPOS ELECTRÓGENOS -->
         <TextView
+            android:id="@+id/tvHeaderGrupos"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Grupos electrógenos"
@@ -116,8 +112,8 @@
             android:id="@+id/item_lista_grupos"
             android:tag="Lista de grupos electrógenos"/>
 
-        <!-- USUARIOS -->
         <TextView
+            android:id="@+id/tvHeaderUsuarios"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Usuarios"
