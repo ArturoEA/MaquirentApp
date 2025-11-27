@@ -1,6 +1,8 @@
 package com.example.maquirentapp.View;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,7 +40,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.yalantis.ucrop.UCrop;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +65,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
     private ActivityResultLauncher<String> imagePickerLauncher;
     private Uri selectedImageUri;
     private ImageView dialogImagePreview;
+    private ActivityResultLauncher<Intent> cropImageLauncher;
 
     public ListaGruposElectrogenosFragment() { }
 
@@ -72,10 +77,24 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri != null) {
-                        selectedImageUri = uri;
-                        if (dialogImagePreview != null) {
-                            dialogImagePreview.setImageURI(uri);
+                        iniciarRecorte(uri);
+                    }
+                });
+
+        cropImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        final Uri resultUri = UCrop.getOutput(result.getData());
+                        if (resultUri != null) {
+                            selectedImageUri = resultUri;
+                            if (dialogImagePreview != null) {
+                                dialogImagePreview.setImageURI(resultUri);
+                            }
                         }
+                    } else if (result.getResultCode() == UCrop.RESULT_ERROR) {
+                        final Throwable cropError = UCrop.getError(result.getData());
+                        mostrarError("Error al recortar: " + cropError.getMessage());
                     }
                 });
     }
@@ -146,6 +165,26 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 }
         );
         recyclerView.setAdapter(adapter);
+    }
+    private void iniciarRecorte(Uri sourceUri) {
+        String destFileName = "cropped_" + System.currentTimeMillis() + ".jpg";
+
+        Uri destinationUri = Uri.fromFile(new File(requireContext().getCacheDir(), destFileName));
+
+        UCrop.Options options = new UCrop.Options();
+        options.setCompressionQuality(80);
+        options.setToolbarColor(ContextCompat.getColor(requireContext(), R.color.black));
+        options.setStatusBarColor(ContextCompat.getColor(requireContext(), R.color.black));
+        options.setActiveControlsWidgetColor(ContextCompat.getColor(requireContext(), R.color.selection_indicator));
+        options.setToolbarTitle("Editar Foto");
+
+        Intent intent = UCrop.of(sourceUri, destinationUri)
+                .withAspectRatio(16, 9)
+                .withMaxResultSize(1280, 720)
+                .withOptions(options)
+                .getIntent(requireContext());
+
+        cropImageLauncher.launch(intent);
     }
     private void cargarGrupos() {
         Log.d(TAG, "Iniciando carga de grupos...");
