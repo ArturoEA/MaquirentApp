@@ -35,8 +35,7 @@
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
                 android:layout_marginEnd="20dp"
-                android:layout_weight="1"
-                android:hint="Horómetro inicial">
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputHorometroInicial"
@@ -50,8 +49,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:hint="Fecha inicial">
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputFechaInicial"
@@ -65,8 +63,7 @@
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            style="@style/CustomTextInputLayout"
-            android:hint="Lugar de trabajo del equipo">
+            style="@style/CustomTextInputLayout">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputUbicacion"
@@ -85,8 +82,7 @@
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
                 android:layout_marginEnd="20dp"
-                android:layout_weight="1"
-                android:hint="Horómetro final">
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputHorometroFinal"
@@ -100,8 +96,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:hint="Fecha final">
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputFechaFinal"
@@ -176,8 +171,7 @@
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
                 android:layout_marginEnd="20dp"
-                android:layout_weight="1"
-                android:hint="Precio por hora extra">
+                android:layout_weight="1">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputPrecioHoraExtra"

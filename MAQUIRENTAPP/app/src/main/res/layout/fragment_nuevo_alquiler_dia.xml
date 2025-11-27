@@ -39,6 +39,7 @@
                     android:id="@+id/clienteEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
                     android:textColor="@color/black"
                     android:hint="Cliente" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -51,6 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/black"
+                    android:inputType="textCapSentences"
                     android:hint="Lugar de trabajo del equipo" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -281,7 +283,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Comentarios"
                     android:textColor="@color/black"
-                    android:inputType="text" />
+                    android:inputType="textImeMultiLine|textCapSentences" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button

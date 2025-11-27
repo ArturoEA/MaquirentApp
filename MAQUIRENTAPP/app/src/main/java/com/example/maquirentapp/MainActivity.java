@@ -451,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (dest.getId() == R.id.historialIngresosFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_historial_ingresos);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
-                    setHeaderTitle("Historial de ingresos");
+                    setHeaderTitle("Dashboard financiero");
                 } else if (dest.getId() == R.id.accesoriosAlquilerDiarioFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_accesorios_diario);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));

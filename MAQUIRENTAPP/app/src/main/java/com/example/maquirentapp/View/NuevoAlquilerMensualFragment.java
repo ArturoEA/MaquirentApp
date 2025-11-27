@@ -232,6 +232,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                         detalle
                 );
                 Toast.makeText(getContext(), "Pago del mes confirmado", Toast.LENGTH_SHORT).show();
+                verificarYGenerarSiguienteMes(detalle);
             }
 
             @Override
@@ -855,6 +856,83 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     }
                 }
         );
+    }
+
+    private void verificarYGenerarSiguienteMes(DetalleMes detallePagado) {
+        if (alquilerActual == null || alquilerActual.isFinalizado()) {
+            return;
+        }
+
+        // Verificar si el mes que se acaba de pagar es el ÚLTIMO de la lista.
+        // No queremos generar meses duplicados si el usuario paga un mes antiguo.
+        List<DetalleMes> listaActual = adapterDetallesMes.getItems();
+        if (listaActual.isEmpty()) return;
+
+        DetalleMes ultimoMes = listaActual.get(listaActual.size() - 1);
+
+        // Solo generamos el siguiente si acabamos de pagar el último mes disponible
+        if (!detallePagado.getId().equals(ultimoMes.getId())) {
+            return;
+        }
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+            // 2. Calcular fechas del NUEVO mes (basado en el fin del anterior)
+            Date fechaFinAnterior = sdf.parse(detallePagado.getFechaFin());
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fechaFinAnterior);
+
+            // Inicio = Fin anterior + 1 día
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+            Date nuevaFechaInicio = cal.getTime();
+            String strFechaInicio = sdf.format(nuevaFechaInicio);
+
+            // Fin = Inicio + 29 días (para hacer ciclos de 30 días, según tu lógica actual)
+            // OJO: Si prefieres mes calendario usa cal.add(Calendar.MONTH, 1);
+            cal.add(Calendar.DAY_OF_YEAR, 29);
+            Date nuevaFechaFin = cal.getTime();
+            String strFechaFin = sdf.format(nuevaFechaFin);
+
+            // 3. Crear el objeto DetalleMes
+            DetalleMes nuevoMes = new DetalleMes();
+            nuevoMes.setIdAlquilerMensual(alquilerActual.getId());
+            nuevoMes.setNumeroMes(detallePagado.getNumeroMes() + 1);
+            nuevoMes.setFechaInicio(strFechaInicio);
+            nuevoMes.setFechaFin(strFechaFin);
+            nuevoMes.setMontoMes(alquilerActual.getPrecioAlquiler()); // Hereda precio base
+
+            // Formatear título bonito
+            SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
+            String mesNombre = monthFormat.format(nuevaFechaInicio);
+            String titulo = "Mes " + nuevoMes.getNumeroMes() + ": " +
+                    mesNombre.substring(0, 1).toUpperCase() + mesNombre.substring(1) +
+                    " (" + strFechaInicio + " - " + strFechaFin + ")";
+            nuevoMes.setTituloPeriodo(titulo);
+
+            // 4. Guardar en Firebase y actualizar UI
+            Toast.makeText(getContext(), "Generando siguiente mes...", Toast.LENGTH_SHORT).show();
+
+            firebaseServicio.crearDetalleMes(nuevoMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
+                @Override
+                public void onSuccess(DetalleMes detalleCreado) {
+                    // Opción A: Recargar todo (más seguro)
+                    cargarDetallesMes();
+                    Toast.makeText(getContext(), "Siguiente mes generado", Toast.LENGTH_SHORT).show();
+
+                    // Opción B (Optimización): Si tu adapter tiene un método 'add', podrías usarlo:
+                    // adapterDetallesMes.addItem(detalleCreado);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "Error generando siguiente mes auto", e);
+                }
+            });
+
+        } catch (ParseException e) {
+            Log.e(TAG, "Error en fechas al generar mes", e);
+        }
     }
 
     @Override
