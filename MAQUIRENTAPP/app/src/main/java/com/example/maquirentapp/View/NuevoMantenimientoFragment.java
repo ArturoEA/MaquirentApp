@@ -41,6 +41,7 @@ import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.ItemsMantenimientoSeleccionablesAdapter;
+import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -571,30 +572,35 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
 
         List<String> urlsSubidas = new ArrayList<>();
-        final int[] fotosSubidas = {0};
+        final int[] fotosProcesadas = {0};
 
         for (Uri uri : fotosUriList) {
-            String fileName = "mantenimientos/" + codigoGrupo + "/" + System.currentTimeMillis() + ".jpg";
-            StorageReference storageRef = storage.getReference().child(fileName);
+            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uri);
 
-            storageRef.putFile(uri)
-                    .addOnSuccessListener(taskSnapshot ->
-                            storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                                urlsSubidas.add(downloadUri.toString());
-                                fotosSubidas[0]++;
+            if (dataImagen != null) {
+                String fileName = "mantenimientos/" + codigoGrupo + "/" + System.currentTimeMillis() + ".jpg";
+                StorageReference storageRef = storage.getReference().child(fileName);
 
-                                if (fotosSubidas[0] == fotosUriList.size()) {
-                                    listener.onFotosSubidas(urlsSubidas);
-                                }
-                            }))
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error subiendo foto", e);
-                        fotosSubidas[0]++;
-
-                        if (fotosSubidas[0] == fotosUriList.size()) {
-                            listener.onFotosSubidas(urlsSubidas);
-                        }
-                    });
+                storageRef.putBytes(dataImagen)
+                        .addOnSuccessListener(taskSnapshot ->
+                                storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                                    urlsSubidas.add(downloadUri.toString());
+                                    verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+                                }))
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Error subiendo foto comprimida", e);
+                            verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+                        });
+            } else {
+                Log.e(TAG, "Error al comprimir imagen: " + uri.toString());
+                verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+            }
+        }
+    }
+    private void verificarFinSubida(int total, int[] procesadas, List<String> urls, OnFotosSubidasListener listener) {
+        procesadas[0]++;
+        if (procesadas[0] == total) {
+            listener.onFotosSubidas(urls);
         }
     }
 

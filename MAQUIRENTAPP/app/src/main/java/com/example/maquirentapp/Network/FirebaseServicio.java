@@ -156,10 +156,6 @@ public class FirebaseServicio {
                 });
     }
 
-    public void cerrarSesion() {
-        auth.signOut();
-    }
-
     public void crearGrupoConImagen(String codigo, Uri imagenUri, OnGrupoCreatedListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference docRef = db.collection("gruposElectrogenos").document();
@@ -192,21 +188,39 @@ public class FirebaseServicio {
                     .addOnFailureListener(listener::onError);
         }
     }
+    public void crearGrupoConImagenBytes(String codigo, byte[] imagenData, OnGrupoCreatedListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("gruposElectrogenos").document();
+        String idGenerado = docRef.getId();
 
-
-    private void crearGrupo(String codigo, String fotoUrl, OnGrupoCreatedListener listener) {
         GrupoElectrogeno grupo = new GrupoElectrogeno();
+        grupo.setId(idGenerado);
         grupo.setCodigo(codigo);
-        grupo.setFoto(fotoUrl);
+        grupo.setEliminado(false);
 
-        db.collection("gruposElectrogenos")
-                .add(grupo)
-                .addOnSuccessListener(documentReference -> {
-                    grupo.setId(documentReference.getId());
-                    listener.onSuccess(grupo);
-                })
-                .addOnFailureListener(listener::onError);
+        if (imagenData != null) {
+            StorageReference storageRef = FirebaseStorage.getInstance()
+                    .getReference()
+                    .child("grupos/" + idGenerado + ".jpg");
+
+            storageRef.putBytes(imagenData)
+                    .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
+                            .addOnSuccessListener(downloadUri -> {
+                                grupo.setFoto(downloadUri.toString());
+
+                                docRef.set(grupo)
+                                        .addOnSuccessListener(aVoid -> listener.onSuccess(grupo))
+                                        .addOnFailureListener(listener::onError);
+                            })
+                            .addOnFailureListener(listener::onError))
+                    .addOnFailureListener(listener::onError);
+        } else {
+            docRef.set(grupo)
+                    .addOnSuccessListener(aVoid -> listener.onSuccess(grupo))
+                    .addOnFailureListener(listener::onError);
+        }
     }
+
 
     // Interface para callbacks simples
     public interface OnSimpleCallback {
@@ -874,7 +888,24 @@ public class FirebaseServicio {
                         .addOnFailureListener(listener::onError))
                 .addOnFailureListener(listener::onError);
     }
+    public void subirPlanoBytes(byte[] dataImagen, OnSimpleCallback listener) {
+        String nombreArchivo = "plano_" + System.currentTimeMillis() + ".jpg";
+        StorageReference storageRef = storage.getReference().child("planos_voltaje/" + nombreArchivo);
 
+        storageRef.putBytes(dataImagen)
+                .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUri -> {
+                            DocumentReference docRef = db.collection("planosVoltaje").document();
+
+                            Plano plano = new Plano(docRef.getId(), downloadUri.toString(), nombreArchivo);
+
+                            docRef.set(plano)
+                                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                                    .addOnFailureListener(listener::onError);
+                        })
+                        .addOnFailureListener(listener::onError))
+                .addOnFailureListener(listener::onError);
+    }
     public void getPlanosVoltaje(OnPlanosLoadedListener listener) {
         db.collection("planosVoltaje")
                 .get()
@@ -1012,7 +1043,24 @@ public class FirebaseServicio {
                         .addOnFailureListener(listener::onError))
                 .addOnFailureListener(listener::onError);
     }
+    public void subirFotoEquipoBytes(String idGrupo, byte[] dataImagen, OnSimpleCallback listener) {
+        String nombreArchivo = "foto_equipo_" + System.currentTimeMillis() + ".jpg";
+        StorageReference storageRef = storage.getReference().child("grupos/" + idGrupo + "/fotos/" + nombreArchivo);
 
+        storageRef.putBytes(dataImagen)
+                .addOnSuccessListener(taskSnapshot -> storageRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUri -> {
+                            DocumentReference docRef = db.collection("fotosEquipo").document();
+
+                            FotoEquipo foto = new FotoEquipo(docRef.getId(), downloadUri.toString(), nombreArchivo, idGrupo);
+
+                            docRef.set(foto)
+                                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                                    .addOnFailureListener(listener::onError);
+                        })
+                        .addOnFailureListener(listener::onError))
+                .addOnFailureListener(listener::onError);
+    }
     public void getFotosEquipo(String idGrupo, OnFotosEquipoLoadedListener listener) {
         db.collection("fotosEquipo")
                 .whereEqualTo("idGrupo", idGrupo)
@@ -1124,6 +1172,14 @@ public class FirebaseServicio {
         StorageReference ref = storage.getReference().child("placas/" + nombreCarpeta + "/" + nombreArchivo);
 
         ref.putFile(uri).addOnSuccessListener(taskSnapshot ->
+                ref.getDownloadUrl().addOnSuccessListener(uri1 -> listener.onSuccess(uri1.toString()))
+        ).addOnFailureListener(listener::onError);
+    }
+    public void subirFotoPlacaBytes(String nombreCarpeta, byte[] dataImagen, OnUrlUploadedListener listener) {
+        String nombreArchivo = "placa_" + System.currentTimeMillis() + ".jpg";
+        StorageReference ref = storage.getReference().child("placas/" + nombreCarpeta + "/" + nombreArchivo);
+
+        ref.putBytes(dataImagen).addOnSuccessListener(taskSnapshot ->
                 ref.getDownloadUrl().addOnSuccessListener(uri1 -> listener.onSuccess(uri1.toString()))
         ).addOnFailureListener(listener::onError);
     }

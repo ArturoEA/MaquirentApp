@@ -27,6 +27,7 @@ import com.example.maquirentapp.Access.GruposElectrogenosConfiguracionAdapter;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -254,21 +255,52 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         }
     }
     private void crearNuevoGrupo(String codigo, Dialog dialog, MaterialButton btnGuardar) {
-        firebaseServicio.crearGrupoConImagen(codigo, selectedImageUri,
-                new FirebaseServicio.OnGrupoCreatedListener() {
-                    @Override
-                    public void onSuccess(GrupoElectrogeno grupo) {
-                        mostrarExito("Grupo creado exitosamente");
-                        cerrarDialogo(dialog);
-                        cargarGrupos();
-                    }
+        if (selectedImageUri != null) {
+            Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
 
-                    @Override
-                    public void onError(Exception e) {
-                        mostrarError("Error: " + e.getMessage());
+            new Thread(() -> {
+                byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), selectedImageUri);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (dataImagen != null) {
+                        firebaseServicio.crearGrupoConImagenBytes(codigo, dataImagen,
+                                new FirebaseServicio.OnGrupoCreatedListener() {
+                                    @Override
+                                    public void onSuccess(GrupoElectrogeno grupo) {
+                                        mostrarExito("Grupo creado exitosamente");
+                                        cerrarDialogo(dialog);
+                                        cargarGrupos();
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        mostrarError("Error: " + e.getMessage());
+                                        habilitarBoton(btnGuardar, "Guardar");
+                                    }
+                                });
+                    } else {
+                        mostrarError("Error al comprimir la imagen");
                         habilitarBoton(btnGuardar, "Guardar");
                     }
                 });
+            }).start();
+        } else {
+            firebaseServicio.crearGrupoConImagen(codigo, null,
+                    new FirebaseServicio.OnGrupoCreatedListener() {
+                        @Override
+                        public void onSuccess(GrupoElectrogeno grupo) {
+                            mostrarExito("Grupo creado (sin foto)");
+                            cerrarDialogo(dialog);
+                            cargarGrupos();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            mostrarError("Error: " + e.getMessage());
+                            habilitarBoton(btnGuardar, "Guardar");
+                        }
+                    });
+        }
     }
     private void actualizarGrupo(GrupoElectrogeno grupo, String nuevoCodigo,
                                  Dialog dialog, MaterialButton btnGuardar) {
@@ -280,29 +312,43 @@ public class ListaGruposElectrogenosFragment extends Fragment {
     }
     private void subirImagenYActualizar(GrupoElectrogeno grupo, String nuevoCodigo,
                                         Dialog dialog, MaterialButton btnGuardar) {
-        String fileName = "grupos/" + nuevoCodigo + "_" + System.currentTimeMillis() + ".jpg";
-        StorageReference storageRef = FirebaseStorage.getInstance()
-                .getReference().child(fileName);
 
-        storageRef.putFile(selectedImageUri)
-                .addOnSuccessListener(taskSnapshot ->
-                        storageRef.getDownloadUrl()
-                                .addOnSuccessListener(downloadUri -> {
-                                    Map<String, Object> updates = new HashMap<>();
-                                    updates.put("codigo", nuevoCodigo);
-                                    updates.put("foto", downloadUri.toString());
+        Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
 
-                                    actualizarEnFirestore(grupo.getId(), updates, dialog, btnGuardar);
-                                })
-                                .addOnFailureListener(e -> {
-                                    mostrarError("Error obteniendo URL: " + e.getMessage());
-                                    habilitarBoton(btnGuardar, "Guardar");
-                                })
-                )
-                .addOnFailureListener(e -> {
-                    mostrarError("Error subiendo imagen: " + e.getMessage());
+        new Thread(() -> {
+            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), selectedImageUri);
+
+            requireActivity().runOnUiThread(() -> {
+                if (dataImagen != null) {
+                    String fileName = "grupos/" + nuevoCodigo + "_" + System.currentTimeMillis() + ".jpg";
+                    StorageReference storageRef = FirebaseStorage.getInstance()
+                            .getReference().child(fileName);
+
+                    storageRef.putBytes(dataImagen)
+                            .addOnSuccessListener(taskSnapshot ->
+                                    storageRef.getDownloadUrl()
+                                            .addOnSuccessListener(downloadUri -> {
+                                                Map<String, Object> updates = new HashMap<>();
+                                                updates.put("codigo", nuevoCodigo);
+                                                updates.put("foto", downloadUri.toString());
+
+                                                actualizarEnFirestore(grupo.getId(), updates, dialog, btnGuardar);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                mostrarError("Error obteniendo URL: " + e.getMessage());
+                                                habilitarBoton(btnGuardar, "Guardar");
+                                            })
+                            )
+                            .addOnFailureListener(e -> {
+                                mostrarError("Error subiendo imagen: " + e.getMessage());
+                                habilitarBoton(btnGuardar, "Guardar");
+                            });
+                } else {
+                    mostrarError("Error al comprimir la imagen");
                     habilitarBoton(btnGuardar, "Guardar");
-                });
+                }
+            });
+        }).start();
     }
     private void actualizarSoloCodigo(GrupoElectrogeno grupo, String nuevoCodigo,
                                       Dialog dialog, MaterialButton btnGuardar) {

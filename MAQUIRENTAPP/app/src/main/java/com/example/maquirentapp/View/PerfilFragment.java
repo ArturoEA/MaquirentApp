@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -236,47 +237,36 @@ public class PerfilFragment extends Fragment {
 
         StorageReference fotoRef = storageRef.child("perfiles/" + userId + "/foto.jpg");
 
-        android.util.Log.d("PerfilFragment", "Iniciando subida de foto a: " + fotoRef.getPath());
-        android.util.Log.d("PerfilFragment", "URI de imagen: " + imagenSeleccionada.toString());
+        byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), imagenSeleccionada);
 
-        fotoRef.putFile(imagenSeleccionada)
-                .addOnProgressListener(snapshot -> {
-                    double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
-                    android.util.Log.d("PerfilFragment", "Progreso de subida: " + progress + "%");
-                })
-                .addOnSuccessListener(taskSnapshot -> {
-                    android.util.Log.d("PerfilFragment", "Foto subida exitosamente");
-                    android.util.Log.d("PerfilFragment", "Path: " + taskSnapshot.getStorage().getPath());
+        if (dataImagen != null) {
+            fotoRef.putBytes(dataImagen)
+                    .addOnProgressListener(snapshot -> {
+                        double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
+                        android.util.Log.d("PerfilFragment", "Progreso de subida: " + progress + "%");
+                    })
+                    .addOnSuccessListener(taskSnapshot -> {
+                        android.util.Log.d("PerfilFragment", "Foto comprimida subida exitosamente");
 
-                    fotoRef.getDownloadUrl()
-                            .addOnSuccessListener(downloadUri -> {
-                                String fotoUrl = downloadUri.toString();
-                                android.util.Log.d("PerfilFragment", "URL descargada: " + fotoUrl);
-                                actualizarDatosUsuario(userId, nuevoNombre, fotoUrl);
-                            })
-                            .addOnFailureListener(e -> {
-                                android.util.Log.e("PerfilFragment", "Error obteniendo URL: " + e.getMessage(), e);
-                                Toast.makeText(getContext(),
-                                        "Error al obtener URL de foto: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("PerfilFragment", "Error completo al subir foto:", e);
-                    android.util.Log.e("PerfilFragment", "Mensaje: " + e.getMessage());
-                    android.util.Log.e("PerfilFragment", "Causa: " + e.getCause());
-
-                    String mensaje = "Error al subir foto";
-                    if (e.getMessage() != null) {
-                        mensaje = e.getMessage();
-                    }
-
-                    Toast.makeText(getContext(),
-                            "Error: " + mensaje,
-                            Toast.LENGTH_SHORT).show();
-                });
+                        fotoRef.getDownloadUrl()
+                                .addOnSuccessListener(downloadUri -> {
+                                    String fotoUrl = downloadUri.toString();
+                                    actualizarDatosUsuario(userId, nuevoNombre, fotoUrl);
+                                })
+                                .addOnFailureListener(e -> {
+                                    android.util.Log.e("PerfilFragment", "Error URL: " + e.getMessage());
+                                    Toast.makeText(getContext(), "Error al obtener URL", Toast.LENGTH_SHORT).show();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        android.util.Log.e("PerfilFragment", "Error al subir: " + e.getMessage());
+                        Toast.makeText(getContext(), "Error al subir foto: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            android.util.Log.e("PerfilFragment", "Error al comprimir la imagen");
+            Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+        }
     }
-
     private void actualizarDatosUsuario(String userId, String nuevoNombre, String fotoUrl) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("nombre", nuevoNombre);

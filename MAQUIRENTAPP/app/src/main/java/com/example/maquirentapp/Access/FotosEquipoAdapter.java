@@ -1,12 +1,15 @@
 package com.example.maquirentapp.Access;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
+
 import com.bumptech.glide.Glide;
 import com.example.maquirentapp.Model.FotoEquipo;
 import com.example.maquirentapp.R;
@@ -44,9 +47,16 @@ public class FotosEquipoAdapter extends RecyclerView.Adapter<FotosEquipoAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FotoEquipo foto = items.get(position);
 
+        CircularProgressDrawable spinner = new CircularProgressDrawable(context);
+        spinner.setStrokeWidth(5f);
+        spinner.setCenterRadius(30f);
+        spinner.setColorSchemeColors(Color.WHITE);
+        spinner.start();
+
         Glide.with(context)
                 .load(foto.getUrlImagen())
-                .placeholder(R.drawable.icon_generador)
+                .placeholder(spinner)
+                .error(R.drawable.icon_generador)
                 .centerCrop()
                 .into(holder.imgFoto);
 

@@ -5,6 +5,7 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -34,6 +36,7 @@ import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Plano;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.adaptadores.PlanoAdapter;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -100,22 +103,32 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
     private void subirImagen(Uri uri) {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-        Toast.makeText(getContext(), "Subiendo imagen...", Toast.LENGTH_SHORT).show();
 
-        firebaseServicio.subirPlano(uri, new FirebaseServicio.OnSimpleCallback() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
-                cargarPlanos();
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
-            }
+        new Thread(() -> {
+            byte[] dataComprimida = ImageUtils.comprimirImagen(requireContext(), uri);
 
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                if (progressBar != null) progressBar.setVisibility(View.GONE);
-            }
-        });
+            requireActivity().runOnUiThread(() -> {
+                if (dataComprimida != null) {
+                    firebaseServicio.subirPlanoBytes(dataComprimida, new FirebaseServicio.OnSimpleCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
+                            cargarPlanos();
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        }
+                    });
+                } else {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
 
     private void cargarPlanos() {
@@ -154,10 +167,16 @@ public class PlanosCambioVoltajeFragment extends Fragment {
         LinearLayout btnDownload = dialogView.findViewById(R.id.btnDownload);
         LinearLayout btnShare = dialogView.findViewById(R.id.btnShare);
 
-        // Cargar con Glide en el PhotoView
+        CircularProgressDrawable spinner = new CircularProgressDrawable(this.getContext());
+        spinner.setStrokeWidth(5f);
+        spinner.setCenterRadius(30f);
+        spinner.setColorSchemeColors(Color.WHITE);
+        spinner.start();
+
         Glide.with(this)
                 .load(plano.getUrlImagen())
-                .placeholder(R.drawable.ilustracion_maquinaria_vacio)
+                .placeholder(spinner)
+                .centerCrop()
                 .into(imgFull);
 
         btnClose.setOnClickListener(v -> dialog.dismiss());

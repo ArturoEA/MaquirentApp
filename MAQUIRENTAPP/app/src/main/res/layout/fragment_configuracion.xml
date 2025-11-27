@@ -68,11 +68,13 @@
             android:textSize="16sp"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="6dp"
+            android:visibility="gone"
             android:textColor="#000000"/>
 
         <include layout="@layout/item_configuracion"
             android:id="@+id/item_historial"
-            android:tag="Historial de ingresos" />
+            android:tag="Historial de ingresos"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/tvHeaderAccesorios"

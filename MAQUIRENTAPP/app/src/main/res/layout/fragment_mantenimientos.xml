@@ -1,92 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:theme="@style/Theme.TextMain"
-    android:paddingBottom="70dp"
-    android:clipToPadding="true"
-    tools:context=".View.MantenimientosFragment">
+    android:orientation="vertical"
+    android:theme="@style/Theme.TextMain">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:id="@+id/layoutHeader"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="15dp"
-        android:orientation="horizontal">
+        android:layout_marginBottom="16dp">
 
-        <ImageButton
-            android:id="@+id/btnAnterior"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/icon_flecha_negro"
-            android:backgroundTint="@android:color/transparent"/>
-        <TextView
-            android:id="@+id/tvMes"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:layout_gravity="center_horizontal"
-            android:textAlignment="center"
-            android:textSize="16sp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:text="Mes"/>
+            android:layout_centerInParent="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnAnterior"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/icon_flecha_negro" />
+
+            <TextView
+                android:id="@+id/tvMes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:text="OCTUBRE\n2023"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnSiguiente"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:rotation="180"
+                android:src="@drawable/icon_flecha_negro" />
+        </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnSiguiente"
+            android:id="@+id/btnAbrirBuscador"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/icon_lupa"
+            android:padding="10dp"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutBuscador"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/CustomTextInputLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="0dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBuscador"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Buscar en historial..."
+                android:textColorHint="@color/colorHints"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/black"
+                android:paddingVertical="12dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ImageButton
+            android:id="@+id/btnCerrarBuscador"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:src="@drawable/icon_flecha_negro"
-            android:rotation="-180"
-            android:backgroundTint="@android:color/transparent"/>
-
+            android:layout_marginStart="8dp"
+            android:padding="12dp"
+            android:background="@drawable/icon_nuevo_blanco"
+            android:rotation="45"
+            android:backgroundTint="@color/black"/>
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBarBusqueda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewMantenimientos"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="40dp"
-        android:padding="8dp"
         android:clipToPadding="false" />
 
     <LinearLayout
         android:id="@+id/emptyStateMantenimientos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center"
+        android:orientation="vertical"
         android:visibility="gone">
 
         <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:src="@drawable/icon_mantenimiento_blanco"
-            android:alpha="0.3"
-            app:tint="@android:color/darker_gray"
-            xmlns:app="http://schemas.android.com/apk/res-auto" />
+            android:src="@drawable/icon_mantenimiento_blanco" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="No hay mantenimientos registrados"
-            android:textAlignment="center"
-            android:textSize="16sp"
-            android:textColor="@android:color/darker_gray" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Presiona el botón para agregar"
-            android:textAlignment="center"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray" />
-
+            android:text="No se encontraron resultados"
+            android:textSize="16sp" />
     </LinearLayout>
 
-</FrameLayout>
+</LinearLayout>

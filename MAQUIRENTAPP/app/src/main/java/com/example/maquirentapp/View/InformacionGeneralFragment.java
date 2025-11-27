@@ -28,6 +28,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -40,6 +41,7 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.FiltroCategoriasAdapter;
 import com.example.maquirentapp.Access.FotosSimpleAdapter;
 import com.example.maquirentapp.Access.SpecsPlacaAdapter;
+import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -405,23 +407,34 @@ public class InformacionGeneralFragment extends Fragment {
             specsAdapter.notifyDataSetChanged();
         }
     }
-
     private void subirFotoPlaca(Uri uri) {
-        Toast.makeText(getContext(), "Subiendo...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
 
-        firebaseServicio.subirFotoPlaca(codigoGrupo, uri, new FirebaseServicio.OnUrlUploadedListener() {
-            @Override
-            public void onSuccess(String url) {
-                infoPlacaActual.getImagenesUrls().add(url);
-                fotosAdapter.notifyDataSetChanged();
-                guardarPlacaSinRecargar();
-            }
+        new Thread(() -> {
+            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uri);
 
-            @Override
-            public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al subir", Toast.LENGTH_SHORT).show();
-            }
-        });
+            requireActivity().runOnUiThread(() -> {
+                if (dataImagen != null) {
+                    firebaseServicio.subirFotoPlacaBytes(codigoGrupo, dataImagen, new FirebaseServicio.OnUrlUploadedListener() {
+                        @Override
+                        public void onSuccess(String url) {
+                            infoPlacaActual.getImagenesUrls().add(url);
+                            if (fotosAdapter != null) fotosAdapter.notifyDataSetChanged();
+
+                            guardarPlacaSinRecargar();
+                            Toast.makeText(getContext(), "Foto de placa subida", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(getContext(), "Error al subir", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    Toast.makeText(getContext(), "Error al comprimir imagen", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
     private void mostrarDialogoSpec(Map<String, String> specExistente, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -505,7 +518,17 @@ public class InformacionGeneralFragment extends Fragment {
         Button btnDescargar = dialogView.findViewById(R.id.btnDescargar);
         Button btnCompartir = dialogView.findViewById(R.id.btnCompartir);
 
-        Glide.with(this).load(url).into(ivFoto);
+        CircularProgressDrawable progressDrawable = new CircularProgressDrawable(requireContext());
+        progressDrawable.setStrokeWidth(10f);
+        progressDrawable.setCenterRadius(50f);
+        progressDrawable.setColorSchemeColors(Color.WHITE);
+        progressDrawable.start();
+
+        Glide.with(this)
+                .load(url)
+                .placeholder(progressDrawable)
+                .error(R.drawable.ilustracion_maquinaria_vacio)
+                .into(ivFoto);
 
         btnCerrar.setOnClickListener(v -> dialog.dismiss());
         ivFoto.setOnClickListener(v -> dialog.dismiss());

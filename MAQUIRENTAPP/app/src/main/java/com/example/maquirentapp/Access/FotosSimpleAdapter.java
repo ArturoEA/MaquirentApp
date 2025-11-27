@@ -1,12 +1,15 @@
 package com.example.maquirentapp.Access;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
+
 import com.bumptech.glide.Glide;
 import com.example.maquirentapp.R;
 import java.util.List;
@@ -59,10 +62,16 @@ public class FotosSimpleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             FotoViewHolder fotoHolder = (FotoViewHolder) holder;
             String url = listaUrls.get(position);
 
-            Glide.with(context)
+            CircularProgressDrawable spinner = new CircularProgressDrawable(holder.itemView.getContext());
+            spinner.setStrokeWidth(5f);
+            spinner.setCenterRadius(30f);
+            spinner.setColorSchemeColors(Color.WHITE);
+            spinner.start();
+
+            Glide.with(holder.itemView.getContext())
                     .load(url)
+                    .placeholder(spinner)
                     .centerCrop()
-                    .placeholder(R.drawable.icon_camara_blanco)
                     .into(fotoHolder.imgFoto);
 
             fotoHolder.itemView.setOnClickListener(v -> listener.onVerFoto(url));

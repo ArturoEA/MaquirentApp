@@ -4,14 +4,14 @@
 
     <item
         android:id="@+id/action_compartir"
-        android:icon="@android:drawable/ic_menu_share"
+        android:icon="@drawable/icon_compartir_blanco"
         android:title="Compartir"
         android:iconTint="@color/white"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_descargar"
-        android:icon="@android:drawable/stat_sys_download"
+        android:icon="@drawable/icon_descargar_blanco"
         android:title="Descargar"
         android:iconTint="@color/white"
         app:showAsAction="ifRoom" />

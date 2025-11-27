@@ -4,6 +4,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,8 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAdapter.ViewHolder> {
+public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAdapter.ViewHolder> implements Filterable {
     private List<Mantenimiento> mantenimientos;
+    private List<Mantenimiento> mantenimientosFull;
     private Map<String, MantenimientoConfiguracion> itemsConfigMap;
     private Context context;
     private OnMantenimientoClickListener listener;
@@ -36,6 +39,7 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
                                  OnMantenimientoClickListener listener) {
         this.context = context;
         this.mantenimientos = mantenimientos != null ? mantenimientos : new ArrayList<>();
+        this.mantenimientosFull = new ArrayList<>(this.mantenimientos);
         this.listener = listener;
 
         // Crear mapa de items de configuración para búsqueda rápida
@@ -64,6 +68,43 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
     @Override
     public int getItemCount() {
         return mantenimientos.size();
+    }
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                List<Mantenimiento> filteredList = new ArrayList<>();
+
+                if (constraint == null || constraint.length() == 0) {
+                    filteredList.addAll(mantenimientosFull);
+                } else {
+                    String filterPattern = constraint.toString().toLowerCase().trim();
+
+                    for (Mantenimiento item : mantenimientosFull) {
+                        if (item.getComentarios() != null &&
+                                item.getComentarios().toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+                        else if (item.getEmpresa() != null &&
+                                item.getEmpresa().toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+                    }
+                }
+
+                FilterResults results = new FilterResults();
+                results.values = filteredList;
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                mantenimientos.clear();
+                mantenimientos.addAll((List) results.values);
+                notifyDataSetChanged();
+            }
+        };
     }
 
     public Mantenimiento getMantenimientoAt(int position) {
@@ -152,6 +193,7 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
 
     public void actualizarLista(List<Mantenimiento> nuevaLista) {
         this.mantenimientos = nuevaLista != null ? nuevaLista : new ArrayList<>();
+        this.mantenimientosFull = new ArrayList<>(this.mantenimientos);
         notifyDataSetChanged();
     }
 

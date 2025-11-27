@@ -1,24 +1,32 @@
 package com.example.maquirentapp.View;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.DatePicker;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -33,6 +41,7 @@ import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -58,6 +67,12 @@ public class MantenimientosFragment extends Fragment {
     private ImageButton btnAnterior, btnSiguiente;
     private List<Mantenimiento> mantenimientosList = new ArrayList<>();
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
+    private ImageButton btnAbrirBuscador, btnCerrarBuscador;
+    private View layoutHeader;
+    private View layoutBuscador;
+    private TextInputEditText etBuscador;
+    private ProgressBar progressBarBusqueda;
+    private boolean isSearchMode = false;
 
     public MantenimientosFragment() {
         // Required empty public constructor
@@ -93,12 +108,25 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void initViews(View view) {
+        isSearchMode = false;
+        if (mantenimientosList != null) mantenimientosList.clear();
+
         recyclerView = view.findViewById(R.id.recyclerViewMantenimientos);
         emptyState = view.findViewById(R.id.emptyStateMantenimientos);
 
         tvMes = view.findViewById(R.id.tvMes);
         btnAnterior = view.findViewById(R.id.btnAnterior);
         btnSiguiente = view.findViewById(R.id.btnSiguiente);
+
+        btnAbrirBuscador = view.findViewById(R.id.btnAbrirBuscador);
+        progressBarBusqueda = view.findViewById(R.id.progressBarBusqueda);
+
+        layoutHeader = view.findViewById(R.id.layoutHeader);
+        layoutBuscador = view.findViewById(R.id.layoutBuscador);
+        etBuscador = view.findViewById(R.id.etBuscador);
+        btnAbrirBuscador = view.findViewById(R.id.btnAbrirBuscador);
+        btnCerrarBuscador = view.findViewById(R.id.btnCerrarBuscador);
+        progressBarBusqueda = view.findViewById(R.id.progressBarBusqueda);
 
         calendarioActual = Calendar.getInstance();
         actualizarTextoMes();
@@ -109,24 +137,46 @@ public class MantenimientosFragment extends Fragment {
         );
 
         btnAnterior.setOnClickListener(v -> {
-            calendarioActual.add(Calendar.MONTH, -1);
-            actualizarTextoMes();
-
-            int año = calendarioActual.get(Calendar.YEAR);
-            int mes = calendarioActual.get(Calendar.MONTH);
-            cargarMantenimientosDelMes(año, mes);
+            if (!isSearchMode) {
+                calendarioActual.add(Calendar.MONTH, -1);
+                actualizarTextoMes();
+                cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+            }
         });
-
         btnSiguiente.setOnClickListener(v -> {
-            calendarioActual.add(Calendar.MONTH, 1);
-            actualizarTextoMes();
-
-            int año = calendarioActual.get(Calendar.YEAR);
-            int mes = calendarioActual.get(Calendar.MONTH);
-            cargarMantenimientosDelMes(año, mes);
+            if (!isSearchMode) {
+                calendarioActual.add(Calendar.MONTH, 1);
+                actualizarTextoMes();
+                cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+            }
+        });
+        tvMes.setOnClickListener(v -> {
+            if (!isSearchMode) mostrarSelectorDeMes();
         });
 
-        tvMes.setOnClickListener(v -> mostrarSelectorDeMes());
+        btnAbrirBuscador.setOnClickListener(v -> activarModoBusqueda());
+
+        btnAbrirBuscador.setOnClickListener(v -> activarModoBusqueda());
+
+        btnCerrarBuscador.setOnClickListener(v -> {
+            etBuscador.setText("");
+            desactivarModoBusqueda();
+        });
+
+        etBuscador.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (adapter != null) {
+                    adapter.getFilter().filter(s.toString());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void setupRecyclerView() {
@@ -219,20 +269,75 @@ public class MantenimientosFragment extends Fragment {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+    private void activarModoBusqueda() {
+        isSearchMode = true;
+
+        layoutHeader.setVisibility(View.GONE);
+        layoutBuscador.setVisibility(View.VISIBLE);
+
+        etBuscador.requestFocus();
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(etBuscador, InputMethodManager.SHOW_IMPLICIT);
+
+        cargarTodoElHistorial();
+    }
+
+    private void desactivarModoBusqueda() {
+        isSearchMode = false;
+
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(etBuscador.getWindowToken(), 0);
+
+        layoutBuscador.setVisibility(View.GONE);
+        layoutHeader.setVisibility(View.VISIBLE);
+
+        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+    }
+
+    private void cargarTodoElHistorial() {
+        progressBarBusqueda.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.INVISIBLE);
+        emptyState.setVisibility(View.GONE);
+
+        db.collection("mantenimientos")
+                .whereEqualTo("codigoGrupo", codigo)
+                .orderBy("fechaCreacion", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    mantenimientosList.clear();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        Mantenimiento m = doc.toObject(Mantenimiento.class);
+                        m.setId(doc.getId());
+                        mantenimientosList.add(m);
+                    }
+
+                    progressBarBusqueda.setVisibility(View.GONE);
+                    actualizarUI();
+
+                    Toast.makeText(getContext(), "Historial completo cargado para búsqueda", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    progressBarBusqueda.setVisibility(View.GONE);
+                    Log.e(TAG, "Error cargando historial completo", e);
+                    Toast.makeText(getContext(), "Error al cargar historial", Toast.LENGTH_SHORT).show();
+                    desactivarModoBusqueda();
+                });
+    }
+
     private void actualizarTextoMes() {
         SimpleDateFormat formatoMes = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
         SimpleDateFormat formatoAño = new SimpleDateFormat("yyyy", new Locale("es", "ES"));
 
         String mes = formatoMes.format(calendarioActual.getTime());
         String año = formatoAño.format(calendarioActual.getTime());
-        mes = mes.substring(0,1).toUpperCase() + mes.substring(1);
+        mes = mes.substring(0, 1).toUpperCase() + mes.substring(1);
         tvMes.setText(mes + "\n" + año);
     }
 
 
     private void mostrarSelectorDeMes() {
-        final String[] meses = {"Enero","Febrero","Marzo","Abril","Mayo","Junio",
-                "Julio","Agosto","Setiembre","Octubre","Noviembre","Diciembre"};
+        final String[] meses = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"};
 
         Calendar calendario = Calendar.getInstance();
         int añoActual = calendario.get(Calendar.YEAR);

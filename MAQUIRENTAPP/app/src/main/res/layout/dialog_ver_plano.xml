@@ -23,13 +23,16 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:layout_alignParentEnd="true"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/icon_nuevo_blanco"
+                android:rotation="45"
                 app:tint="@color/black" />
             <ImageView
                 android:id="@+id/btnDelete"
                 android:layout_width="23dp"
                 android:layout_height="23dp"
                 android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="6dp"
                 android:src="@drawable/icon_eliminar_rojo" />
         </RelativeLayout>
 
@@ -62,7 +65,7 @@
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@android:drawable/stat_sys_download"
+                    android:src="@drawable/icon_descargar"
                     app:tint="@color/black" />
 
                 <TextView
@@ -86,7 +89,7 @@
                 <ImageView
                     android:layout_width="35dp"
                     android:layout_height="36dp"
-                    android:src="@android:drawable/ic_menu_share"
+                    android:src="@drawable/icon_compartir"
                     android:backgroundTint="@color/black"
                     app:tint="@color/black"
                     />

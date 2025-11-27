@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -75,6 +76,7 @@ dependencies {
     implementation ("com.google.guava:guava:31.1-android")
     implementation("it.xabaras.android:recyclerview-swipedecorator:1.4")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation("com.google.firebase:firebase-crashlytics")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 
     // Apache POI
