@@ -110,6 +110,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         if (modoEdicion) {
             cargarDatosAlquiler();
+        } else{
+            inputHorasMinimas.setText("200");
         }
 
         if (modoSoloLectura) {
@@ -211,7 +213,29 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             }
         });
 
+        inputHorasMinimas.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.toString().trim().length() > 0) {
+                    calcularPrecioHoraExtra();
+                }
+            }
+        });
+
         adapterDetallesMes.setOnDetalleMesListener(new DetalleMesAdapter.OnDetalleMesListener() {
+            @Override
+            public void onHorometroCalculated(DetalleMes detalle, double nuevoHorometro, int position) {
+                calcularHorasExtras(detalle, nuevoHorometro);
+                adapterDetallesMes.notifyItemChanged(position, "CALCULATED_FIELDS");
+            }
+            @Override
+            public void onHorometroFinalized(DetalleMes detalle) {
+                actualizarDetalleMes(detalle);
+            }
             @Override
             public void onHorometroChanged(DetalleMes detalle, double nuevoHorometro) {
                 calcularHorasExtras(detalle, nuevoHorometro);
@@ -857,44 +881,40 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 }
         );
     }
-
     private void verificarYGenerarSiguienteMes(DetalleMes detallePagado) {
         if (alquilerActual == null || alquilerActual.isFinalizado()) {
             return;
         }
 
-        // Verificar si el mes que se acaba de pagar es el ÚLTIMO de la lista.
-        // No queremos generar meses duplicados si el usuario paga un mes antiguo.
         List<DetalleMes> listaActual = adapterDetallesMes.getItems();
         if (listaActual.isEmpty()) return;
 
         DetalleMes ultimoMes = listaActual.get(listaActual.size() - 1);
 
-        // Solo generamos el siguiente si acabamos de pagar el último mes disponible
         if (!detallePagado.getId().equals(ultimoMes.getId())) {
+            return;
+        }
+        long diasDuracion = calcularDiasEntreFechas(detallePagado.getFechaInicio(), detallePagado.getFechaFin());
+        if (diasDuracion < 30) {
+            Toast.makeText(getContext(), "Último período generado", Toast.LENGTH_LONG).show();
             return;
         }
 
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
-            // 2. Calcular fechas del NUEVO mes (basado en el fin del anterior)
             Date fechaFinAnterior = sdf.parse(detallePagado.getFechaFin());
             Calendar cal = Calendar.getInstance();
             cal.setTime(fechaFinAnterior);
 
-            // Inicio = Fin anterior + 1 día
             cal.add(Calendar.DAY_OF_YEAR, 1);
             Date nuevaFechaInicio = cal.getTime();
             String strFechaInicio = sdf.format(nuevaFechaInicio);
 
-            // Fin = Inicio + 29 días (para hacer ciclos de 30 días, según tu lógica actual)
-            // OJO: Si prefieres mes calendario usa cal.add(Calendar.MONTH, 1);
             cal.add(Calendar.DAY_OF_YEAR, 29);
             Date nuevaFechaFin = cal.getTime();
             String strFechaFin = sdf.format(nuevaFechaFin);
 
-            // 3. Crear el objeto DetalleMes
             DetalleMes nuevoMes = new DetalleMes();
             nuevoMes.setIdAlquilerMensual(alquilerActual.getId());
             nuevoMes.setNumeroMes(detallePagado.getNumeroMes() + 1);
@@ -902,7 +922,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             nuevoMes.setFechaFin(strFechaFin);
             nuevoMes.setMontoMes(alquilerActual.getPrecioAlquiler()); // Hereda precio base
 
-            // Formatear título bonito
             SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
             String mesNombre = monthFormat.format(nuevaFechaInicio);
             String titulo = "Mes " + nuevoMes.getNumeroMes() + ": " +
@@ -910,18 +929,13 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     " (" + strFechaInicio + " - " + strFechaFin + ")";
             nuevoMes.setTituloPeriodo(titulo);
 
-            // 4. Guardar en Firebase y actualizar UI
             Toast.makeText(getContext(), "Generando siguiente mes...", Toast.LENGTH_SHORT).show();
 
             firebaseServicio.crearDetalleMes(nuevoMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
                 @Override
                 public void onSuccess(DetalleMes detalleCreado) {
-                    // Opción A: Recargar todo (más seguro)
                     cargarDetallesMes();
                     Toast.makeText(getContext(), "Siguiente mes generado", Toast.LENGTH_SHORT).show();
-
-                    // Opción B (Optimización): Si tu adapter tiene un método 'add', podrías usarlo:
-                    // adapterDetallesMes.addItem(detalleCreado);
                 }
 
                 @Override
@@ -934,7 +948,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             Log.e(TAG, "Error en fechas al generar mes", e);
         }
     }
-
     @Override
     public void onResume() {
         super.onResume();

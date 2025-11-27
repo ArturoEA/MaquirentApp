@@ -116,7 +116,7 @@ public class AlquilerMensualCheckWorker extends Worker {
             Date fechaInicio = cal.getTime();
 
             // Sumar 30 días para la fecha fin
-            cal.add(Calendar.DAY_OF_MONTH, 30);
+            cal.add(Calendar.DAY_OF_MONTH, 29);
             Date fechaFin = cal.getTime();
 
             DetalleMes nuevoMes = new DetalleMes();

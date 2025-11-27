@@ -2,6 +2,8 @@ package com.example.maquirentapp.Access;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +41,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
     public interface OnDetalleMesListener {
         void onHorometroChanged(DetalleMes detalle, double nuevoHorometro);
+        void onHorometroCalculated(DetalleMes detalle, double nuevoHorometro, int position);
+        void onHorometroFinalized(DetalleMes detalle);
 
         void onPagoMesConfirmado(DetalleMes detalle, int position);
 
@@ -80,9 +84,13 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DetalleMes detalle = items.get(position);
 
-        holder.tvTituloPeriodo.setText(detalle.getTituloPeriodo());
+        if (holder.horometroWatcher != null) {
+            holder.inputHorometro.removeTextChangedListener(holder.horometroWatcher);
+        }
+        holder.inputHorometro.setOnFocusChangeListener(null);
+        holder.inputHorometro.setOnEditorActionListener(null);
 
-        double montoAMostrar = detalle.getMontoMes() > 0 ? detalle.getMontoMes() : precioMensualBase;
+        holder.tvTituloPeriodo.setText(detalle.getTituloPeriodo());
         holder.tvMontoMes.setText(String.format(Locale.US, "Monto Mes: %.2f", detalle.getMontoMes()));
 
         if (detalle.getFechaFin() != null && !detalle.getFechaFin().isEmpty()) {
@@ -105,12 +113,32 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         View.OnClickListener expandListener = v -> {
             ocultarTeclado(v);
-            quitarFocoDeInputs(holder);
-            v.postDelayed(() -> {
+
+            // 1. Obtener el RecyclerView padre
+            // Usamos 'v' que es el item clicado (holder.itemView o el botón)
+            // Subimos en la jerarquía hasta encontrar el RecyclerView si es necesario,
+            // pero normalmente holder.itemView.getParent() es el RecyclerView.
+            View parentView = (View) holder.itemView.getParent();
+
+            if (parentView instanceof RecyclerView) {
+                RecyclerView recyclerView = (RecyclerView) parentView;
+
+                // 2. Hacer el RecyclerView "focusable" temporalmente para que pueda recibir el foco
+                recyclerView.setFocusable(true);
+                recyclerView.setFocusableInTouchMode(true);
+
+                // 3. Forzar el foco al RecyclerView.
+                // Esto quita el foco del EditText problemático ANTES de que desaparezca.
+                recyclerView.requestFocus();
+            }
+
+            // 4. Usar post para diferir la actualización visual al siguiente frame
+            v.post(() -> {
                 detalle.setExpandido(!detalle.isExpandido());
                 notifyItemChanged(position);
-            }, 50);
+            });
         };
+
         holder.itemView.setOnClickListener(expandListener);
         holder.btnExpandir.setOnClickListener(expandListener);
 
@@ -257,70 +285,76 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         }
         super.onBindViewHolder(holder, position, payloads);
     }
-
     private void configurarListeners(ViewHolder holder, DetalleMes detalle, int position) {
-        holder.inputHorometro.setOnFocusChangeListener(null);
-        holder.inputHorometro.setOnEditorActionListener(null);
+        holder.horometroWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Evitamos ciclos infinitos verificando si el valor realmente cambió
+                String texto = s.toString().trim();
+                double valorActual = texto.isEmpty() ? 0 : Double.parseDouble(texto);
+
+                if (valorActual != detalle.getHorometro()) {
+                    detalle.setHorometro(valorActual);
+                    if (listener != null) {
+                        // Notificamos cálculo (sin guardar en BD aún)
+                        listener.onHorometroCalculated(detalle, valorActual, position);
+                    }
+                }
+            }
+        };
+        holder.inputHorometro.addTextChangedListener(holder.horometroWatcher);
+
+        // 2. FocusListener para Guardar en BD al terminar
+        holder.inputHorometro.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && listener != null) {
+                listener.onHorometroFinalized(detalle);
+            }
+        });
+
+        // 3. EditorAction para Guardar al dar "Enter/Done" en el teclado
         holder.inputHorometro.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
                 ocultarTeclado(v);
                 quitarFocoDeInputs(holder);
-                procesarYActualizarHorometro(holder, detalle, position);
+                if (listener != null) {
+                    listener.onHorometroFinalized(detalle);
+                }
                 return true;
             }
             return false;
         });
 
-        holder.inputHorometro.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                procesarYActualizarHorometro(holder, detalle, position);
-            }
-        });
-
-        holder.btnConfirmarPagoMes.setOnClickListener(v -> {
-            if (listener != null) {
-                new MaterialAlertDialogBuilder(v.getContext())
-                        .setTitle("Confirmar Pago")
-                        .setMessage("¿Estás seguro de confirmar el pago del mes?")
-                        .setPositiveButton("Sí", (dialog, which) -> {
-                            String fechaActual = obtenerFechaActual();
-                            detalle.setPagoMesConfirmado(true);
-                            detalle.setFechaConfirmacionPagoMes(fechaActual);
-                            actualizarEstadoBotones(holder, detalle);
-                            actualizarColorFranja(holder, detalle);
-                            holder.tvConfirmacionPagoMes.setText("Pago realizado el " + fechaActual);
-                            holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
-                            deshabilitarInputHorometro(holder);
-                            listener.onPagoMesConfirmado(detalle, position);
-                        })
-                        .setNegativeButton("No", null)
-                        .show();
-            }
-        });
-
-        holder.btnConfirmarPagoHE.setOnClickListener(v -> {
-            if (listener != null) {
-                new MaterialAlertDialogBuilder(v.getContext())
-                        .setTitle("Confirmar Pago")
-                        .setMessage("¿Estás seguro de confirmar el pago de horas extras?")
-                        .setPositiveButton("Sí", (dialog, which) -> {
-                            String fechaActual = obtenerFechaActual();
-                            detalle.setPagoHEConfirmado(true);
-                            detalle.setFechaConfirmacionPagoHE(fechaActual);
-                            actualizarEstadoBotones(holder, detalle);
-                            actualizarColorFranja(holder, detalle);
-                            holder.tvConfirmacionPagoHE.setText("Pago realizado el " + fechaActual);
-                            holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
-                            deshabilitarInputHorometro(holder);
-                            listener.onPagoHEConfirmado(detalle, position);
-                        })
-                        .setNegativeButton("No", null)
-                        .show();
-            }
-        });
+        // Listeners de botones (igual que antes)
+        holder.btnConfirmarPagoMes.setOnClickListener(v -> mostrarConfirmacion(v.getContext(), detalle, position, true));
+        holder.btnConfirmarPagoHE.setOnClickListener(v -> mostrarConfirmacion(v.getContext(), detalle, position, false));
     }
-
+    private void mostrarConfirmacion(Context context, DetalleMes detalle, int position, boolean esMes) {
+        if (listener == null) return;
+        new MaterialAlertDialogBuilder(context)
+                .setTitle("Confirmar Pago")
+                .setMessage("¿Estás seguro de confirmar el pago " + (esMes ? "del mes" : "de horas extras") + "?")
+                .setPositiveButton("Sí", (dialog, which) -> {
+                    String fechaActual = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date());
+                    if (esMes) {
+                        detalle.setPagoMesConfirmado(true);
+                        detalle.setFechaConfirmacionPagoMes(fechaActual);
+                        listener.onPagoMesConfirmado(detalle, position);
+                    } else {
+                        detalle.setPagoHEConfirmado(true);
+                        detalle.setFechaConfirmacionPagoHE(fechaActual);
+                        listener.onPagoHEConfirmado(detalle, position);
+                    }
+                    notifyItemChanged(position); // Actualizar UI completa del item
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
     private String obtenerFechaActual() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         return sdf.format(new Date());
@@ -384,7 +418,6 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setFocusable(false);
         holder.btnConfirmarPagoMes.setEnabled(false);
         holder.btnConfirmarPagoHE.setEnabled(false);
-        // btnValorizacion eliminado
     }
 
     public List<DetalleMes> getItems() {
@@ -394,16 +427,29 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     private void actualizarEstadoBotones(ViewHolder holder, DetalleMes detalle) {
         boolean habilitarBotones = !modoSoloLectura;
 
-        if (detalle.getHorasExtras() <= 0) {
-            holder.btnConfirmarPagoHE.setEnabled(false);
-            holder.btnConfirmarPagoHE.setAlpha(0.5f);
+        // Botón HE
+        boolean hayHE = detalle.getHorasExtras() > 0;
+        holder.btnConfirmarPagoHE.setEnabled(habilitarBotones && hayHE && !detalle.isPagoHEConfirmado());
+        holder.btnConfirmarPagoHE.setAlpha((hayHE && !detalle.isPagoHEConfirmado()) ? 1f : 0.5f);
+
+        // Botón Mes
+        holder.btnConfirmarPagoMes.setEnabled(habilitarBotones && !detalle.isPagoMesConfirmado());
+        holder.btnConfirmarPagoMes.setAlpha(!detalle.isPagoMesConfirmado() ? 1f : 0.5f);
+
+        // Textos de confirmación
+        if (detalle.isPagoMesConfirmado()) {
+            holder.tvConfirmacionPagoMes.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoMes());
+            holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
         } else {
-            holder.btnConfirmarPagoHE.setEnabled(habilitarBotones && !detalle.isPagoHEConfirmado());
-            holder.btnConfirmarPagoHE.setAlpha(detalle.isPagoHEConfirmado() ? 0.5f : 1f);
+            holder.tvConfirmacionPagoMes.setVisibility(View.GONE);
         }
 
-        holder.btnConfirmarPagoMes.setEnabled(habilitarBotones && !detalle.isPagoMesConfirmado());
-        holder.btnConfirmarPagoMes.setAlpha(detalle.isPagoMesConfirmado() ? 0.5f : 1f);
+        if (detalle.isPagoHEConfirmado()) {
+            holder.tvConfirmacionPagoHE.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoHE());
+            holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvConfirmacionPagoHE.setVisibility(View.GONE);
+        }
     }
 
     private void actualizarColorFranja(ViewHolder holder, DetalleMes detalle) {
@@ -440,6 +486,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         TextInputEditText inputHorometro, inputHorasExtras, inputPrecioHE;
         Button btnConfirmarPagoMes, btnConfirmarPagoHE;
         TextView tvConfirmacionPagoMes, tvConfirmacionPagoHE;
+        TextWatcher horometroWatcher;
 
         ViewHolder(View itemView) {
             super(itemView);
