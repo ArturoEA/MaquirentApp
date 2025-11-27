@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -143,6 +144,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                         .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
                         .addActionIcon(R.drawable.icon_eliminar_rojo)
                         .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP,30)
                         .create()
                         .decorate();
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);

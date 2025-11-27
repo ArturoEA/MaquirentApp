@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +31,7 @@ import com.example.maquirentapp.Repository.CotizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.WordGenerator;
 import com.example.maquirentapp.Access.CotizacionesAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -224,7 +226,7 @@ public class HistorialCotizacionesFragment extends Fragment {
                 int pos = viewHolder.getAdapterPosition();
                 Cotizacion item = adapter.getItem(pos);
 
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar Cotización")
                         .setMessage("¿Eliminar " + item.getNumeroCotizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {
@@ -262,6 +264,7 @@ public class HistorialCotizacionesFragment extends Fragment {
                         .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
                         .addActionIcon(R.drawable.icon_eliminar_rojo)
                         .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 30)
                         .create()
                         .decorate();
                 super.onChildDraw(c, r, v, dX, dY, a, i);

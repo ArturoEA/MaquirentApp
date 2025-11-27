@@ -1,7 +1,9 @@
 package com.example.maquirentapp.View;
 
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +40,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import androidx.core.content.ContextCompat;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class HistorialAlquilerMensualFragment extends Fragment {
     private RecyclerView recyclerView;
@@ -267,9 +271,14 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void configurarSwipeToDelete() {
-        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(
+                0,
+                ItemTouchHelper.LEFT
+        ) {
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
                 return false;
             }
 
@@ -281,20 +290,26 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                 new MaterialAlertDialogBuilder(requireContext())
                         .setTitle("Eliminar alquiler")
                         .setMessage("¿Estás seguro de que deseas eliminar este alquiler?")
+                        .setCancelable(false)
                         .setPositiveButton("Eliminar", (dialog, which) -> {
-                            firebaseServicio.eliminarAlquilerMensual(alquilerAEliminar.getId(), new FirebaseServicio.OnAlquilerDeletedListener() {
-                                @Override
-                                public void onSuccess() {
-                                    Toast.makeText(getContext(), "Alquiler eliminado correctamente", Toast.LENGTH_SHORT).show();
-                                    fetchAlquileresMensuales();
-                                }
+                            firebaseServicio.eliminarAlquilerMensual(alquilerAEliminar.getId(),
+                                    new FirebaseServicio.OnAlquilerDeletedListener() {
+                                        @Override
+                                        public void onSuccess() {
+                                            Toast.makeText(getContext(),
+                                                    "Alquiler eliminado correctamente",
+                                                    Toast.LENGTH_SHORT).show();
+                                            fetchAlquileresMensuales();
+                                        }
 
-                                @Override
-                                public void onError(Exception e) {
-                                    Toast.makeText(getContext(), "Error al eliminar: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                    adapter.notifyItemChanged(position);
-                                }
-                            });
+                                        @Override
+                                        public void onError(Exception e) {
+                                            Toast.makeText(getContext(),
+                                                    "Error al eliminar: " + e.getMessage(),
+                                                    Toast.LENGTH_LONG).show();
+                                            adapter.notifyItemChanged(position);
+                                        }
+                                    });
                         })
                         .setNegativeButton("Cancelar", (dialog, which) -> {
                             adapter.notifyItemChanged(position);
@@ -302,11 +317,39 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                         .setOnCancelListener(dialog -> adapter.notifyItemChanged(position))
                         .show();
             }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c,
+                                    @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY,
+                                    int actionState,
+                                    boolean isCurrentlyActive) {
+
+                new RecyclerViewSwipeDecorator.Builder(
+                        c,
+                        recyclerView,
+                        viewHolder,
+                        dX,
+                        dY,
+                        actionState,
+                        isCurrentlyActive
+                )
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 30)
+                        .create()
+                        .decorate();
+
+                super.onChildDraw(c, recyclerView, viewHolder,
+                        dX, dY, actionState, isCurrentlyActive);
+            }
         };
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerView);
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerView);
     }
+
 
     private void mostrarDetallesAlquiler(AlquilerMensual alquiler) {
         View hostView = getView();
@@ -349,6 +392,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         configureGlobalFab();
         fetchAlquileresMensuales();
     }
+
     @Override
     public void onPause() {
         super.onPause();

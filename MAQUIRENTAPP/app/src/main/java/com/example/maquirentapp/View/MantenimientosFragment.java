@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,7 @@ import com.example.maquirentapp.Access.MantenimientosAdapter;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -52,6 +54,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class MantenimientosFragment extends Fragment {
     private static final String TAG = "MantenimientosFragment";
@@ -165,7 +169,8 @@ public class MantenimientosFragment extends Fragment {
 
         etBuscador.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -175,7 +180,8 @@ public class MantenimientosFragment extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -192,12 +198,14 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void setupSwipeToDelete() {
-        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
-            private final ColorDrawable background = new ColorDrawable(Color.RED);
-            private Drawable deleteIcon;
 
+        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(
+                0,
+                ItemTouchHelper.LEFT
+        ) {
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
                                   @NonNull RecyclerView.ViewHolder target) {
                 return false;
             }
@@ -207,68 +215,59 @@ public class MantenimientosFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 Mantenimiento mantenimiento = adapter.getMantenimientoAt(position);
 
-                // Remover del adapter
-                adapter.removerMantenimiento(position);
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Eliminar mantenimiento")
+                        .setMessage("¿Estás seguro de que deseas eliminar este mantenimiento?")
+                        .setCancelable(false)
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            adapter.removerMantenimiento(position);
 
-                // Mostrar Snackbar con opción de deshacer
-                Snackbar.make(recyclerView, "Mantenimiento eliminado", Snackbar.LENGTH_LONG)
-                        .setAction("DESHACER", v -> adapter.restaurarMantenimiento(mantenimiento, position))
-                        .addCallback(new Snackbar.Callback() {
-                            @Override
-                            public void onDismissed(Snackbar transientBottomBar, int event) {
-                                if (event != DISMISS_EVENT_ACTION) {
-                                    // Solo eliminar de Firestore si no se presionó deshacer
-                                    eliminarMantenimientoFirestore(mantenimiento);
-                                }
-                            }
+                            eliminarMantenimientoFirestore(mantenimiento);
+
+                            Toast.makeText(requireContext(),
+                                    "Mantenimiento eliminado",
+                                    Toast.LENGTH_SHORT).show();
+
+                            actualizarUI();
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> {
+                            adapter.notifyItemChanged(position);
                         })
                         .show();
-
-                actualizarUI();
             }
 
             @Override
-            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
-                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
-                                    int actionState, boolean isCurrentlyActive) {
-                View itemView = viewHolder.itemView;
+            public void onChildDraw(@NonNull Canvas c,
+                                    @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY,
+                                    int actionState,
+                                    boolean isCurrentlyActive) {
 
-                if (deleteIcon == null) {
-                    deleteIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_delete);
-                    if (deleteIcon != null) {
-                        deleteIcon.setTint(Color.WHITE);
-                    }
-                }
-
-                int iconMargin = (itemView.getHeight() - deleteIcon.getIntrinsicHeight()) / 2;
-                int iconTop = itemView.getTop() + iconMargin;
-                int iconBottom = iconTop + deleteIcon.getIntrinsicHeight();
-
-                if (dX < 0) { // Swipe izquierda
-                    int iconLeft = itemView.getRight() - iconMargin - deleteIcon.getIntrinsicWidth();
-                    int iconRight = itemView.getRight() - iconMargin;
-                    deleteIcon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
-
-                    background.setBounds(
-                            itemView.getRight() + (int) dX,
-                            itemView.getTop(),
-                            itemView.getRight(),
-                            itemView.getBottom()
-                    );
-                } else {
-                    background.setBounds(0, 0, 0, 0);
-                }
-
-                background.draw(c);
-                deleteIcon.draw(c);
+                new RecyclerViewSwipeDecorator.Builder(
+                        c,
+                        recyclerView,
+                        viewHolder,
+                        dX,
+                        dY,
+                        actionState,
+                        isCurrentlyActive
+                )
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 30)
+                        .create()
+                        .decorate();
 
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
         };
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerView);
+        new ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView);
     }
+
+
     private void activarModoBusqueda() {
         isSearchMode = true;
 
