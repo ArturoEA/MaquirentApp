@@ -85,7 +85,7 @@ public class ConfiguracionFragment extends Fragment {
             view.findViewById(R.id.tvHeaderUsuarios).setVisibility(View.GONE);
 
         // Ocultar Items de Menú
-        view.findViewById(R.id.item_historial).setVisibility(View.GONE);
+        view.findViewById(R.id.item_dashboard).setVisibility(View.GONE);
         view.findViewById(R.id.item_accesorios_diario).setVisibility(View.GONE);
         view.findViewById(R.id.item_accesorios_mensual).setVisibility(View.GONE);
         view.findViewById(R.id.item_mantenimientos).setVisibility(View.GONE);
@@ -150,8 +150,8 @@ public class ConfiguracionFragment extends Fragment {
 
     private void configurarItems(View view) {
         // Item Historial
-        View itemHistorial = view.findViewById(R.id.item_historial);
-        ((TextView) itemHistorial.findViewById(R.id.text_item_configuracion)).setText("Historial de ingresos");
+        View itemHistorial = view.findViewById(R.id.item_dashboard);
+        ((TextView) itemHistorial.findViewById(R.id.text_item_configuracion)).setText("Dashboard financiero");
         ((ImageView) itemHistorial.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_blanco_historial_ingresos);
 

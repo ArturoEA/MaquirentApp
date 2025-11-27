@@ -444,8 +444,8 @@
 
     <fragment
         android:id="@+id/historialIngresosFragment"
-        android:name="com.example.maquirentapp.View.HistorialIngresosFragment"
-        tools:layout="@layout/fragment_historial_ingresos">
+        android:name="com.example.maquirentapp.View.DashboardFinanzasFragment"
+        tools:layout="@layout/fragment_dashboard_finanzas">
 
     </fragment>
 

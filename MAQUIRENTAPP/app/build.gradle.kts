@@ -79,6 +79,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
     implementation("com.github.yalantis:ucrop:2.2.8")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // Apache POI
     implementation("org.apache.poi:poi:5.2.3")
