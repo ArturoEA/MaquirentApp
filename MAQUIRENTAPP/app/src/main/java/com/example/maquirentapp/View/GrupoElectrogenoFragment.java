@@ -102,6 +102,7 @@ public class GrupoElectrogenoFragment extends Fragment {
 
         cardHistorialAlquilerDiario.setOnClickListener(v -> {
             Bundle args = new Bundle();
+            if (codigoLocal != null) args.putString("codigo", codigoLocal);
             if (idGrupoLocal != null) args.putString("idGrupo", idGrupoLocal);
             Navigation.findNavController(view)
                     .navigate(R.id.action_grupoElectrogeno_to_historialAlquilerDiario, args);

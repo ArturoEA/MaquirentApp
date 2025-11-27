@@ -435,6 +435,12 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_generador);
                     setHeaderTitle("Nuevo alquiler mensual\n" + codigo);
+                } else if (dest.getId() == R.id.mantenimientosFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.icon_mantenimiento_blanco);
+                    setHeaderTitle("Mantenimientos\n" + codigo);
                 } else if (dest.getId() == R.id.gestionarUsuariosFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_gestionar_usuarios);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
@@ -479,6 +485,12 @@ public class MainActivity extends AppCompatActivity {
                 } else if (dest.getId() == R.id.listaClientesValorizaciones) {
                     setHeaderIcon(R.drawable.icon_valorizacion_blanco);
                     setHeaderTitle("Lista de clientes");
+                } else if (dest.getId() == R.id.historialAlquilerDiarioFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.icon_contrato_blanco);
+                    setHeaderTitle("Historial de alquileres\n"+codigo);
                 }
 
 

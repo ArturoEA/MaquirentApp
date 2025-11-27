@@ -1,6 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -11,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -94,6 +96,7 @@ public class PerfilFragment extends Fragment {
         setupListeners();
         cargarDatosUsuario();
     }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -105,6 +108,7 @@ public class PerfilFragment extends Fragment {
         super.onPause();
         hideGlobalFab();
     }
+
     private void configureGlobalFab() {
         if (getActivity() instanceof MainActivity) {
             MainActivity main = (MainActivity) getActivity();
@@ -115,11 +119,13 @@ public class PerfilFragment extends Fragment {
             );
         }
     }
+
     private void hideGlobalFab() {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).hideGlobalFab();
         }
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -130,6 +136,7 @@ public class PerfilFragment extends Fragment {
             if (activityFab != null) activityFab.setVisibility(View.GONE);
         }
     }
+
     private void initViews(View view) {
         imgFotoPerfil = view.findViewById(R.id.imgFotoPerfil);
         fabCambiarFoto = view.findViewById(R.id.fabCambiarFoto);
@@ -187,8 +194,18 @@ public class PerfilFragment extends Fragment {
 
                             // Cargar foto de perfil si existe
                             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+
+                                CircularProgressDrawable spinner = new CircularProgressDrawable(this.getContext());
+                                spinner.setStrokeWidth(5f);
+                                spinner.setCenterRadius(30f);
+                                spinner.setColorSchemeColors(Color.WHITE);
+                                spinner.start();
+
                                 Glide.with(this)
                                         .load(fotoPerfil)
+                                        .placeholder(spinner)
+                                        .error(R.drawable.ico_voltaje_blanco)
+                                        .centerCrop()
                                         .circleCrop()
                                         .into(imgFotoPerfil);
                             }
@@ -268,6 +285,7 @@ public class PerfilFragment extends Fragment {
             Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void actualizarDatosUsuario(String userId, String nuevoNombre, String fotoUrl) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("nombre", nuevoNombre);

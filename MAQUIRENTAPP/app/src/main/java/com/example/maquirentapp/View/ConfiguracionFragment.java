@@ -1,5 +1,6 @@
 package com.example.maquirentapp.View;
 
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -7,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -121,8 +123,17 @@ public class ConfiguracionFragment extends Fragment {
                     }
 
                     if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                        CircularProgressDrawable spinner = new CircularProgressDrawable(this.getContext());
+                        spinner.setStrokeWidth(5f);
+                        spinner.setCenterRadius(30f);
+                        spinner.setColorSchemeColors(Color.WHITE);
+                        spinner.start();
+
                         Glide.with(this)
                                 .load(fotoPerfil)
+                                .placeholder(spinner)
+                                .error(R.drawable.ico_voltaje_blanco)
+                                .centerCrop()
                                 .circleCrop()
                                 .into(imgFotoPerfil);
                     }

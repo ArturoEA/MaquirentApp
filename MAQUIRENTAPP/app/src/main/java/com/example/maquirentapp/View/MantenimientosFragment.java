@@ -464,7 +464,8 @@ public class MantenimientosFragment extends Fragment {
 
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
-            main.updateHeaderTitle(codigo);
+            main.updateHeaderTitle("Mantenimientos\n"+codigo);
+            main.updateHeaderIcon(R.drawable.icon_mantenimiento_blanco);
         }
 
         configureGlobalFab();
