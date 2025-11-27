@@ -26,6 +26,7 @@ import com.example.maquirentapp.Access.MantenimientoConfiguracionAdapter;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -388,7 +389,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
     // ===== ELIMINAR MANTENIMIENTO CONFIGURACION =====
 
     private void confirmarEliminacion(MantenimientoConfiguracion mantenimientoConfiguracion) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar Mantenimiento")
                 .setMessage("¿Estás seguro de que deseas eliminar \"" + mantenimientoConfiguracion.getNombre() + "\"?")
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarMantenimientoConfiguracion(mantenimientoConfiguracion))

@@ -29,6 +29,7 @@ import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -440,7 +441,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         inputCodigo.setHint("Código de 6 dígitos");
         inputCodigo.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Confirmar Eliminación")
                 .setMessage("Se ha enviado un código de verificación a tu correo.\n\n" +
                         "Grupo: " + grupo.getCodigo() + "\n" +

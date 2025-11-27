@@ -24,6 +24,7 @@ import com.example.maquirentapp.Model.ClienteValorizacion;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.ClientesValorizacionAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.Calendar;
@@ -137,7 +138,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
         picker.setValue(anioSeleccionado);
         picker.setWrapSelectorWheel(false); // Para que no de la vuelta
 
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Seleccionar Año Fiscal")
                 .setView(picker)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

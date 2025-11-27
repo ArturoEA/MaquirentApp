@@ -30,6 +30,7 @@ import com.example.maquirentapp.Access.AccesoriosAdapter;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -410,7 +411,7 @@ public class AccesoriosAlquilerDiarioFragment extends Fragment {
     // ===== ELIMINAR ACCESORIO =====
 
     private void confirmarEliminacion(Accesorio accesorio) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar Accesorio")
                 .setMessage("¿Estás seguro de que deseas eliminar \"" + accesorio.getNombre() + "\"?")
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarAccesorio(accesorio))

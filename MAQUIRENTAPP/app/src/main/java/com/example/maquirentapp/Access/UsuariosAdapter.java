@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.HttpsCallableResult;
@@ -115,7 +116,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             String[] roles = {"Empleado", "Administrador"};
             int selectedRole = "admin".equals(usuario.getRol()) ? 1 : 0;
 
-            new AlertDialog.Builder(context)
+            new MaterialAlertDialogBuilder(context)
                     .setTitle("Cambiar Rol - " + usuario.getNombre())
                     .setSingleChoiceItems(roles, selectedRole, (dialog, which) -> {
                         String nuevoRol = which == 0 ? "empleado" : "admin";
@@ -133,7 +134,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             int selectedEstado = "pendiente".equals(usuario.getEstado()) ? 1 :
                     "inactivo".equals(usuario.getEstado()) ? 2 : 0;
 
-            new AlertDialog.Builder(context)
+            new MaterialAlertDialogBuilder(context)
                     .setTitle("Cambiar Estado - " + usuario.getNombre())
                     .setSingleChoiceItems(estados, selectedEstado, (dialog, which) -> {
                         String nuevoEstado = which == 0 ? "activo" :
@@ -154,7 +155,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                 return;
             }
 
-            new AlertDialog.Builder(context)
+            new MaterialAlertDialogBuilder(context)
                     .setTitle("Eliminar Usuario")
                     .setMessage("Se enviará un código al administrador para confirmar la eliminación de " + usuario.getNombre() + ". ¿Continuar?")
                     .setPositiveButton("Enviar código", (dialog, which) -> {
@@ -183,7 +184,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             input.setHint("Código de 6 dígitos");
             input.setInputType(InputType.TYPE_CLASS_NUMBER);
 
-            new AlertDialog.Builder(context)
+            new MaterialAlertDialogBuilder(context)
                     .setTitle("Ingrese código de verificación")
                     .setView(input)
                     .setPositiveButton("Confirmar", (dialog, which) -> {

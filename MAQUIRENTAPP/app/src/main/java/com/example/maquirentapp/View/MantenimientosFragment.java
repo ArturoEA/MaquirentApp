@@ -359,7 +359,7 @@ public class MantenimientosFragment extends Fragment {
         layout.addView(monthPicker);
         layout.setPadding(250, 30, 100, 10);
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Seleccionar mes y año")
                 .setView(layout)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

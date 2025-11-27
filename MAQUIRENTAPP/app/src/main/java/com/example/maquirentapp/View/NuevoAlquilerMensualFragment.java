@@ -38,6 +38,7 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -742,7 +743,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private void mostrarDialogoConfirmarEnvio() {
         if (alquilerActual == null) return;
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Finalizar Alquiler")
                 .setMessage("Estás a punto de finalizar este alquiler. Una vez finalizado, no podrás editar los datos.\n\nSe enviará un código a tu correo para confirmar.")
                 .setPositiveButton("Enviar Código", (dialog, which) -> {
@@ -787,7 +788,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         container.setPadding(48, 16, 48, 16);
         container.addView(inputCodigo);
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Ingresa el Código")
                 .setMessage("Revisa tu correo e ingresa el código de 6 dígitos para finalizar el alquiler.")
                 .setView(container)

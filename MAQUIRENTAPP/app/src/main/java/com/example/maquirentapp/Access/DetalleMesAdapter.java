@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -279,7 +280,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         holder.btnConfirmarPagoMes.setOnClickListener(v -> {
             if (listener != null) {
-                new android.app.AlertDialog.Builder(v.getContext())
+                new MaterialAlertDialogBuilder(v.getContext())
                         .setTitle("Confirmar Pago")
                         .setMessage("¿Estás seguro de confirmar el pago del mes?")
                         .setPositiveButton("Sí", (dialog, which) -> {
@@ -300,7 +301,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         holder.btnConfirmarPagoHE.setOnClickListener(v -> {
             if (listener != null) {
-                new android.app.AlertDialog.Builder(v.getContext())
+                new MaterialAlertDialogBuilder(v.getContext())
                         .setTitle("Confirmar Pago")
                         .setMessage("¿Estás seguro de confirmar el pago de horas extras?")
                         .setPositiveButton("Sí", (dialog, which) -> {

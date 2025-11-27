@@ -28,6 +28,7 @@ import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.Calendar;
@@ -114,7 +115,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 AlquilerDia alquiler = adapter.getItem(position);
 
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar Alquiler")
                         .setMessage("¿Estás seguro de eliminar este alquiler?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
@@ -200,7 +201,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         pickerAnio.setMaxValue(2050);
         pickerAnio.setValue(anioActual);
 
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Seleccionar Mes y Año")
                 .setView(dialogView)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

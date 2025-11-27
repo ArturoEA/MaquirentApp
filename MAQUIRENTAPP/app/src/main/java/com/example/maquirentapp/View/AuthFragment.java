@@ -20,6 +20,7 @@ import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -308,21 +309,25 @@ public class AuthFragment extends Fragment {
     }
 
     private void mostrarDialogoRecuperarPassword() {
-        View dialogView = LayoutInflater.from(getContext()).inflate(
-                R.layout.dialog_recuperar_password, null);
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_recuperar_password, null);
 
         TextInputLayout layoutEmailRecuperar = dialogView.findViewById(R.id.layoutEmailRecuperar);
         TextInputEditText inputEmailRecuperar = dialogView.findViewById(R.id.inputEmailRecuperar);
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
                 .setPositiveButton("Enviar", null)
-                .setNegativeButton("Cancelar", null)
-                .create();
+                .setNegativeButton("Cancelar", null);
+
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
 
         dialog.setOnShowListener(dialogInterface -> {
+
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String email = inputEmailRecuperar.getText().toString().trim();
+
+                layoutEmailRecuperar.setError(null); // limpiar errores
 
                 if (TextUtils.isEmpty(email)) {
                     layoutEmailRecuperar.setError("Ingresa tu correo");
@@ -341,6 +346,7 @@ public class AuthFragment extends Fragment {
 
         dialog.show();
     }
+
     private void enviarEmailRecuperacion(String email) {
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
@@ -360,7 +366,7 @@ public class AuthFragment extends Fragment {
     }
 
     private void mostrarDialogoRegistroExitoso() {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("¡Registro exitoso!")
                 .setMessage("Tu cuenta ha sido creada y está pendiente de aprobación por un administrador. " +
                         "Recibirás una notificación cuando sea aprobada.")
@@ -375,7 +381,7 @@ public class AuthFragment extends Fragment {
     }
 
     private void mostrarDialogoExito(String titulo, String mensaje) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(titulo)
                 .setMessage(mensaje)
                 .setPositiveButton("Entendido", null)

@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 
 import com.example.maquirentapp.BuildConfig;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -60,7 +61,7 @@ public class UpdateManager {
     private void mostrarDialogoActualizacion() {
         if (activity.isFinishing()) return;
 
-        new AlertDialog.Builder(activity)
+        new MaterialAlertDialogBuilder(activity)
                 .setTitle("Actualización disponible")
                 .setMessage("Existe una nueva versión de MaquirentApp. Es necesario actualizar para continuar.")
                 .setCancelable(false)
@@ -81,7 +82,7 @@ public class UpdateManager {
     }
     private void solicitarPermisoInstalacion() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            new AlertDialog.Builder(activity)
+            new MaterialAlertDialogBuilder(activity)
                     .setTitle("Permiso necesario")
                     .setMessage("Para poder actualizar la app, necesitas activar el permiso de 'Instalar aplicaciones desconocidas' para MaquirentApp.")
                     .setPositiveButton("Ir a configuración", (dialog, which) -> {

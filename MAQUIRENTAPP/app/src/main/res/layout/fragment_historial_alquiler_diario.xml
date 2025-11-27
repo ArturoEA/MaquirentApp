@@ -14,10 +14,9 @@
 
         <ImageButton
             android:id="@+id/btnAnterior"
-            android:layout_width="30dp"
+            android:layout_width="40dp"
             android:layout_height="30dp"
-            android:src="@drawable/icon_flecha_negro"
-            android:backgroundTint="@android:color/transparent"/>
+            android:background="@drawable/icon_flecha_negro"/>
         <TextView
             android:id="@+id/tvMes"
             android:layout_width="wrap_content"
@@ -26,17 +25,17 @@
             android:layout_gravity="center_horizontal"
             android:textAlignment="center"
             android:textSize="16sp"
+            android:textStyle="bold"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Mes"/>
 
         <ImageButton
             android:id="@+id/btnSiguiente"
-            android:layout_width="30dp"
+            android:layout_width="40dp"
             android:layout_height="30dp"
-            android:src="@drawable/icon_flecha_negro"
             android:rotation="-180"
-            android:backgroundTint="@android:color/transparent"/>
+            android:background="@drawable/icon_flecha_negro"/>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -51,7 +50,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="No hay alquileres diarios para este período."
+        android:text="No hay alquileres diarios para este período"
+        android:textColor="@color/gray_dark"
         android:gravity="center"
         android:visibility="gone"/>
 

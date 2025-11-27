@@ -18,11 +18,9 @@
 
         <ImageButton
             android:id="@+id/btnAnterior"
-            android:layout_width="30dp"
+            android:layout_width="40dp"
             android:layout_height="30dp"
-            android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/icon_flecha_negro"
-            android:backgroundTint="@android:color/transparent"/>
+            android:background="@drawable/icon_flecha_negro"/>
 
         <TextView
             android:id="@+id/tvAnio"
@@ -36,12 +34,10 @@
 
         <ImageButton
             android:id="@+id/btnSiguiente"
-            android:layout_width="30dp"
+            android:layout_width="40dp"
             android:layout_height="30dp"
-            android:background="?selectableItemBackgroundBorderless"
-            android:rotation="180"
-            android:src="@drawable/icon_flecha_negro"
-            android:backgroundTint="@android:color/transparent"/>
+            android:background="@drawable/icon_flecha_negro"
+            android:rotation="180"/>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

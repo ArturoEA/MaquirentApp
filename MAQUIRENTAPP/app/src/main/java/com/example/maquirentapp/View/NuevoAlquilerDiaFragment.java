@@ -32,6 +32,7 @@ import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -408,7 +409,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             return;
         }
 
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Finalizar Alquiler")
                 .setMessage("¿Estás seguro de finalizar este alquiler? Se registrará el ingreso y ya no se podrá modificar.")
                 .setPositiveButton("Sí, finalizar", (dialog, which) -> {

@@ -30,6 +30,7 @@ import com.example.maquirentapp.Model.FichaTecnica;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.ViewModel.FichaTecnicaViewModel;
 import com.example.maquirentapp.adaptadores.FichasTecnicasAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
@@ -198,7 +199,7 @@ public class FichasTecnicasFragment extends Fragment {
     }
 
     private void mostrarDialogoEliminar(FichaTecnica ficha) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar ficha")
                 .setMessage("¿Estás seguro de eliminar '" + ficha.getNombreArchivo() + "'?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {

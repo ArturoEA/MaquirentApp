@@ -27,6 +27,7 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.CertificadosRepository;
 import com.example.maquirentapp.Utils.PdfGenerator;
 import com.example.maquirentapp.databinding.FragmentNuevoCertificadoBinding;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -173,7 +174,7 @@ public class NuevoCertificadoFragment extends Fragment {
         return texto != null && !texto.trim().isEmpty();
     }
     private void mostrarAlertaFaltanDatos() {
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Datos Incompletos")
                 .setMessage("El grupo seleccionado no tiene los datos técnicos (Placa, Motor, Serie) registrados en el módulo de Información General.\n\nPor favor complétalos antes de emitir el certificado.")
                 .setPositiveButton("Entendido", null)
@@ -342,7 +343,7 @@ public class NuevoCertificadoFragment extends Fragment {
     }
 
     private void mostrarDialogoOpciones(File archivo) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Certificado PDF Generado")
                 .setMessage("¿Qué deseas hacer con el certificado?")
                 .setPositiveButton("Abrir", (dialog, which) -> abrirPdf(archivo))

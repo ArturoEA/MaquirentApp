@@ -23,6 +23,7 @@ import com.example.maquirentapp.Model.Valorizacion;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.ValorizacionesAdapter;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +130,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
                 int pos = viewHolder.getAdapterPosition();
                 Valorizacion item = adapter.getItem(pos);
 
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar")
                         .setMessage("¿Eliminar valorización " + item.getNumeroValorizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {

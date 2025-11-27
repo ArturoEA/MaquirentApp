@@ -39,6 +39,7 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.adaptadores.PlanoAdapter;
 import com.github.chrisbanes.photoview.PhotoView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.io.File;
@@ -182,7 +183,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         btnDelete.setOnClickListener(v -> {
-            new AlertDialog.Builder(getContext())
+            new MaterialAlertDialogBuilder(getContext())
                     .setTitle("Eliminar Plano")
                     .setMessage("¿Estás seguro de eliminar esta imagen?")
                     .setPositiveButton("Eliminar", (d, w) -> {

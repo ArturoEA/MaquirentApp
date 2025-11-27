@@ -42,6 +42,7 @@ import com.example.maquirentapp.Access.FiltroCategoriasAdapter;
 import com.example.maquirentapp.Access.FotosSimpleAdapter;
 import com.example.maquirentapp.Access.SpecsPlacaAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -159,7 +160,7 @@ public class InformacionGeneralFragment extends Fragment {
 
             @Override
             public void onEliminarItem(FiltroCategoria categoria, FiltroItem item) {
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar filtro")
                         .setMessage("¿Estás seguro de eliminar este item?")
                         .setPositiveButton("Eliminar", (d, w) -> {
@@ -182,7 +183,7 @@ public class InformacionGeneralFragment extends Fragment {
 
             @Override
             public void onEliminarCategoria(FiltroCategoria categoria) {
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar " + categoria.getNombreCategoria())
                         .setMessage("¿Borrar esta categoría y sus items?")
                         .setPositiveButton("Sí", (d, w) -> {
@@ -229,7 +230,7 @@ public class InformacionGeneralFragment extends Fragment {
 
     private void mostrarDialogoNuevaCategoria() {
         EditText input = new EditText(getContext());
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Nueva categoría de filtro")
                 .setView(input)
                 .setPositiveButton("Crear", (d, w) -> {
@@ -351,7 +352,7 @@ public class InformacionGeneralFragment extends Fragment {
 
                 @Override
                 public void onEliminarFoto(String url) {
-                    new AlertDialog.Builder(getContext())
+                    new MaterialAlertDialogBuilder(getContext())
                             .setTitle("Eliminar foto")
                             .setMessage("¿Estás seguro?")
                             .setPositiveButton("Sí", (d, w) -> {
@@ -387,7 +388,7 @@ public class InformacionGeneralFragment extends Fragment {
             specsAdapter = new SpecsPlacaAdapter(infoPlacaActual.getEspecificaciones(), new SpecsPlacaAdapter.OnSpecActionListener() {
                 @Override
                 public void onEliminarSpec(Map<String, String> spec) {
-                    new AlertDialog.Builder(getContext())
+                    new MaterialAlertDialogBuilder(getContext())
                             .setTitle("Eliminar dato")
                             .setMessage("¿Eliminar '" + spec.get("clave") + "'?")
                             .setPositiveButton("Sí", (d, w) -> {

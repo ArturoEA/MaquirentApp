@@ -26,6 +26,7 @@ import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -318,7 +319,7 @@ public class PerfilFragment extends Fragment {
         container.addView(inputPasswordNueva);
         container.addView(inputPasswordConfirmar);
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Cambiar Contraseña")
                 .setView(container)
                 .setPositiveButton("Cambiar", (dialog, which) -> {
@@ -375,7 +376,7 @@ public class PerfilFragment extends Fragment {
     }
 
     private void cerrarSesion() {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Cerrar Sesión")
                 .setMessage("¿Estás seguro de que deseas cerrar sesión?")
                 .setPositiveButton("Sí", (dialog, which) -> {

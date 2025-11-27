@@ -144,7 +144,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         layout.addView(yearPicker);
         layout.setPadding(100, 50, 100, 50);
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Seleccionar año")
                 .setView(layout)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

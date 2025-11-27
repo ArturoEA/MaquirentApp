@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ import com.example.maquirentapp.Model.Tarea;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.Network.FirebaseServicio;
 import com.example.maquirentapp.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -96,7 +98,7 @@ public class TareasFragment extends Fragment {
 
                 Tarea tarea = adapter.getItem(position);
 
-                new AlertDialog.Builder(getContext())
+                new MaterialAlertDialogBuilder(getContext())
                         .setTitle("Eliminar Tarea")
                         .setMessage("¿Estás seguro de eliminar '" + tarea.getTitulo() + "'?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
@@ -137,6 +139,7 @@ public class TareasFragment extends Fragment {
                         .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
                         .addActionIcon(R.drawable.icon_eliminar_rojo)
                         .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 30)
                         .create()
                         .decorate();
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);

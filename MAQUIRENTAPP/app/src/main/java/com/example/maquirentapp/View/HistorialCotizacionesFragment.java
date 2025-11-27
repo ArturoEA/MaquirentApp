@@ -116,7 +116,7 @@ public class HistorialCotizacionesFragment extends Fragment {
         picker.setMaxValue(2030);
         picker.setValue(anioSeleccionado);
 
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(getContext())
                 .setTitle("Seleccionar Año")
                 .setView(picker)
                 .setPositiveButton("OK", (d, w) -> {

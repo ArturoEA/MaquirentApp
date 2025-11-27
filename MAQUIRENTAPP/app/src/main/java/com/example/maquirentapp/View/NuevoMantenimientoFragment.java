@@ -42,6 +42,7 @@ import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.ItemsMantenimientoSeleccionablesAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -500,7 +501,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
     }
     private void confirmarEliminarFoto(int index, boolean esUrl) {
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Eliminar foto")
                 .setMessage("¿Deseas eliminar esta foto?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {
