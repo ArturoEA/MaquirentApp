@@ -20,10 +20,12 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
@@ -387,17 +389,40 @@ public class FirebaseServicio {
                 .addOnFailureListener(listener::onError);
     }
 
-    public void eliminarAlquilerMensual(String id, OnAlquilerDeletedListener listener) {
-        if (id == null || id.isEmpty()) {
+    public void eliminarAlquilerMensual(String idAlquiler, OnAlquilerDeletedListener listener) {
+        if (idAlquiler == null || idAlquiler.isEmpty()) {
             listener.onError(new Exception("ID de alquiler inválido"));
             return;
         }
 
-        db.collection("alquileresMensuales")
-                .document(id)
-                .delete()
-                .addOnSuccessListener(aVoid -> listener.onSuccess())
-                .addOnFailureListener(listener::onError);
+        WriteBatch batch = db.batch();
+
+        Task<QuerySnapshot> taskDetalles = db.collection("detallesMes")
+                .whereEqualTo("idAlquilerMensual", idAlquiler).get();
+
+        Task<QuerySnapshot> taskIngresos = db.collection("ingresosRegistrados")
+                .whereEqualTo("idAlquiler", idAlquiler).get();
+
+        Tasks.whenAllSuccess(taskDetalles, taskIngresos).addOnSuccessListener(results -> {
+            QuerySnapshot detallesSnapshot = (QuerySnapshot) results.get(0);
+            QuerySnapshot ingresosSnapshot = (QuerySnapshot) results.get(1);
+
+            for (DocumentSnapshot doc : detallesSnapshot.getDocuments()) {
+                batch.delete(doc.getReference());
+            }
+
+            for (DocumentSnapshot doc : ingresosSnapshot.getDocuments()) {
+                batch.delete(doc.getReference());
+            }
+
+            DocumentReference alquilerRef = db.collection("alquileresMensuales").document(idAlquiler);
+            batch.delete(alquilerRef);
+
+            batch.commit()
+                    .addOnSuccessListener(aVoid -> listener.onSuccess())
+                    .addOnFailureListener(listener::onError);
+
+        }).addOnFailureListener(listener::onError);
     }
 
     // Mét0dos para DetalleMes
@@ -661,16 +686,28 @@ public class FirebaseServicio {
                 .addOnSuccessListener(aVoid -> listener.onSuccess())
                 .addOnFailureListener(listener::onError);
     }
-
-    public void eliminarAlquilerDia(String id, OnSimpleCallback listener) {
-        if (id == null || id.isEmpty()) {
+    public void eliminarAlquilerDia(String idAlquiler, OnSimpleCallback listener) {
+        if (idAlquiler == null || idAlquiler.isEmpty()) {
             listener.onError(new Exception("ID de alquiler inválido"));
             return;
         }
-        db.collection("alquileresDiarios")
-                .document(id)
-                .delete()
-                .addOnSuccessListener(aVoid -> listener.onSuccess())
+        db.collection("ingresosRegistrados")
+                .whereEqualTo("idAlquiler", idAlquiler)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    WriteBatch batch = db.batch();
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        batch.delete(doc.getReference());
+                    }
+
+                    DocumentReference alquilerRef = db.collection("alquileresDiarios").document(idAlquiler);
+                    batch.delete(alquilerRef);
+
+                    batch.commit()
+                            .addOnSuccessListener(aVoid -> listener.onSuccess())
+                            .addOnFailureListener(listener::onError);
+                })
                 .addOnFailureListener(listener::onError);
     }
 
