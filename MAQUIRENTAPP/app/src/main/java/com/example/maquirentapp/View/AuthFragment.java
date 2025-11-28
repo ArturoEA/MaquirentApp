@@ -141,6 +141,7 @@ public class AuthFragment extends Fragment {
         firebaseServicio.iniciarSesion(email, password, new FirebaseServicio.OnAuthListener() {
             @Override
             public void onLoginExitoso(Usuario usuario) {
+                if (getContext() == null) return;
                 Toast.makeText(getContext(), "Bienvenido " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
                 reiniciarMainActivity();
             }
@@ -152,6 +153,7 @@ public class AuthFragment extends Fragment {
 
             @Override
             public void onUsuarioPendiente() {
+                if (getContext() == null) return;
                 Toast.makeText(getContext(),
                         "Tu cuenta está pendiente de aprobación por un administrador",
                         Toast.LENGTH_LONG).show();
@@ -160,6 +162,7 @@ public class AuthFragment extends Fragment {
 
             @Override
             public void onUsuarioInactivo() {
+                if (getContext() == null) return;
                 Toast.makeText(getContext(),
                         "Tu cuenta ha sido desactivada. Contacta al administrador",
                         Toast.LENGTH_LONG).show();
@@ -168,6 +171,7 @@ public class AuthFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (getContext() == null) return;
                 // Mensaje genérico para no revelar información
                 Toast.makeText(getContext(),
                         "Credenciales incorrectas. Verifica tu correo y contraseña",

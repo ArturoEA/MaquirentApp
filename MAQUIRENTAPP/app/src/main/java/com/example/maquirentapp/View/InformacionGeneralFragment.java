@@ -410,31 +410,36 @@ public class InformacionGeneralFragment extends Fragment {
     }
     private void subirFotoPlaca(Uri uri) {
         Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
+        Context safeContext = getContext();
+        if (safeContext == null) return;
 
         new Thread(() -> {
-            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uri);
+            byte[] dataImagen = ImageUtils.comprimirImagen(safeContext, uri);
 
-            requireActivity().runOnUiThread(() -> {
-                if (dataImagen != null) {
-                    firebaseServicio.subirFotoPlacaBytes(codigoGrupo, dataImagen, new FirebaseServicio.OnUrlUploadedListener() {
-                        @Override
-                        public void onSuccess(String url) {
-                            infoPlacaActual.getImagenesUrls().add(url);
-                            if (fotosAdapter != null) fotosAdapter.notifyDataSetChanged();
+            if (getActivity() != null){
+                requireActivity().runOnUiThread(() -> {
+                    if (dataImagen != null) {
+                        firebaseServicio.subirFotoPlacaBytes(codigoGrupo, dataImagen, new FirebaseServicio.OnUrlUploadedListener() {
+                            @Override
+                            public void onSuccess(String url) {
+                                infoPlacaActual.getImagenesUrls().add(url);
+                                if (fotosAdapter != null) fotosAdapter.notifyDataSetChanged();
 
-                            guardarPlacaSinRecargar();
-                            Toast.makeText(getContext(), "Foto de placa subida", Toast.LENGTH_SHORT).show();
-                        }
+                                guardarPlacaSinRecargar();
+                                Toast.makeText(getContext(), "Foto de placa subida", Toast.LENGTH_SHORT).show();
+                            }
 
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(getContext(), "Error al subir", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    Toast.makeText(getContext(), "Error al comprimir imagen", Toast.LENGTH_SHORT).show();
-                }
-            });
+                            @Override
+                            public void onError(Exception e) {
+                                Toast.makeText(getContext(), "Error al subir", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(getContext(), "Error al comprimir imagen", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
         }).start();
     }
     private void mostrarDialogoSpec(Map<String, String> specExistente, int position) {

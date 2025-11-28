@@ -111,31 +111,37 @@ public class FotosEquipoFragment extends Fragment {
     }
     private void subirImagen(Uri uri) {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
+        Context safeContext = getContext();
+        if (safeContext == null) return;
 
         new Thread(() -> {
-            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uri);
+            byte[] dataImagen = ImageUtils.comprimirImagen(safeContext, uri);
 
-            requireActivity().runOnUiThread(() -> {
-                if (dataImagen != null) {
-                    firebaseServicio.subirFotoEquipoBytes(idGrupo, dataImagen, new FirebaseServicio.OnSimpleCallback() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(getContext(), "Foto subida correctamente", Toast.LENGTH_SHORT).show();
-                            cargarFotos();
-                            if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        }
+            if(getActivity() != null){
+                getActivity().runOnUiThread(() -> {
+                    if (dataImagen != null) {
+                        firebaseServicio.subirFotoEquipoBytes(idGrupo, dataImagen, new FirebaseServicio.OnSimpleCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Toast.makeText(getContext(), "Foto subida correctamente", Toast.LENGTH_SHORT).show();
+                                cargarFotos();
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            }
 
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        }
-                    });
-                } else {
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
-                }
-            });
+                            @Override
+                            public void onError(Exception e) {
+                                Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            }
+                        });
+                    } else {
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
         }).start();
     }
 

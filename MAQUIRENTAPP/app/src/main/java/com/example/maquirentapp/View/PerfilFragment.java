@@ -233,6 +233,7 @@ public class PerfilFragment extends Fragment {
         String nuevoNombre = inputNombrePerfil.getText().toString().trim();
 
         if (nuevoNombre.isEmpty()) {
+            if (getContext() == null) return;
             Toast.makeText(getContext(), "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -309,6 +310,7 @@ public class PerfilFragment extends Fragment {
 
                 })
                 .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(),
                             "Error al guardar cambios",
                             Toast.LENGTH_SHORT).show();

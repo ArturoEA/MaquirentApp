@@ -104,31 +104,42 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
     private void subirImagen(Uri uri) {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
+        Context safeContext = getContext();
+        if (safeContext == null) return;
 
         new Thread(() -> {
-            byte[] dataComprimida = ImageUtils.comprimirImagen(requireContext(), uri);
+            byte[] dataComprimida = ImageUtils.comprimirImagen(safeContext, uri);
 
-            requireActivity().runOnUiThread(() -> {
-                if (dataComprimida != null) {
-                    firebaseServicio.subirPlanoBytes(dataComprimida, new FirebaseServicio.OnSimpleCallback() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
-                            cargarPlanos();
-                            if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        }
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    if (getContext() == null) return;
 
-                        @Override
-                        public void onError(Exception e) {
-                            Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        }
-                    });
-                } else {
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
-                }
-            });
+                    if (dataComprimida != null) {
+                        firebaseServicio.subirPlanoBytes(dataComprimida, new FirebaseServicio.OnSimpleCallback() {
+                            @Override
+                            public void onSuccess() {
+                                if (getContext() == null) return;
+
+                                Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
+                                cargarPlanos();
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                if (getContext() == null) return;
+
+                                Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            }
+                        });
+                    } else {
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         }).start();
     }
 
