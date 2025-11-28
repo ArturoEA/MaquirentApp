@@ -286,16 +286,6 @@ public class NuevoCertificadoFragment extends Fragment {
     }
 
     private void generarDocumentoEnSegundoPlano(CertificadoOperatividad cert) {
-        // Recuperar URL de la foto si existe
-        String urlFoto = null;
-        if (datosTecnicosCargados != null &&
-                datosTecnicosCargados.getImagenesUrls() != null &&
-                !datosTecnicosCargados.getImagenesUrls().isEmpty()) {
-            urlFoto = datosTecnicosCargados.getImagenesUrls().get(0);
-        }
-
-        final String fotoFinal = urlFoto;
-
         // Generar PDF en hilo secundario
         new Thread(() -> {
             try {
@@ -305,8 +295,7 @@ public class NuevoCertificadoFragment extends Fragment {
                 File archivo = generator.generarCertificadoPdf(
                         requireContext(),
                         cert,
-                        codigoGrupoSeleccionado,
-                        fotoFinal
+                        codigoGrupoSeleccionado
                 );
 
                 // Actualizar UI en hilo principal

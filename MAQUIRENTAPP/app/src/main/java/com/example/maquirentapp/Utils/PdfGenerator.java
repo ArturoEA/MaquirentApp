@@ -1,5 +1,6 @@
 package com.example.maquirentapp.Utils;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -8,8 +9,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +25,7 @@ import com.example.maquirentapp.R;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class PdfGenerator {
     private static final int A4_WIDTH_PTS = 595;
@@ -29,7 +33,7 @@ public class PdfGenerator {
     private static final int RENDER_WIDTH_PX = 1190;
     private static final float TARGET_DENSITY = 2.0f;
 
-    public File generarCertificadoPdf(Context context, CertificadoOperatividad cert, String codigoGrupo, String urlFoto) throws Exception {
+    public File generarCertificadoPdf(Context context, CertificadoOperatividad cert, String codigoGrupo) throws Exception {
 
         // 1. CREAR CONTEXTO CON DENSIDAD CONTROLADA
         Context pdfContext = createContextWithDensity(context, TARGET_DENSITY);
@@ -83,28 +87,45 @@ public class PdfGenerator {
         // 7. Guardar
         String nombreArchivo = "Certificado_" + (cert.getNumeroCertificado() != null ? cert.getNumeroCertificado() : "borrador") + ".pdf";
 
-        // Intentar guardar en carpeta pública Documentos
-        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "MaquirentCertificados");
-        if (!directory.exists()) directory.mkdirs();
+        File archivoGenerado = guardarPdfEnDispositivo(context, document, nombreArchivo);
 
-        File archivoFinal = new File(directory, nombreArchivo);
+        document.close();
+        return archivoGenerado;
+    }
+    private File guardarPdfEnDispositivo(Context context, PdfDocument document, String nombreArchivo) throws IOException {
+        OutputStream fos;
+        File archivoSalida = null;
 
-        try {
-            FileOutputStream fos = new FileOutputStream(archivoFinal);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, nombreArchivo);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/MaquirentCertificados");
+
+            Uri uri = context.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
+            if (uri != null) {
+                fos = context.getContentResolver().openOutputStream(uri);
+                document.writeTo(fos);
+                if (fos != null) fos.close();
+
+                archivoSalida = new File(context.getCacheDir(), nombreArchivo);
+                FileOutputStream fosCache = new FileOutputStream(archivoSalida);
+                document.writeTo(fosCache);
+                fosCache.close();
+            } else {
+                throw new IOException("No se pudo crear el archivo en MediaStore");
+            }
+        }
+        else {
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "MaquirentCertificados");
+            if (!directory.exists()) directory.mkdirs();
+            archivoSalida = new File(directory, nombreArchivo);
+            fos = new FileOutputStream(archivoSalida);
             document.writeTo(fos);
-            document.close();
-            fos.close();
-        } catch (IOException e) {
-            File cacheDir = new File(context.getCacheDir(), "certificados");
-            if (!cacheDir.exists()) cacheDir.mkdirs();
-            archivoFinal = new File(cacheDir, nombreArchivo);
-            FileOutputStream fos = new FileOutputStream(archivoFinal);
-            document.writeTo(fos);
-            document.close();
             fos.close();
         }
 
-        return archivoFinal;
+        return archivoSalida;
     }
     private Context createContextWithDensity(Context context, float densityScale) {
         Configuration configuration = new Configuration(context.getResources().getConfiguration());
