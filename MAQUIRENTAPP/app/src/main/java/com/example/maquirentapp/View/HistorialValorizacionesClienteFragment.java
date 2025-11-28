@@ -130,7 +130,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
                 int pos = viewHolder.getAdapterPosition();
                 Valorizacion item = adapter.getItem(pos);
 
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar")
                         .setMessage("¿Eliminar valorización " + item.getNumeroValorizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {

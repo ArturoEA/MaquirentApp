@@ -480,7 +480,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         inputCodigo.setHint("Código de 6 dígitos");
         inputCodigo.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Confirmar Eliminación")
                 .setMessage("Se ha enviado un código de verificación a tu correo.\n\n" +
                         "Grupo: " + grupo.getCodigo() + "\n" +

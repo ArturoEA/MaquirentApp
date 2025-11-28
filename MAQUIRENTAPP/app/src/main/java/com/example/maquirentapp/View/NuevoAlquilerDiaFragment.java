@@ -409,7 +409,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             return;
         }
 
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Finalizar Alquiler")
                 .setMessage("¿Estás seguro de finalizar este alquiler? Se registrará el ingreso y ya no se podrá modificar.")
                 .setPositiveButton("Sí, finalizar", (dialog, which) -> {

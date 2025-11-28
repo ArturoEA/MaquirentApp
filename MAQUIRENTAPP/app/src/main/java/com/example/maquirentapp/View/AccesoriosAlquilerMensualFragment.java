@@ -409,7 +409,7 @@ public class AccesoriosAlquilerMensualFragment extends Fragment {
     // ===== ELIMINAR ACCESORIO =====
 
     private void confirmarEliminacion(Accesorio accesorio) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Eliminar Accesorio")
                 .setMessage("¿Estás seguro de que deseas eliminar \"" + accesorio.getNombre() + "\"?")
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarAccesorio(accesorio))

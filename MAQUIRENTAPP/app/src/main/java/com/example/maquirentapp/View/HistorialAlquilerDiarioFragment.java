@@ -115,7 +115,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 AlquilerDia alquiler = adapter.getItem(position);
 
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar Alquiler")
                         .setMessage("¿Estás seguro de eliminar este alquiler?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
@@ -201,7 +201,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         pickerAnio.setMaxValue(2050);
         pickerAnio.setValue(anioActual);
 
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Seleccionar Mes y Año")
                 .setView(dialogView)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

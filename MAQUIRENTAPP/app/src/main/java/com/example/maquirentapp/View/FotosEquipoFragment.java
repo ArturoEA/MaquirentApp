@@ -182,7 +182,7 @@ public class FotosEquipoFragment extends Fragment {
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         btnDelete.setOnClickListener(v -> {
-            new MaterialAlertDialogBuilder(getContext())
+            new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                     .setTitle("Eliminar Foto")
                     .setMessage("¿Estás seguro?")
                     .setPositiveButton("Eliminar", (d, w) -> {

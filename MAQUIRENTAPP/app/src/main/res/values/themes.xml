@@ -8,28 +8,43 @@
         <item name="colorAccent">@color/gris_200</item>
     </style>
 
-    <style name="DialogoConFuenteAnta" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+    <style name="DialogoConFuenteAnta" parent="Theme.Material3.DayNight.Dialog.Alert">
         <item name="materialAlertDialogTitleTextStyle">@style/MiTextoTituloDialogo</item>
         <item name="materialAlertDialogBodyTextStyle">@style/MiTextoCuerpoDialogo</item>
-
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Material3.Corner.ExtraLarge</item>
-
         <item name="buttonBarPositiveButtonStyle">@style/MiBotonDialogo</item>
         <item name="buttonBarNegativeButtonStyle">@style/MiBotonDialogo</item>
+        <item name="buttonBarNeutralButtonStyle">@style/MiBotonDialogo</item>
+
+        <item name="android:fontFamily">@font/anta_font</item>
+        <item name="fontFamily">@font/anta_font</item>
+
+        <item name="colorSurface">@color/black</item>
     </style>
 
     <style name="MiTextoTituloDialogo" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:fontFamily">@font/anta_font</item>
+        <item name="fontFamily">@font/anta_font</item>
         <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="MiTextoCuerpoDialogo" parent="TextAppearance.Material3.BodyMedium">
         <item name="android:fontFamily">@font/anta_font</item>
+        <item name="fontFamily">@font/anta_font</item>
         <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
     <style name="MiBotonDialogo" parent="Widget.Material3.Button.TextButton">
         <item name="android:fontFamily">@font/anta_font</item>
+        <item name="fontFamily">@font/anta_font</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ShapeAppearance.MisDialogos.Redondeado" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
     </style>
 
     <style name="EstiloTextoTitulo" parent="TextAppearance.MaterialComponents.Headline5">

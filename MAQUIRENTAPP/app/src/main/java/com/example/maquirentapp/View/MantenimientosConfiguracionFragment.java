@@ -389,7 +389,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
     // ===== ELIMINAR MANTENIMIENTO CONFIGURACION =====
 
     private void confirmarEliminacion(MantenimientoConfiguracion mantenimientoConfiguracion) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Eliminar Mantenimiento")
                 .setMessage("¿Estás seguro de que deseas eliminar \"" + mantenimientoConfiguracion.getNombre() + "\"?")
                 .setPositiveButton("Eliminar", (dialog, which) -> eliminarMantenimientoConfiguracion(mantenimientoConfiguracion))

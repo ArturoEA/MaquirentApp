@@ -144,7 +144,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         layout.addView(yearPicker);
         layout.setPadding(100, 50, 100, 50);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Seleccionar año")
                 .setView(layout)
                 .setPositiveButton("Aceptar", (dialog, which) -> {
@@ -287,7 +287,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 AlquilerMensual alquilerAEliminar = adapter.getItem(position);
 
-                new MaterialAlertDialogBuilder(requireContext())
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar alquiler")
                         .setMessage("¿Estás seguro de que deseas eliminar este alquiler?")
                         .setCancelable(false)
@@ -296,6 +296,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                                     new FirebaseServicio.OnAlquilerDeletedListener() {
                                         @Override
                                         public void onSuccess() {
+                                            if (getContext() == null) return;
                                             Toast.makeText(getContext(),
                                                     "Alquiler eliminado correctamente",
                                                     Toast.LENGTH_SHORT).show();
@@ -304,6 +305,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
                                         @Override
                                         public void onError(Exception e) {
+                                            if (getContext() == null) return;
                                             Toast.makeText(getContext(),
                                                     "Error al eliminar: " + e.getMessage(),
                                                     Toast.LENGTH_LONG).show();

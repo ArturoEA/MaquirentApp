@@ -98,7 +98,7 @@ public class TareasFragment extends Fragment {
 
                 Tarea tarea = adapter.getItem(position);
 
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar Tarea")
                         .setMessage("¿Estás seguro de eliminar '" + tarea.getTitulo() + "'?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {

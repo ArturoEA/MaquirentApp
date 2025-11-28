@@ -199,7 +199,7 @@ public class FichasTecnicasFragment extends Fragment {
     }
 
     private void mostrarDialogoEliminar(FichaTecnica ficha) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Eliminar ficha")
                 .setMessage("¿Estás seguro de eliminar '" + ficha.getNombreArchivo() + "'?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {

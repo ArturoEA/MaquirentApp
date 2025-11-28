@@ -174,7 +174,7 @@ public class NuevoCertificadoFragment extends Fragment {
         return texto != null && !texto.trim().isEmpty();
     }
     private void mostrarAlertaFaltanDatos() {
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Datos Incompletos")
                 .setMessage("El grupo seleccionado no tiene los datos técnicos (Placa, Motor, Serie) registrados en el módulo de Información General.\n\nPor favor complétalos antes de emitir el certificado.")
                 .setPositiveButton("Entendido", null)
@@ -343,7 +343,7 @@ public class NuevoCertificadoFragment extends Fragment {
     }
 
     private void mostrarDialogoOpciones(File archivo) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Certificado PDF Generado")
                 .setMessage("¿Qué deseas hacer con el certificado?")
                 .setPositiveButton("Abrir", (dialog, which) -> abrirPdf(archivo))

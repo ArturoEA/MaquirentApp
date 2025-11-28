@@ -1,5 +1,7 @@
 package com.example.maquirentapp.adaptadores;
 
+import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -115,17 +117,29 @@ public class AlquilerMensualAdapter extends RecyclerView.Adapter<AlquilerMensual
             firebaseServicio.getAccesorioPorId(accesorioId, new FirebaseServicio.OnAccesorioLoadedListener() {
                 @Override
                 public void onSuccess(Accesorio accesorio) {
+                    Context context = h.itemView.getContext();
+                    if (context == null) return;
+                    if (context instanceof Activity) {
+                        if (((Activity) context).isDestroyed() ||
+                                ((Activity) context).isFinishing()) {
+                            return;
+                        }
+                    }
                     ImageView icon = new ImageView(h.itemView.getContext());
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(110, 110);
                     params.setMargins(0, 0, 15, 0);
                     icon.setLayoutParams(params);
 
                     if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
-                        Glide.with(h.itemView.getContext())
-                                .load(accesorio.getIcono())
-                                .placeholder(R.drawable.icon_extintor_blanco)
-                                .error(R.drawable.icon_extintor_blanco)
-                                .into(icon);
+                        try {
+                            Glide.with(context)
+                                    .load(accesorio.getIcono())
+                                    .placeholder(R.drawable.icon_extintor_blanco)
+                                    .error(R.drawable.icon_extintor_blanco)
+                                    .into(icon);
+                        } catch (IllegalArgumentException e) {
+                            return;
+                        }
                     } else {
                         icon.setImageResource(R.drawable.icon_extintor_blanco);
                     }

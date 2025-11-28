@@ -183,7 +183,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         btnDelete.setOnClickListener(v -> {
-            new MaterialAlertDialogBuilder(getContext())
+            new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                     .setTitle("Eliminar Plano")
                     .setMessage("¿Estás seguro de eliminar esta imagen?")
                     .setPositiveButton("Eliminar", (d, w) -> {

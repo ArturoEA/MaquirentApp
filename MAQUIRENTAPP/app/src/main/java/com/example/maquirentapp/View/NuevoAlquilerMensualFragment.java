@@ -768,7 +768,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private void mostrarDialogoConfirmarEnvio() {
         if (alquilerActual == null) return;
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Finalizar Alquiler")
                 .setMessage("Estás a punto de finalizar este alquiler. Una vez finalizado, no podrás editar los datos.\n\nSe enviará un código a tu correo para confirmar.")
                 .setPositiveButton("Enviar Código", (dialog, which) -> {
@@ -813,7 +813,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         container.setPadding(48, 16, 48, 16);
         container.addView(inputCodigo);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Ingresa el Código")
                 .setMessage("Revisa tu correo e ingresa el código de 6 dígitos para finalizar el alquiler.")
                 .setView(container)

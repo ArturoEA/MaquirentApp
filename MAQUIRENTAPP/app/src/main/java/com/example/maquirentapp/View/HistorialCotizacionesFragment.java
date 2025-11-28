@@ -116,7 +116,7 @@ public class HistorialCotizacionesFragment extends Fragment {
         picker.setMaxValue(2030);
         picker.setValue(anioSeleccionado);
 
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Seleccionar Año")
                 .setView(picker)
                 .setPositiveButton("OK", (d, w) -> {
@@ -226,7 +226,7 @@ public class HistorialCotizacionesFragment extends Fragment {
                 int pos = viewHolder.getAdapterPosition();
                 Cotizacion item = adapter.getItem(pos);
 
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar Cotización")
                         .setMessage("¿Eliminar " + item.getNumeroCotizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {

@@ -138,7 +138,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
         picker.setValue(anioSeleccionado);
         picker.setWrapSelectorWheel(false); // Para que no de la vuelta
 
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Seleccionar Año Fiscal")
                 .setView(picker)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

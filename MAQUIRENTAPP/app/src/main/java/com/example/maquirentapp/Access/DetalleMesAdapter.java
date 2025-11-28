@@ -336,7 +336,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     }
     private void mostrarConfirmacion(Context context, DetalleMes detalle, int position, boolean esMes) {
         if (listener == null) return;
-        new MaterialAlertDialogBuilder(context)
+        new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                 .setTitle("Confirmar Pago")
                 .setMessage("¿Estás seguro de confirmar el pago " + (esMes ? "del mes" : "de horas extras") + "?")
                 .setPositiveButton("Sí", (dialog, which) -> {

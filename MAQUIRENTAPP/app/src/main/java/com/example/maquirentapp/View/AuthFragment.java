@@ -315,7 +315,7 @@ public class AuthFragment extends Fragment {
         TextInputLayout layoutEmailRecuperar = dialogView.findViewById(R.id.layoutEmailRecuperar);
         TextInputEditText inputEmailRecuperar = dialogView.findViewById(R.id.inputEmailRecuperar);
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setView(dialogView)
                 .setPositiveButton("Enviar", null)
                 .setNegativeButton("Cancelar", null);
@@ -366,7 +366,7 @@ public class AuthFragment extends Fragment {
     }
 
     private void mostrarDialogoRegistroExitoso() {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("¡Registro exitoso!")
                 .setMessage("Tu cuenta ha sido creada y está pendiente de aprobación por un administrador. " +
                         "Recibirás una notificación cuando sea aprobada.")
@@ -381,7 +381,7 @@ public class AuthFragment extends Fragment {
     }
 
     private void mostrarDialogoExito(String titulo, String mensaje) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle(titulo)
                 .setMessage(mensaje)
                 .setPositiveButton("Entendido", null)

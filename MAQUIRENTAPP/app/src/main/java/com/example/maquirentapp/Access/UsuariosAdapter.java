@@ -116,7 +116,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             String[] roles = {"Empleado", "Administrador"};
             int selectedRole = "admin".equals(usuario.getRol()) ? 1 : 0;
 
-            new MaterialAlertDialogBuilder(context)
+            new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                     .setTitle("Cambiar Rol - " + usuario.getNombre())
                     .setSingleChoiceItems(roles, selectedRole, (dialog, which) -> {
                         String nuevoRol = which == 0 ? "empleado" : "admin";
@@ -134,7 +134,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             int selectedEstado = "pendiente".equals(usuario.getEstado()) ? 1 :
                     "inactivo".equals(usuario.getEstado()) ? 2 : 0;
 
-            new MaterialAlertDialogBuilder(context)
+            new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                     .setTitle("Cambiar Estado - " + usuario.getNombre())
                     .setSingleChoiceItems(estados, selectedEstado, (dialog, which) -> {
                         String nuevoEstado = which == 0 ? "activo" :
@@ -155,7 +155,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
                 return;
             }
 
-            new MaterialAlertDialogBuilder(context)
+            new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                     .setTitle("Eliminar Usuario")
                     .setMessage("Se enviará un código al administrador para confirmar la eliminación de " + usuario.getNombre() + ". ¿Continuar?")
                     .setPositiveButton("Enviar código", (dialog, which) -> {
@@ -184,7 +184,7 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             input.setHint("Código de 6 dígitos");
             input.setInputType(InputType.TYPE_CLASS_NUMBER);
 
-            new MaterialAlertDialogBuilder(context)
+            new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                     .setTitle("Ingrese código de verificación")
                     .setView(input)
                     .setPositiveButton("Confirmar", (dialog, which) -> {

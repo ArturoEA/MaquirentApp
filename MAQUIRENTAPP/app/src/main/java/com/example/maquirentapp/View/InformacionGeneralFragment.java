@@ -160,7 +160,7 @@ public class InformacionGeneralFragment extends Fragment {
 
             @Override
             public void onEliminarItem(FiltroCategoria categoria, FiltroItem item) {
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar filtro")
                         .setMessage("¿Estás seguro de eliminar este item?")
                         .setPositiveButton("Eliminar", (d, w) -> {
@@ -183,7 +183,7 @@ public class InformacionGeneralFragment extends Fragment {
 
             @Override
             public void onEliminarCategoria(FiltroCategoria categoria) {
-                new MaterialAlertDialogBuilder(getContext())
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar " + categoria.getNombreCategoria())
                         .setMessage("¿Borrar esta categoría y sus items?")
                         .setPositiveButton("Sí", (d, w) -> {
@@ -230,7 +230,7 @@ public class InformacionGeneralFragment extends Fragment {
 
     private void mostrarDialogoNuevaCategoria() {
         EditText input = new EditText(getContext());
-        new MaterialAlertDialogBuilder(getContext())
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Nueva categoría de filtro")
                 .setView(input)
                 .setPositiveButton("Crear", (d, w) -> {
@@ -352,7 +352,7 @@ public class InformacionGeneralFragment extends Fragment {
 
                 @Override
                 public void onEliminarFoto(String url) {
-                    new MaterialAlertDialogBuilder(getContext())
+                    new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                             .setTitle("Eliminar foto")
                             .setMessage("¿Estás seguro?")
                             .setPositiveButton("Sí", (d, w) -> {
@@ -388,7 +388,7 @@ public class InformacionGeneralFragment extends Fragment {
             specsAdapter = new SpecsPlacaAdapter(infoPlacaActual.getEspecificaciones(), new SpecsPlacaAdapter.OnSpecActionListener() {
                 @Override
                 public void onEliminarSpec(Map<String, String> spec) {
-                    new MaterialAlertDialogBuilder(getContext())
+                    new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
                             .setTitle("Eliminar dato")
                             .setMessage("¿Eliminar '" + spec.get("clave") + "'?")
                             .setPositiveButton("Sí", (d, w) -> {

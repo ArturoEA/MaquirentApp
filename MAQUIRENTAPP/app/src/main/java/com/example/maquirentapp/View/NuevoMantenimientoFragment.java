@@ -501,7 +501,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
     }
     private void confirmarEliminarFoto(int index, boolean esUrl) {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Eliminar foto")
                 .setMessage("¿Deseas eliminar esta foto?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {

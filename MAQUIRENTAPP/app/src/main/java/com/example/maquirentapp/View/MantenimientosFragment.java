@@ -215,7 +215,7 @@ public class MantenimientosFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 Mantenimiento mantenimiento = adapter.getMantenimientoAt(position);
 
-                new MaterialAlertDialogBuilder(requireContext())
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                         .setTitle("Eliminar mantenimiento")
                         .setMessage("¿Estás seguro de que deseas eliminar este mantenimiento?")
                         .setCancelable(false)
@@ -359,7 +359,7 @@ public class MantenimientosFragment extends Fragment {
         layout.addView(monthPicker);
         layout.setPadding(250, 30, 100, 10);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Seleccionar mes y año")
                 .setView(layout)
                 .setPositiveButton("Aceptar", (dialog, which) -> {

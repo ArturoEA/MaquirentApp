@@ -6,6 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:paddingBottom="70dp"
+    android:clipToPadding="true"
     tools:context=".View.FichasTecnicasFragment">
 
     <!-- RecyclerView para mostrar las fichas -->
@@ -38,9 +40,5 @@
         android:indeterminateTint="@color/black"
         android:elevation="50dp"
         android:visibility="gone" />
-
-    <View
-        android:layout_width="wrap_content"
-        android:layout_height="70dp"/>
 
 </FrameLayout>

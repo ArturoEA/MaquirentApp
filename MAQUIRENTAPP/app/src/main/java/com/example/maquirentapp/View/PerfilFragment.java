@@ -298,6 +298,7 @@ public class PerfilFragment extends Fragment {
         db.collection("usuarios").document(userId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(),
                             "Cambios guardados correctamente",
                             Toast.LENGTH_SHORT).show();
@@ -337,7 +338,7 @@ public class PerfilFragment extends Fragment {
         container.addView(inputPasswordNueva);
         container.addView(inputPasswordConfirmar);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Cambiar Contraseña")
                 .setView(container)
                 .setPositiveButton("Cambiar", (dialog, which) -> {
@@ -394,7 +395,7 @@ public class PerfilFragment extends Fragment {
     }
 
     private void cerrarSesion() {
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Cerrar Sesión")
                 .setMessage("¿Estás seguro de que deseas cerrar sesión?")
                 .setPositiveButton("Sí", (dialog, which) -> {

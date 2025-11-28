@@ -1,5 +1,6 @@
 package com.example.maquirentapp.Access;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -166,17 +167,28 @@ public class AlquilerDiarioAdapter extends RecyclerView.Adapter<AlquilerDiarioAd
                         public void onSuccess(Accesorio accesorio) {
                             if (context == null) return;
 
+                            if (context instanceof Activity) {
+                                Activity activity = (Activity) context;
+                                if (activity.isDestroyed() || activity.isFinishing()) {
+                                    return;
+                                }
+                            }
+
                             ImageView icon = new ImageView(context);
                             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(110, 110);
                             params.setMargins(0, 0, 15, 0);
                             icon.setLayoutParams(params);
 
                             if (accesorio.getIcono() != null && !accesorio.getIcono().isEmpty()) {
-                                Glide.with(context)
-                                        .load(accesorio.getIcono())
-                                        .placeholder(R.drawable.icon_extintor_blanco)
-                                        .error(R.drawable.icon_extintor_blanco)
-                                        .into(icon);
+                                try {
+                                    Glide.with(context)
+                                            .load(accesorio.getIcono())
+                                            .placeholder(R.drawable.icon_extintor_blanco)
+                                            .error(R.drawable.icon_extintor_blanco)
+                                            .into(icon);
+                                } catch (IllegalArgumentException e) {
+                                    return;
+                                }
                             } else {
                                 icon.setImageResource(R.drawable.icon_extintor_blanco);
                             }
