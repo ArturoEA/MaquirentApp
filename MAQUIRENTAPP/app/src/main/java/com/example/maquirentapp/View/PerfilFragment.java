@@ -269,15 +269,18 @@ public class PerfilFragment extends Fragment {
 
                         fotoRef.getDownloadUrl()
                                 .addOnSuccessListener(downloadUri -> {
+                                    if (getContext() == null) return;
                                     String fotoUrl = downloadUri.toString();
                                     actualizarDatosUsuario(userId, nuevoNombre, fotoUrl);
                                 })
                                 .addOnFailureListener(e -> {
+                                    if (getContext() == null) return;
                                     android.util.Log.e("PerfilFragment", "Error URL: " + e.getMessage());
                                     Toast.makeText(getContext(), "Error al obtener URL", Toast.LENGTH_SHORT).show();
                                 });
                     })
                     .addOnFailureListener(e -> {
+                        if (getContext() == null) return;
                         android.util.Log.e("PerfilFragment", "Error al subir: " + e.getMessage());
                         Toast.makeText(getContext(), "Error al subir foto: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
@@ -356,16 +359,19 @@ public class PerfilFragment extends Fragment {
 
     private void cambiarPassword(String passwordActual, String passwordNueva, String passwordConfirmar) {
         if (passwordActual.isEmpty() || passwordNueva.isEmpty() || passwordConfirmar.isEmpty()) {
+            if (getContext() == null) return;
             Toast.makeText(getContext(), "Completa todos los campos", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (!passwordNueva.equals(passwordConfirmar)) {
+            if (getContext() == null) return;
             Toast.makeText(getContext(), "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (passwordNueva.length() < 6) {
+            if (getContext() == null) return;
             Toast.makeText(getContext(), "La nueva contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -379,17 +385,20 @@ public class PerfilFragment extends Fragment {
                     // Si la autenticación es exitosa, cambiar la contraseña
                     user.updatePassword(passwordNueva)
                             .addOnSuccessListener(aVoid -> {
+                                if (getContext() == null) return;
                                 Toast.makeText(getContext(),
                                         "Contraseña cambiada correctamente",
                                         Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
+                                if (getContext() == null) return;
                                 Toast.makeText(getContext(),
                                         "Error al cambiar contraseña",
                                         Toast.LENGTH_SHORT).show();
                             });
                 })
                 .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(),
                             "Contraseña actual incorrecta",
                             Toast.LENGTH_SHORT).show();

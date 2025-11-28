@@ -359,6 +359,7 @@ public class InformacionGeneralFragment extends Fragment {
                                 firebaseServicio.eliminarArchivoStorage(url, new FirebaseServicio.OnSimpleCallback() {
                                     @Override
                                     public void onSuccess() {
+                                        if (getContext() == null) return;
                                         infoPlacaActual.getImagenesUrls().remove(url);
                                         fotosAdapter.notifyDataSetChanged();
                                         guardarPlacaSinRecargar();
@@ -367,6 +368,7 @@ public class InformacionGeneralFragment extends Fragment {
 
                                     @Override
                                     public void onError(Exception e) {
+                                        if (getContext() == null) return;
                                         infoPlacaActual.getImagenesUrls().remove(url);
                                         fotosAdapter.notifyDataSetChanged();
                                         guardarPlacaSinRecargar();
@@ -422,6 +424,7 @@ public class InformacionGeneralFragment extends Fragment {
                         firebaseServicio.subirFotoPlacaBytes(codigoGrupo, dataImagen, new FirebaseServicio.OnUrlUploadedListener() {
                             @Override
                             public void onSuccess(String url) {
+                                if (getContext() == null) return;
                                 infoPlacaActual.getImagenesUrls().add(url);
                                 if (fotosAdapter != null) fotosAdapter.notifyDataSetChanged();
 
@@ -431,10 +434,12 @@ public class InformacionGeneralFragment extends Fragment {
 
                             @Override
                             public void onError(Exception e) {
+                                if (getContext() == null) return;
                                 Toast.makeText(getContext(), "Error al subir", Toast.LENGTH_SHORT).show();
                             }
                         });
                     } else {
+                        if (getContext() == null) return;
                         Toast.makeText(getContext(), "Error al comprimir imagen", Toast.LENGTH_SHORT).show();
                     }
                 });

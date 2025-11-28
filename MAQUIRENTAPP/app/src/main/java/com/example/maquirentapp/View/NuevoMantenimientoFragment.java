@@ -609,11 +609,13 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos")
                 .add(mantenimiento)
                 .addOnSuccessListener(documentReference -> {
+                    if (getContext() == null) return;
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Mantenimiento guardado", Toast.LENGTH_SHORT).show();
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
                 .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
                     Log.e(TAG, "Error guardando", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Error al guardar", Toast.LENGTH_SHORT).show();
@@ -624,6 +626,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos").document(mantenimientoId)
                 .set(mantenimiento)
                 .addOnSuccessListener(aVoid -> {
+                    if (getContext() == null) return;
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Mantenimiento actualizado", Toast.LENGTH_SHORT).show();
 
@@ -632,6 +635,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
                 .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
                     Log.e(TAG, "Error actualizando", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();

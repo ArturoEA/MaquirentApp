@@ -1,5 +1,6 @@
 package com.example.maquirentapp.Access;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -67,6 +68,13 @@ public class FotosSimpleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             spinner.setCenterRadius(30f);
             spinner.setColorSchemeColors(Color.WHITE);
             spinner.start();
+
+            if (context instanceof Activity) {
+                Activity activity = (Activity) context;
+                if (activity.isDestroyed() || activity.isFinishing()) {
+                    return;
+                }
+            }
 
             Glide.with(holder.itemView.getContext())
                     .load(url)

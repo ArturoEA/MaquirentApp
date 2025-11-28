@@ -1,5 +1,7 @@
 package com.example.maquirentapp.Access;
 
+import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +20,7 @@ public class UsuariosSeleccionAdapter extends RecyclerView.Adapter<UsuariosSelec
 
     private List<Usuario> usuarios;
     private List<String> seleccionados = new ArrayList<>();
+    private Context context;
 
     public UsuariosSeleccionAdapter(List<Usuario> usuarios) {
         this.usuarios = usuarios;
@@ -30,6 +33,7 @@ public class UsuariosSeleccionAdapter extends RecyclerView.Adapter<UsuariosSelec
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        context = parent.getContext();
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_usuario_seleccion, parent, false);
         return new ViewHolder(view);
     }
@@ -38,6 +42,13 @@ public class UsuariosSeleccionAdapter extends RecyclerView.Adapter<UsuariosSelec
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Usuario u = usuarios.get(position);
         holder.tvNombre.setText(u.getNombre());
+
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+        }
 
         // Cargar foto redonda con Glide
         if (u.getFotoPerfil() != null && !u.getFotoPerfil().isEmpty()) {

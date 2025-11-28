@@ -122,12 +122,14 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                             firebaseServicio.eliminarAlquilerDia(alquiler.getId(), new FirebaseServicio.OnSimpleCallback() {
                                 @Override
                                 public void onSuccess() {
+                                    if (getContext() == null) return;
                                     adapter.removeItem(position);
                                     Toast.makeText(getContext(), "Alquiler eliminado", Toast.LENGTH_SHORT).show();
                                 }
 
                                 @Override
                                 public void onError(Exception e) {
+                                    if (getContext() == null) return;
                                     adapter.notifyItemChanged(position);
                                     Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
                                 }
@@ -222,6 +224,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
 
     private void cargarAlquileres() {
         if (idGrupo == null) {
+            if (getContext() == null) return;
             Toast.makeText(getContext(), "Error: ID de Grupo no encontrado", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -239,6 +242,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             }
             @Override
             public void onError(Exception e) {
+                if (getContext() == null) return;
                 Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

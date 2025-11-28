@@ -91,6 +91,7 @@ public class TareasFragment extends Fragment {
                 if (position == RecyclerView.NO_POSITION) return;
 
                 if (!isAdmin) {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(), "Solo los administradores pueden eliminar tareas", Toast.LENGTH_SHORT).show();
                     adapter.notifyItemChanged(position);
                     return;
@@ -105,6 +106,7 @@ public class TareasFragment extends Fragment {
                             firebaseServicio.eliminarTarea(tarea.getId(), new FirebaseServicio.OnSimpleCallback() {
                                 @Override
                                 public void onSuccess() {
+                                    if (getContext() == null) return;
                                     Toast.makeText(getContext(), "Tarea eliminada", Toast.LENGTH_SHORT).show();
 
                                     List<Tarea> listaActualizada = new ArrayList<>(adapter.getCurrentList());
@@ -121,6 +123,7 @@ public class TareasFragment extends Fragment {
 
                                 @Override
                                 public void onError(Exception e) {
+                                    if (getContext() == null) return;
                                     Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
                                     adapter.notifyItemChanged(position);
                                 }
@@ -216,12 +219,14 @@ public class TareasFragment extends Fragment {
                 firebaseServicio.crearTarea(titulo, new FirebaseServicio.OnSimpleCallback() {
                     @Override
                     public void onSuccess() {
+                        if (getContext() == null) return;
                         Toast.makeText(getContext(), "Tarea creada", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        if (getContext() == null) return;
                         Toast.makeText(getContext(), "Error al crear tarea", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -257,12 +262,14 @@ public class TareasFragment extends Fragment {
             firebaseServicio.completarTarea(tarea.getId(), seleccionados, new FirebaseServicio.OnSimpleCallback() {
                 @Override
                 public void onSuccess() {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(), "Tarea completada", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 }
 
                 @Override
                 public void onError(Exception e) {
+                    if (getContext() == null) return;
                     Toast.makeText(getContext(), "Error al actualizar tarea", Toast.LENGTH_SHORT).show();
                 }
             });

@@ -1,5 +1,6 @@
 package com.example.maquirentapp.adaptadores;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -52,6 +53,13 @@ public class PlanoAdapter extends RecyclerView.Adapter<PlanoAdapter.ViewHolder> 
         spinner.setCenterRadius(30f);
         spinner.setColorSchemeColors(Color.WHITE);
         spinner.start();
+
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+        }
 
         Glide.with(context)
                 .load(plano.getUrlImagen())

@@ -68,7 +68,8 @@ public class ListaGruposElectrogenosFragment extends Fragment {
     private ImageView dialogImagePreview;
     private ActivityResultLauncher<Intent> cropImageLauncher;
 
-    public ListaGruposElectrogenosFragment() { }
+    public ListaGruposElectrogenosFragment() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,10 +100,12 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     }
                 });
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_lista_grupos_electrogenos, container, false);
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -112,42 +115,50 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         setupRecyclerView();
         cargarGrupos();
     }
+
     private void initializeFirebase() {
         firebaseServicio = new FirebaseServicio();
         auth = FirebaseAuth.getInstance();
         functions = FirebaseFunctions.getInstance();
         db = FirebaseFirestore.getInstance();
     }
+
     @Override
     public void onResume() {
         super.onResume();
         configureGlobalFab();
     }
+
     @Override
     public void onPause() {
         super.onPause();
         hideGlobalFab();
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         hideGlobalFab();
     }
+
     private void configureGlobalFab() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
             main.showGlobalFab("Añadir", R.drawable.icon_nuevo_blanco, v -> mostrarDialogoNuevoGrupo());
         }
     }
+
     private void hideGlobalFab() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             ((com.example.maquirentapp.MainActivity) getActivity()).hideGlobalFab();
         }
     }
+
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewGrupos);
         emptyState = view.findViewById(R.id.emptyState);
     }
+
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new GruposElectrogenosConfiguracionAdapter(
@@ -167,6 +178,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         );
         recyclerView.setAdapter(adapter);
     }
+
     private void iniciarRecorte(Uri sourceUri) {
         String destFileName = "cropped_" + System.currentTimeMillis() + ".jpg";
 
@@ -187,6 +199,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
         cropImageLauncher.launch(intent);
     }
+
     private void cargarGrupos() {
         Log.d(TAG, "Iniciando carga de grupos...");
 
@@ -213,6 +226,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
             }
         });
     }
+
     private void actualizarUI(List<GrupoElectrogeno> grupos) {
         if (recyclerView != null) {
             recyclerView.post(() -> {
@@ -227,14 +241,17 @@ public class ListaGruposElectrogenosFragment extends Fragment {
             });
         }
     }
+
     private void mostrarDialogoNuevoGrupo() {
         Dialog dialog = crearDialogoGrupo(null);
         dialog.show();
     }
+
     private void mostrarDialogoEditarGrupo(GrupoElectrogeno grupo) {
         Dialog dialog = crearDialogoGrupo(grupo);
         dialog.show();
     }
+
     private Dialog crearDialogoGrupo(@Nullable GrupoElectrogeno grupoExistente) {
         Dialog dialog = new Dialog(requireContext());
         View dialogView = LayoutInflater.from(requireContext())
@@ -282,6 +299,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
         return dialog;
     }
+
     private void cargarImagenExistente(String fotoUrl) {
         if (fotoUrl != null && !fotoUrl.isEmpty() && dialogImagePreview != null) {
             try {
@@ -295,6 +313,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
             }
         }
     }
+
     private void crearNuevoGrupo(String codigo, Dialog dialog, MaterialButton btnGuardar) {
         if (selectedImageUri != null) {
             Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();
@@ -304,13 +323,14 @@ public class ListaGruposElectrogenosFragment extends Fragment {
             new Thread(() -> {
                 byte[] dataImagen = ImageUtils.comprimirImagen(safeContext, selectedImageUri);
 
-                if (getActivity() != null){
+                if (getActivity() != null) {
                     requireActivity().runOnUiThread(() -> {
                         if (dataImagen != null) {
                             firebaseServicio.crearGrupoConImagenBytes(codigo, dataImagen,
                                     new FirebaseServicio.OnGrupoCreatedListener() {
                                         @Override
                                         public void onSuccess(GrupoElectrogeno grupo) {
+                                            if (getContext() == null) return;
                                             mostrarExito("Grupo creado exitosamente");
                                             cerrarDialogo(dialog);
                                             cargarGrupos();
@@ -318,6 +338,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
                                         @Override
                                         public void onError(Exception e) {
+                                            if (getContext() == null) return;
                                             mostrarError("Error: " + e.getMessage());
                                             habilitarBoton(btnGuardar, "Guardar");
                                         }
@@ -347,6 +368,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     });
         }
     }
+
     private void actualizarGrupo(GrupoElectrogeno grupo, String nuevoCodigo,
                                  Dialog dialog, MaterialButton btnGuardar) {
         if (selectedImageUri != null) {
@@ -355,6 +377,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
             actualizarSoloCodigo(grupo, nuevoCodigo, dialog, btnGuardar);
         }
     }
+
     private void subirImagenYActualizar(GrupoElectrogeno grupo, String nuevoCodigo,
                                         Dialog dialog, MaterialButton btnGuardar) {
 
@@ -365,7 +388,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         new Thread(() -> {
             byte[] dataImagen = ImageUtils.comprimirImagen(safeContext, selectedImageUri);
 
-            if (getActivity() != null){
+            if (getActivity() != null) {
                 requireActivity().runOnUiThread(() -> {
                     if (dataImagen != null) {
                         String fileName = "grupos/" + nuevoCodigo + "_" + System.currentTimeMillis() + ".jpg";
@@ -376,6 +399,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                                 .addOnSuccessListener(taskSnapshot ->
                                         storageRef.getDownloadUrl()
                                                 .addOnSuccessListener(downloadUri -> {
+                                                    if (getContext() == null) return;
                                                     Map<String, Object> updates = new HashMap<>();
                                                     updates.put("codigo", nuevoCodigo);
                                                     updates.put("foto", downloadUri.toString());
@@ -383,15 +407,18 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                                                     actualizarEnFirestore(grupo.getId(), updates, dialog, btnGuardar);
                                                 })
                                                 .addOnFailureListener(e -> {
+                                                    if (getContext() == null) return;
                                                     mostrarError("Error obteniendo URL: " + e.getMessage());
                                                     habilitarBoton(btnGuardar, "Guardar");
                                                 })
                                 )
                                 .addOnFailureListener(e -> {
+                                    if (getContext() == null) return;
                                     mostrarError("Error subiendo imagen: " + e.getMessage());
                                     habilitarBoton(btnGuardar, "Guardar");
                                 });
                     } else {
+                        if (getContext() == null) return;
                         mostrarError("Error al comprimir la imagen");
                         habilitarBoton(btnGuardar, "Guardar");
                     }
@@ -400,12 +427,14 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
         }).start();
     }
+
     private void actualizarSoloCodigo(GrupoElectrogeno grupo, String nuevoCodigo,
                                       Dialog dialog, MaterialButton btnGuardar) {
         firebaseServicio.actualizarCodigoGrupo(grupo.getId(), nuevoCodigo,
                 new FirebaseServicio.OnSimpleCallback() {
                     @Override
                     public void onSuccess() {
+                        if (getContext() == null) return;
                         mostrarExito("Grupo actualizado");
                         cerrarDialogo(dialog);
                         cargarGrupos();
@@ -413,11 +442,13 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
                     @Override
                     public void onError(Exception e) {
+                        if (getContext() == null) return;
                         mostrarError("Error al actualizar: " + e.getMessage());
                         habilitarBoton(btnGuardar, "Guardar");
                     }
                 });
     }
+
     private void actualizarEnFirestore(String grupoId, Map<String, Object> updates,
                                        Dialog dialog, MaterialButton btnGuardar) {
         db.collection("gruposElectrogenos").document(grupoId)
@@ -432,6 +463,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     habilitarBoton(btnGuardar, "Guardar");
                 });
     }
+
     private void solicitarEliminacionGrupo(GrupoElectrogeno grupo) {
         String codigo = generarCodigoVerificacion();
         long timestamp = System.currentTimeMillis();
@@ -446,6 +478,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> {
                     FirebaseUser currentUser = auth.getCurrentUser();
                     if (currentUser == null) {
+                        if (getContext() == null) return;
                         mostrarError("Debes iniciar sesión antes de eliminar un grupo.");
                         return;
                     }
@@ -453,13 +486,17 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     enviarEmailVerificacion(codigo, grupo);
                     mostrarDialogoCodigoVerificacion(grupo);
                 })
-                .addOnFailureListener(e ->
-                        mostrarError("Error generando código: " + e.getMessage())
+                .addOnFailureListener(e -> {
+                            if (getContext() == null) return;
+                            mostrarError("Error generando código: " + e.getMessage());
+                        }
                 );
     }
+
     private String generarCodigoVerificacion() {
         return String.valueOf(100000 + new Random().nextInt(900000));
     }
+
     private void enviarEmailVerificacion(String codigo, GrupoElectrogeno grupo) {
         String userEmail = auth.getCurrentUser() != null ?
                 auth.getCurrentUser().getEmail() : "";
@@ -474,10 +511,12 @@ public class ListaGruposElectrogenosFragment extends Fragment {
         functions.getHttpsCallable("enviarCodigoEliminacion")
                 .call(data)
                 .addOnSuccessListener(result -> {
+                    if (getContext() == null) return;
                     Log.d(TAG, "Email enviado exitosamente");
                     mostrarExito("Código enviado a " + userEmail);
                 })
                 .addOnFailureListener(e -> {
+                    if (getContext() == null) return;
                     Log.e(TAG, "Error enviando email", e);
                     // Mostrar código como fallback
                     Toast.makeText(getContext(),
@@ -485,6 +524,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                             Toast.LENGTH_LONG).show();
                 });
     }
+
     private void mostrarDialogoCodigoVerificacion(GrupoElectrogeno grupo) {
         final EditText inputCodigo = new EditText(getContext());
         inputCodigo.setHint("Código de 6 dígitos");
@@ -503,6 +543,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 .setCancelable(false)
                 .show();
     }
+
     private void verificarCodigoYEliminar(GrupoElectrogeno grupo, String codigoIngresado) {
         if (codigoIngresado.isEmpty()) {
             mostrarError("Ingresa el código");
@@ -513,6 +554,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (!documentSnapshot.exists()) {
+                        if (getContext() == null) return;
                         mostrarError("Documento no encontrado");
                         return;
                     }
@@ -521,6 +563,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     Long tsGenerado = documentSnapshot.getLong("codigoGeneradoEn");
 
                     if (codigoGuardado == null || tsGenerado == null) {
+                        if (getContext() == null) return;
                         mostrarError("Código no encontrado. Solicita nuevamente.");
                         return;
                     }
@@ -530,12 +573,14 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     boolean expirado = (ahora - tsGenerado) > CODIGO_EXPIRACION_MS;
 
                     if (expirado) {
+                        if (getContext() == null) return;
                         mostrarError("El código ha expirado. Solicita nuevamente.");
                         limpiarCodigoVerificacion(grupo.getId());
                     } else if (codigoGuardado.equals(codigoIngresado)) {
                         eliminarGrupoSuave(grupo);
                         limpiarCodigoVerificacion(grupo.getId());
                     } else {
+                        if (getContext() == null) return;
                         mostrarError("Código incorrecto");
                     }
                 })
@@ -543,6 +588,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                         mostrarError("Error verificando código: " + e.getMessage())
                 );
     }
+
     private void limpiarCodigoVerificacion(String grupoId) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("codigoVerificacion", null);
@@ -550,6 +596,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
 
         db.collection("gruposElectrogenos").document(grupoId).update(updates);
     }
+
     private void eliminarGrupoSuave(GrupoElectrogeno grupo) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("eliminado", true);
@@ -560,8 +607,8 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                 new FirebaseServicio.OnSimpleCallback() {
                     @Override
                     public void onSuccess() {
-                        mostrarExito("Grupo marcado para eliminación.\n" +
-                                "Se eliminará permanentemente en 30 días.");
+                        if (getContext() == null) return;
+                        mostrarExito("Grupo eliminado de las vistas");
                         cargarGrupos();
                     }
 
@@ -571,23 +618,28 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     }
                 });
     }
+
     private void deshabilitarBoton(MaterialButton btn, String texto) {
         btn.setEnabled(false);
         btn.setText(texto);
     }
+
     private void habilitarBoton(MaterialButton btn, String texto) {
         btn.setEnabled(true);
         btn.setText(texto);
     }
+
     private void cerrarDialogo(Dialog dialog) {
         selectedImageUri = null;
         dialog.dismiss();
     }
+
     private void mostrarError(String mensaje) {
         if (getContext() != null) {
             Toast.makeText(getContext(), mensaje, Toast.LENGTH_SHORT).show();
         }
     }
+
     private void mostrarExito(String mensaje) {
         if (getContext() != null) {
             Toast.makeText(getContext(), mensaje, Toast.LENGTH_SHORT).show();
