@@ -37,6 +37,17 @@
             android:textStyle="bold"
             android:textColor="@color/black" />
 
+        <ImageView
+            android:id="@+id/btnOrdenar"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:padding="8dp"
+            android:layout_marginEnd="5dp"
+            android:src="@drawable/icon_ordenar_negro"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/black"
+            android:contentDescription="Ordenar grupo" />
+
         <!-- Botón Editar -->
         <ImageView
             android:id="@+id/btnEditar"

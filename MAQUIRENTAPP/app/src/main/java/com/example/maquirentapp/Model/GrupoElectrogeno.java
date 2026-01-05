@@ -4,6 +4,7 @@ public class GrupoElectrogeno {
     private String id;
     private String codigo;
     private String foto;
+    private int orden;
     private boolean eliminado = false;
     private long fechaEliminacion = 0;
     private String eliminadoPor = "";
@@ -33,4 +34,12 @@ public class GrupoElectrogeno {
 
     public String getEliminadoPor() { return eliminadoPor; }
     public void setEliminadoPor(String eliminadoPor) { this.eliminadoPor = eliminadoPor; }
+
+    public int getOrden() {
+        return orden;
+    }
+
+    public void setOrden(int orden) {
+        this.orden = orden;
+    }
 }

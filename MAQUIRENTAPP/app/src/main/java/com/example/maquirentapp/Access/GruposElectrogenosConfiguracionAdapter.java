@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -19,6 +20,7 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GruposElectrogenosConfiguracionAdapter extends RecyclerView.Adapter<GruposElectrogenosConfiguracionAdapter.GrupoViewHolder> {
@@ -26,18 +28,36 @@ public class GruposElectrogenosConfiguracionAdapter extends RecyclerView.Adapter
     private List<GrupoElectrogeno> gruposList = new ArrayList<>();
     private Context context;
     private OnGrupoActionListener listener;
-
+    private final OnStartDragListener dragListener;
+    public interface OnStartDragListener {
+        void onRequestDrag(RecyclerView.ViewHolder viewHolder);
+    }
     public interface OnGrupoActionListener {
         void onEditarClick(GrupoElectrogeno grupo);
         void onEliminarClick(GrupoElectrogeno grupo);
     }
 
-    public GruposElectrogenosConfiguracionAdapter(List<GrupoElectrogeno> gruposList, Context context, OnGrupoActionListener listener) {
-        if (gruposList != null) this.gruposList = gruposList;
+    public GruposElectrogenosConfiguracionAdapter(List<GrupoElectrogeno> gruposList, Context context, OnGrupoActionListener listener, OnStartDragListener dragListener) {
+        this.gruposList = gruposList != null ? gruposList : new ArrayList<>();
         this.context = context;
         this.listener = listener;
+        this.dragListener = dragListener;
     }
-
+    public List<GrupoElectrogeno> getListaActual() {
+        return gruposList;
+    }
+    public void onItemMove(int fromPosition, int toPosition) {
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(gruposList, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(gruposList, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+    }
     @NonNull
     @Override
     public GrupoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -61,7 +81,7 @@ public class GruposElectrogenosConfiguracionAdapter extends RecyclerView.Adapter
     }
 
     public class GrupoViewHolder extends RecyclerView.ViewHolder {
-        private ImageView imgGrupo, btnEditar, btnEliminar;
+        private ImageView imgGrupo, btnEditar, btnEliminar, btnOrdenar;
         private TextView tvCodigoGrupo;
 
         public GrupoViewHolder(@NonNull View itemView) {
@@ -70,6 +90,7 @@ public class GruposElectrogenosConfiguracionAdapter extends RecyclerView.Adapter
             tvCodigoGrupo = itemView.findViewById(R.id.tvCodigoGrupo);
             btnEditar = itemView.findViewById(R.id.btnEditar);
             btnEliminar = itemView.findViewById(R.id.btnEliminar);
+            btnOrdenar = itemView.findViewById(R.id.btnOrdenar);
         }
 
         public void bind(GrupoElectrogeno grupo) {
@@ -101,6 +122,14 @@ public class GruposElectrogenosConfiguracionAdapter extends RecyclerView.Adapter
 
             btnEliminar.setOnClickListener(v -> {
                 if (listener != null) listener.onEliminarClick(grupo);
+            });
+            btnOrdenar.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (dragListener != null) {
+                        dragListener.onRequestDrag(this);
+                    }
+                }
+                return false;
             });
         }
     }

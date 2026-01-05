@@ -282,7 +282,7 @@ public class FirebaseServicio {
 
     // Obtener grupos electrógenos
     public void getGruposElectrogenos(boolean incluirEliminados, OnGruposLoadedListener listener) {
-        Query query = db.collection("gruposElectrogenos");
+        Query query = db.collection("gruposElectrogenos").orderBy("orden", Query.Direction.ASCENDING);
 
         if (!incluirEliminados) {
             query = query.whereEqualTo("eliminado", false);
@@ -300,6 +300,19 @@ public class FirebaseServicio {
                 listener.onError(task.getException());
             }
         });
+    }
+    public void actualizarOrdenGrupos(List<GrupoElectrogeno> listaOrdenada, OnSimpleCallback callback) {
+        WriteBatch batch = db.batch();
+
+        for (int i = 0; i < listaOrdenada.size(); i++) {
+            GrupoElectrogeno grupo = listaOrdenada.get(i);
+            DocumentReference ref = db.collection("gruposElectrogenos").document(grupo.getId());
+            batch.update(ref, "orden", i);
+        }
+
+        batch.commit()
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
     }
 
     //Mét0dos para accesorios

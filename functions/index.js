@@ -117,6 +117,19 @@ exports.borrarFotosDeGrupoEliminado = onDocumentUpdated("gruposElectrogenos/{gru
           await doc.ref.update({ fotosUrls: [] });
         }
       }
+
+      // 4. NUEVO: Borrar fotos de la colección FOTOS EQUIPO
+      const fotosEquipoSnapshot = await db.collection("fotosEquipo")
+         .where("idGrupo", "==", grupoId).get();
+
+      for (const doc of fotosEquipoSnapshot.docs) {
+         const fotoData = doc.data();
+         if (fotoData.urlImagen) {
+             await borrarFotoPorUrl(storage, fotoData.urlImagen, "Foto Galeria Equipo");
+             contadorFotos++;
+         }
+         await doc.ref.delete({ urlImagen: null, nombreArchivo: null }); 
+      }
       
       logger.info(`Borrado de fotos completado. Total: ${contadorFotos} fotos de mant.`);
       return { success: true, fotosBorradas: contadorFotos };

@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -50,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class ListaGruposElectrogenosFragment extends Fragment {
+public class ListaGruposElectrogenosFragment extends Fragment implements GruposElectrogenosConfiguracionAdapter.OnStartDragListener{
     private static final String TAG = "ListaGrupos";
     private static final long CODIGO_EXPIRACION_MS = 15 * 60 * 1000L;
     private RecyclerView recyclerView;
@@ -67,6 +68,7 @@ public class ListaGruposElectrogenosFragment extends Fragment {
     private Uri selectedImageUri;
     private ImageView dialogImagePreview;
     private ActivityResultLauncher<Intent> cropImageLauncher;
+    private ItemTouchHelper itemTouchHelper;
 
     public ListaGruposElectrogenosFragment() {
     }
@@ -174,9 +176,73 @@ public class ListaGruposElectrogenosFragment extends Fragment {
                     public void onEliminarClick(GrupoElectrogeno grupo) {
                         solicitarEliminacionGrupo(grupo);
                     }
-                }
+                },
+                this
         );
         recyclerView.setAdapter(adapter);
+
+        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback() {
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
+
+            @Override
+            public boolean isItemViewSwipeEnabled() {
+                return false;
+            }
+
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+                int swipeFlags = 0;
+                return makeMovementFlags(dragFlags, swipeFlags);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                adapter.onItemMove(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                guardarNuevoOrdenEnFirebase();
+            }
+        };
+
+        itemTouchHelper = new ItemTouchHelper(callback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+    public void onRequestDrag(RecyclerView.ViewHolder viewHolder) {
+        if (itemTouchHelper != null) {
+            itemTouchHelper.startDrag(viewHolder);
+        }
+    }
+
+    private void guardarNuevoOrdenEnFirebase() {
+        List<GrupoElectrogeno> listaOrdenada = adapter.getListaActual();
+
+        if (listaOrdenada == null || listaOrdenada.isEmpty()) return;
+
+        firebaseServicio.actualizarOrdenGrupos(listaOrdenada, new FirebaseServicio.OnSimpleCallback() {
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "Orden actualizado correctamente en Firebase");
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al guardar el orden", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void iniciarRecorte(Uri sourceUri) {
