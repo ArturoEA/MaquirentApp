@@ -98,4 +98,10 @@ public class CotizacionesRepository {
                 .addOnSuccessListener(aVoid -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
     }
+    public void actualizarCotizacion(Cotizacion cotizacion, Callback<Void> callback) {
+        db.collection("cotizaciones").document(cotizacion.getId())
+                .set(cotizacion)
+                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onError);
+    }
 }

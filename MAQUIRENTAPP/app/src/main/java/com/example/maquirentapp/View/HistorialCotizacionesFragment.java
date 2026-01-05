@@ -98,10 +98,16 @@ public class HistorialCotizacionesFragment extends Fragment {
 
         tvAnio.setOnClickListener(v -> mostrarSelectorAnio());
     }
-
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new CotizacionesAdapter(this::regenerarYAbrirWord);
+        adapter = new CotizacionesAdapter(cotizacion -> {
+            Bundle args = new Bundle();
+            args.putSerializable("cotizacion_a_editar", cotizacion);
+            if (getView() != null) {
+                Navigation.findNavController(getView())
+                        .navigate(R.id.action_historialCotizaciones_to_nuevaCotizacion, args);
+            }
+        });
         recyclerView.setAdapter(adapter);
         setupSwipeToDelete();
     }
@@ -173,47 +179,6 @@ public class HistorialCotizacionesFragment extends Fragment {
         }
         return -1;
     }
-
-    private void regenerarYAbrirWord(Cotizacion cotizacion) {
-        ProgressDialog progress = new ProgressDialog(getContext());
-        progress.setMessage("Abriendo cotización...");
-        progress.setCancelable(false);
-        progress.show();
-
-        new Thread(() -> {
-            try {
-                WordGenerator generator = new WordGenerator();
-                File archivo = generator.generarCotizacionWord(requireContext(), cotizacion);
-
-                requireActivity().runOnUiThread(() -> {
-                    progress.dismiss();
-                    abrirDocumento(archivo);
-                });
-            } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    progress.dismiss();
-                    Toast.makeText(getContext(), "Error al abrir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-            }
-        }).start();
-    }
-
-    private void abrirDocumento(File archivo) {
-        try {
-            Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".provider",
-                    archivo
-            );
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(Intent.createChooser(intent, "Abrir con..."));
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "No tienes app para Word", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     private void setupSwipeToDelete() {
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             @Override

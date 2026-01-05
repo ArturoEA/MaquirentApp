@@ -42,6 +42,7 @@ public class NuevaCotizacionFragment extends Fragment {
     private Cotizacion cotizacionActual;
     private List<GrupoElectrogeno> listaGruposInventario = new ArrayList<>();
     private ArrayAdapter<String> autoCompleteAdapter;
+    private boolean esEdicion = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,6 +71,33 @@ public class NuevaCotizacionFragment extends Fragment {
 
         actualizarFechaInput(Calendar.getInstance());
         cargarGruposParaAutocompletado();
+        if (getArguments() != null && getArguments().containsKey("cotizacion_a_editar")) {
+            cotizacionActual = (Cotizacion) getArguments().getSerializable("cotizacion_a_editar");
+            if (cotizacionActual != null) {
+                esEdicion = true;
+                rellenarDatosEnPantalla();
+            }
+        } else {
+            cotizacionActual = new Cotizacion();
+            actualizarFechaInput(Calendar.getInstance());
+        }
+    }
+    private void rellenarDatosEnPantalla() {
+        binding.inputCliente.setText(cotizacionActual.getClienteNombre());
+        binding.inputRuc.setText(cotizacionActual.getClienteRuc());
+        binding.inputLugar.setText(cotizacionActual.getLugarTrabajo());
+        binding.inputFecha.setText(cotizacionActual.getFechaEmision());
+        binding.inputHorasMinimas.setText(String.valueOf(cotizacionActual.getHorasMinimas()));
+
+        if ("USD".equals(cotizacionActual.getMoneda())) {
+            binding.radioUsd.setChecked(true);
+        } else {
+            binding.radioSol.setChecked(true);
+        }
+
+        actualizarListaYTotales();
+
+        binding.btnGenerarCotizacion.setText("Actualizar y generar Word");
     }
 
     private void cargarGruposParaAutocompletado() {
@@ -119,8 +147,45 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.inputFecha.setOnClickListener(v -> mostrarDatePicker());
         binding.btnAgregarItem.setOnClickListener(v -> mostrarDialogoAgregarItem(null));
         binding.btnGenerarCotizacion.setOnClickListener(v -> guardarYGenerar());
-    }
 
+        binding.inputHorasMinimas.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                recalcularPreciosHoraExtraGlobal();
+            }
+        });
+    }
+    private void recalcularPreciosHoraExtraGlobal() {
+        int horasMinimas = getHorasMinimasActuales();
+
+        if (horasMinimas <= 0) return;
+
+        boolean huboCambios = false;
+
+        if (cotizacionActual != null && cotizacionActual.getItems() != null) {
+            for (ItemCotizacion item : cotizacionActual.getItems()) {
+                double precioMensual = item.getPrecioMensual();
+
+                double nuevoPrecioHE = (precioMensual / horasMinimas) * 0.75;
+
+                nuevoPrecioHE = Math.round(nuevoPrecioHE * 100.0) / 100.0;
+
+                if (Math.abs(item.getPrecioHoraExtra() - nuevoPrecioHE) > 0.01) {
+                    item.setPrecioHoraExtra(nuevoPrecioHE);
+                    huboCambios = true;
+                }
+            }
+        }
+        if (huboCambios) {
+            actualizarListaYTotales();
+        }
+    }
     private void mostrarDialogoAgregarItem(ItemCotizacion itemExistente) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_agregar_item_cotizacion, null);
@@ -273,45 +338,84 @@ public class NuevaCotizacionFragment extends Fragment {
         cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
 
         binding.btnGenerarCotizacion.setEnabled(false);
-        binding.btnGenerarCotizacion.setText("Guardando...");
+        binding.btnGenerarCotizacion.setText(esEdicion ? "Actualizando..." : "Guardando...");
 
-        repository.crearCotizacion(cotizacionActual, new CotizacionesRepository.Callback<String>() {
-            @Override
-            public void onSuccess(String numeroCotizacion) {
-                if (getContext() == null) return;
-                Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " guardada.", Toast.LENGTH_SHORT).show();
+        if (esEdicion) {
+            repository.actualizarCotizacion(cotizacionActual, new CotizacionesRepository.Callback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Toast.makeText(getContext(), "Cotización actualizada", Toast.LENGTH_SHORT).show();
+                    generarDocumentoWord();
+                }
 
-                binding.btnGenerarCotizacion.setText("Generando archivo...");
+                @Override
+                public void onError(Exception e) {
+                    binding.btnGenerarCotizacion.setEnabled(true);
+                    Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            repository.crearCotizacion(cotizacionActual, new CotizacionesRepository.Callback<String>() {
+                @Override
+                public void onSuccess(String numeroCotizacion) {
+                    if (getContext() == null) return;
+                    Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " creada.", Toast.LENGTH_SHORT).show();
 
-                new Thread(() -> {
-                    try {
-                        WordGenerator generator = new WordGenerator();
-                        File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
+                    binding.btnGenerarCotizacion.setText("Generando archivo...");
 
-                        requireActivity().runOnUiThread(() -> {
-                            binding.btnGenerarCotizacion.setText("Documento Listo");
-                            binding.btnGenerarCotizacion.setEnabled(true);
-                            abrirOCompartirDocumento(archivoWord);
-                        });
+                    new Thread(() -> {
+                        try {
+                            WordGenerator generator = new WordGenerator();
+                            File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
 
-                    } catch (Exception e) {
-                        requireActivity().runOnUiThread(() -> {
-                            Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            binding.btnGenerarCotizacion.setText("Reintentar Generar");
-                            binding.btnGenerarCotizacion.setEnabled(true);
-                            e.printStackTrace();
-                        });
-                    }
-                }).start();
+                            requireActivity().runOnUiThread(() -> {
+                                binding.btnGenerarCotizacion.setText("Documento Listo");
+                                binding.btnGenerarCotizacion.setEnabled(true);
+                                abrirOCompartirDocumento(archivoWord);
+                            });
+
+                        } catch (Exception e) {
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                binding.btnGenerarCotizacion.setText("Reintentar Generar");
+                                binding.btnGenerarCotizacion.setEnabled(true);
+                                e.printStackTrace();
+                            });
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    binding.btnGenerarCotizacion.setEnabled(true);
+                    binding.btnGenerarCotizacion.setText("Generar Cotización (Word)");
+                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+    }
+    private void generarDocumentoWord() {
+        binding.btnGenerarCotizacion.setText("Generando archivo...");
+        new Thread(() -> {
+            try {
+                WordGenerator generator = new WordGenerator();
+                File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
+
+                requireActivity().runOnUiThread(() -> {
+                    binding.btnGenerarCotizacion.setText(esEdicion ? "Actualizado y listo" : "Documento listo");
+                    binding.btnGenerarCotizacion.setEnabled(true);
+                    abrirOCompartirDocumento(archivoWord);
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    binding.btnGenerarCotizacion.setText("Reintentar generar");
+                    binding.btnGenerarCotizacion.setEnabled(true);
+                    e.printStackTrace();
+                });
             }
-
-            @Override
-            public void onError(Exception e) {
-                binding.btnGenerarCotizacion.setEnabled(true);
-                binding.btnGenerarCotizacion.setText("Generar Cotización (Word)");
-                Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+        }).start();
     }
 
     private void abrirOCompartirDocumento(File archivo) {
