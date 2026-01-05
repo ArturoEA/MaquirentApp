@@ -145,15 +145,21 @@ public class NuevaCotizacionFragment extends Fragment {
                 String seleccion = (String) parent.getItemAtPosition(position);
                 for (GrupoElectrogeno g : listaGruposInventario) {
                     if (seleccion.contains(g.getCodigo())) {
-                        // TODO: considerar implementar más atributos al modelo GrupoElectrogeno para autocompletado de datos (potencia, marca, etc)
                         break;
                     }
                 }
             });
         }
 
-        inputPrecio.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
+        inputPrecio.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
                 calcularHoraExtraAutomatica(inputPrecio, inputPrecioHE);
             }
         });
@@ -217,8 +223,12 @@ public class NuevaCotizacionFragment extends Fragment {
 
     private void calcularHoraExtraAutomatica(TextInputEditText inputPrecio, TextInputEditText inputHE) {
         try {
-            String precioStr = inputPrecio.getText().toString();
-            if (precioStr.isEmpty()) return;
+            String precioStr = inputPrecio.getText().toString().trim();
+
+            if (precioStr.isEmpty() || precioStr.equals(".")) {
+                inputHE.setText("");
+                return;
+            }
 
             double precioMensual = Double.parseDouble(precioStr);
             int horas = getHorasMinimasActuales();
@@ -226,8 +236,11 @@ public class NuevaCotizacionFragment extends Fragment {
             if (horas > 0) {
                 // Fórmula: (Precio / Horas) * 0.75
                 double precioHE = (precioMensual / horas) * 0.75;
+
                 inputHE.setText(String.format(Locale.US, "%.2f", precioHE));
             }
+        } catch (NumberFormatException e) {
+            inputHE.setText("");
         } catch (Exception e) {
         }
     }
