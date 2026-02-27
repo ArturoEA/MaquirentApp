@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@android:color/black">
+    android:background="@android:color/black"
+    android:theme="@style/Theme.TextMain">
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPagerImagenes"
