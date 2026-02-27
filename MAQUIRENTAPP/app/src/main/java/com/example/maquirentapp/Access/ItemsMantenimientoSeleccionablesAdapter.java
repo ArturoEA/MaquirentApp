@@ -131,9 +131,11 @@ public class ItemsMantenimientoSeleccionablesAdapter extends RecyclerView.Adapte
             } else {
                 itemView.setOnClickListener(null);
                 checkBox.setOnClickListener(null);
+                itemView.setClickable(false);
+                checkBox.setClickable(false);
 
-                itemView.setAlpha(0.7f);
-                checkBox.setAlpha(0.7f);
+//                itemView.setAlpha(0.7f);
+//                checkBox.setAlpha(0.7f);
             }
         }
     }

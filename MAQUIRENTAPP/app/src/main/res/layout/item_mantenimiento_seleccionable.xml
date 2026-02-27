@@ -34,15 +34,16 @@
             android:textColor="@color/white"
             android:textSize="16sp"  />
 
-        <CheckBox
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/checkboxAccesorio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:clickable="false"
             android:focusable="false"
-            android:drawableTint="@color/white"
-            android:buttonTint="@color/white"
-            android:button="@drawable/checkbox_custom"/>
+            android:button="@drawable/checkbox_custom"
+            app:useMaterialThemeColors="false"
+            app:buttonTint="@null"
+            android:buttonTint="@null"/>
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>
