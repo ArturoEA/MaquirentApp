@@ -12,10 +12,17 @@ import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,7 +39,10 @@ public class PdfGenerator {
     private static final int A4_HEIGHT_PTS = 842;
     private static final int RENDER_WIDTH_PX = 1190;
     private static final float TARGET_DENSITY = 2.0f;
-
+    public interface OnPdfGeneratedListener {
+        void onPdfGenerated(File pdfFile);
+        void onError(String error);
+    }
     public File generarCertificadoPdf(Context context, CertificadoOperatividad cert, String codigoGrupo) throws Exception {
 
         // 1. CREAR CONTEXTO CON DENSIDAD CONTROLADA
@@ -168,6 +178,121 @@ public class PdfGenerator {
         TextView tv = parent.findViewById(id);
         if (tv != null) {
             tv.setText(text != null ? text : "-");
+        }
+    }
+
+
+    public void generarPdfDesdeHtml(Context context, String htmlContent, String nombreArchivo) {
+        WebView webView = new WebView(context);
+
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                crearPdf(context, view, nombreArchivo);
+            }
+        });
+    }
+    private void crearPdf(Context context, WebView webView, String nombreArchivo) {
+        PrintManager printManager = (PrintManager) context.getSystemService(Context.PRINT_SERVICE);
+
+        PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(nombreArchivo);
+
+        PrintAttributes.Builder builder = new PrintAttributes.Builder();
+        builder.setMediaSize(PrintAttributes.MediaSize.ISO_A4);
+
+        printManager.print(nombreArchivo, printAdapter, builder.build());
+    }
+    public void generarPdfDesdeWebView(WebView webView, String htmlContent, String nombreArchivo, OnPdfGeneratedListener listener) {
+
+        // Configuramos el WebView para que sea "A4"
+        webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setUseWideViewPort(true);
+        // Habilitar el dibujo incluso si es invisible
+        webView.setDrawingCacheEnabled(true);
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                // Damos un pequeño respiro (300ms) para asegurar que el renderizado visual termine
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    createPdfFromVisualView(view, nombreArchivo, view.getContext(), listener);
+                }, 300);
+            }
+        });
+
+        // Cargamos el HTML
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+    }
+    private void createPdfFromVisualView(WebView webView, String nombreArchivo, Context context, OnPdfGeneratedListener listener) {
+        PdfDocument document = new PdfDocument();
+
+        // Dimensiones A4 estándar en puntos (PDF unit)
+        int anchoPaginaPdf = 595;
+        int altoPaginaPdf = 842;
+
+        try {
+            // 1. Obtener las medidas REALES del contenido del WebView (en píxeles)
+            // El WebView ya se dibujó en la pantalla invisible, así que usamos su ancho real.
+            int anchoContenidoWebView = webView.getWidth();
+            int altoContenidoWebView = webView.getContentHeight(); // Ojo: getContentHeight() es más preciso para scroll vertical
+
+            // Si por alguna razón es 0, usamos medidas por defecto para evitar crash
+            if (anchoContenidoWebView <= 0) anchoContenidoWebView = 1000;
+            if (altoContenidoWebView <= 0) altoContenidoWebView = 1500;
+
+            // 2. Calcular el Factor de Escala (Zoom Out)
+            // Queremos que el ancho del WebView quepa exactamente en el ancho del PDF
+            float escala = (float) anchoPaginaPdf / (float) anchoContenidoWebView;
+
+            // Calculamos la altura de una página PDF pero en "píxeles de WebView"
+            // Es decir: ¿Cuántos píxeles de la web caben en una hoja A4?
+            float altoPaginaEnPixelesWeb = altoPaginaPdf / escala;
+
+            // Calculamos cuántas páginas necesitamos
+            int totalPaginas = (int) Math.ceil(altoContenidoWebView / altoPaginaEnPixelesWeb);
+
+            for (int i = 0; i < totalPaginas; i++) {
+                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(anchoPaginaPdf, altoPaginaPdf, i + 1).create();
+                PdfDocument.Page page = document.startPage(pageInfo);
+                Canvas canvas = page.getCanvas();
+
+                // Pintamos fondo blanco
+                Paint paint = new Paint();
+                paint.setColor(Color.WHITE);
+                canvas.drawRect(0, 0, anchoPaginaPdf, altoPaginaPdf, paint);
+
+                // --- AQUÍ ESTÁ LA MAGIA DEL ZOOM ---
+                canvas.save();
+
+                // 1. Aplicamos la escala para que el contenido gigante se encoja al tamaño A4
+                canvas.scale(escala, escala);
+
+                // 2. Trasladamos para "escanear" la parte del WebView que toca en esta página
+                // Movemos hacia arriba en píxeles originales del webview
+                canvas.translate(0, -(i * altoPaginaEnPixelesWeb));
+
+                // 3. Dibujamos
+                webView.draw(canvas);
+
+                canvas.restore();
+                document.finishPage(page);
+            }
+
+            // Guardar
+            File pdfDir = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Cotizaciones");
+            if (!pdfDir.exists()) pdfDir.mkdirs();
+            File archivoFinal = new File(pdfDir, nombreArchivo + ".pdf");
+
+            document.writeTo(new FileOutputStream(archivoFinal));
+            document.close();
+
+            listener.onPdfGenerated(archivoFinal);
+
+        } catch (IOException e) {
+            listener.onError(e.getMessage());
+            document.close();
         }
     }
 }

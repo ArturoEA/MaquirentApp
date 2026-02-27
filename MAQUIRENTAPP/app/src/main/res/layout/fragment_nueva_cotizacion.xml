@@ -10,7 +10,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <TextView
@@ -131,6 +131,7 @@
                     android:layout_height="wrap_content"
                     android:checked="true"
                     android:text="Soles (S/.)"
+                    app:buttonTint="@color/black"
                     android:textColor="@color/black" />
 
                 <RadioButton
@@ -139,6 +140,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="Dólares ($)"
+                    app:buttonTint="@color/black"
                     android:textColor="@color/black" />
             </RadioGroup>
         </LinearLayout>
@@ -259,16 +261,42 @@
             </LinearLayout>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnGenerarCotizacion"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="32dp"
-            android:backgroundTint="@color/selection_indicator"
-            android:text="Generar cotización"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnGenerarCotizacion"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="55dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="32dp"
+                android:backgroundTint="@color/selection_indicator"
+                android:text="Word"
+                android:textColor="@color/white"
+                android:layout_marginEnd="15dp"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnGenerarPdf"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="55dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="32dp"
+                android:backgroundTint="@color/selection_indicator"
+                android:text="PDF"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <WebView
+            android:id="@+id/webViewPdfHidden"
+            android:layout_width="595dp"
+            android:layout_height="wrap_content"
+            android:visibility="invisible" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

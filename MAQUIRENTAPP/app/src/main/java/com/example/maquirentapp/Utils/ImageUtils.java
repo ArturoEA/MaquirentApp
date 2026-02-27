@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.media.ExifInterface; // Importante: Usar esta librería
 import android.net.Uri;
 import android.os.Build;
+import android.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -89,5 +90,12 @@ public class ImageUtils {
             img.recycle();
         }
         return rotatedImg;
+    }
+    public static String convertirDrawableABase64(Context context, int resourceId) {
+        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+        byte[] byteArray = outputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP);
     }
 }

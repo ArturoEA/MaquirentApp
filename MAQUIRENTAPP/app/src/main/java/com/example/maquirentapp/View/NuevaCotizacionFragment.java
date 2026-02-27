@@ -24,6 +24,8 @@ import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
 import com.example.maquirentapp.Access.CotizacionItemsAdapter;
+import com.example.maquirentapp.Utils.HtmlGenerator;
+import com.example.maquirentapp.Utils.PdfGenerator;
 import com.example.maquirentapp.Utils.WordGenerator;
 import com.example.maquirentapp.databinding.FragmentNuevaCotizacionBinding;
 import com.google.android.material.textfield.TextInputEditText;
@@ -96,8 +98,6 @@ public class NuevaCotizacionFragment extends Fragment {
         }
 
         actualizarListaYTotales();
-
-        binding.btnGenerarCotizacion.setText("Actualizar y generar Word");
     }
 
     private void cargarGruposParaAutocompletado() {
@@ -146,7 +146,8 @@ public class NuevaCotizacionFragment extends Fragment {
     private void setupListeners() {
         binding.inputFecha.setOnClickListener(v -> mostrarDatePicker());
         binding.btnAgregarItem.setOnClickListener(v -> mostrarDialogoAgregarItem(null));
-        binding.btnGenerarCotizacion.setOnClickListener(v -> guardarYGenerar());
+        binding.btnGenerarCotizacion.setOnClickListener(v -> guardarYGenerar("WORD"));
+        binding.btnGenerarPdf.setOnClickListener(v -> guardarYGenerar("PDF"));
 
         binding.inputHorasMinimas.addTextChangedListener(new android.text.TextWatcher() {
             @Override
@@ -319,8 +320,7 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.tvIgvGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getIgvGlobal()));
         binding.tvTotalGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getTotalGlobal()));
     }
-
-    private void guardarYGenerar() {
+    private void guardarYGenerar(String tipoDocumento) {
         if (binding.inputCliente.getText().toString().isEmpty()) {
             binding.inputCliente.setError("Requerido");
             return;
@@ -337,20 +337,23 @@ public class NuevaCotizacionFragment extends Fragment {
         cotizacionActual.setMoneda(binding.radioSol.isChecked() ? "SOL" : "USD");
         cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
 
+        // Deshabilitar ambos botones para evitar doble envío
         binding.btnGenerarCotizacion.setEnabled(false);
-        binding.btnGenerarCotizacion.setText(esEdicion ? "Actualizando..." : "Guardando...");
+        binding.btnGenerarPdf.setEnabled(false);
 
         if (esEdicion) {
             repository.actualizarCotizacion(cotizacionActual, new CotizacionesRepository.Callback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(getContext(), "Cotización actualizada", Toast.LENGTH_SHORT).show();
-                    generarDocumentoWord();
+                    // Derivar a la función correcta
+                    if (tipoDocumento.equals("WORD")) generarDocumentoWord();
+                    else generarDocumentoPdf();
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    binding.btnGenerarCotizacion.setEnabled(true);
+                    habilitarBotones();
                     Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
@@ -359,65 +362,85 @@ public class NuevaCotizacionFragment extends Fragment {
                 @Override
                 public void onSuccess(String numeroCotizacion) {
                     if (getContext() == null) return;
-                    Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " creada.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " guardada.", Toast.LENGTH_SHORT).show();
 
-                    binding.btnGenerarCotizacion.setText("Generando archivo...");
-
-                    new Thread(() -> {
-                        try {
-                            WordGenerator generator = new WordGenerator();
-                            File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
-
-                            requireActivity().runOnUiThread(() -> {
-                                binding.btnGenerarCotizacion.setText("Documento Listo");
-                                binding.btnGenerarCotizacion.setEnabled(true);
-                                abrirOCompartirDocumento(archivoWord);
-                            });
-
-                        } catch (Exception e) {
-                            requireActivity().runOnUiThread(() -> {
-                                Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                binding.btnGenerarCotizacion.setText("Reintentar Generar");
-                                binding.btnGenerarCotizacion.setEnabled(true);
-                                e.printStackTrace();
-                            });
-                        }
-                    }).start();
+                    // Derivar a la función correcta
+                    if (tipoDocumento.equals("WORD")) generarDocumentoWord();
+                    else generarDocumentoPdf();
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    binding.btnGenerarCotizacion.setEnabled(true);
-                    binding.btnGenerarCotizacion.setText("Generar Cotización (Word)");
+                    habilitarBotones();
                     Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         }
-
+    }
+    private void habilitarBotones() {
+        binding.btnGenerarCotizacion.setEnabled(true);
+        binding.btnGenerarPdf.setEnabled(true);
     }
     private void generarDocumentoWord() {
-        binding.btnGenerarCotizacion.setText("Generando archivo...");
+        binding.btnGenerarCotizacion.setText("Generando Word...");
+
         new Thread(() -> {
             try {
                 WordGenerator generator = new WordGenerator();
                 File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
 
                 requireActivity().runOnUiThread(() -> {
-                    binding.btnGenerarCotizacion.setText(esEdicion ? "Actualizado y listo" : "Documento listo");
-                    binding.btnGenerarCotizacion.setEnabled(true);
+                    binding.btnGenerarCotizacion.setText(esEdicion ? "Word" : "Word");
+                    habilitarBotones();
                     abrirOCompartirDocumento(archivoWord);
                 });
             } catch (Exception e) {
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    binding.btnGenerarCotizacion.setText("Reintentar generar");
-                    binding.btnGenerarCotizacion.setEnabled(true);
+                    binding.btnGenerarCotizacion.setText("Word");
+                    habilitarBotones();
                     e.printStackTrace();
                 });
             }
         }).start();
     }
 
+    private void generarDocumentoPdf() {
+        binding.btnGenerarPdf.setText("Generando PDF...");
+
+        HtmlGenerator htmlGen = new HtmlGenerator();
+        String html = htmlGen.generarHtmlCotizacion(requireContext(), cotizacionActual);
+
+        PdfGenerator pdfGen = new PdfGenerator();
+        String nombreArchivo = "Cotizacion_" + cotizacionActual.getNumeroCotizacion();
+
+        pdfGen.generarPdfDesdeWebView(binding.webViewPdfHidden, html, nombreArchivo, new PdfGenerator.OnPdfGeneratedListener() {
+            @Override
+            public void onPdfGenerated(File pdfFile) {
+                requireActivity().runOnUiThread(() -> {
+                    binding.btnGenerarPdf.setText("PDF");
+                    habilitarBotones();
+                    abrirEnVisorInterno(pdfFile);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Error: " + error, Toast.LENGTH_SHORT).show();
+                    binding.btnGenerarPdf.setText("PDF");
+                    habilitarBotones();
+                });
+            }
+        });
+    }
+    private void abrirEnVisorInterno(File pdfFile) {
+        Intent intent = new Intent(getContext(), PdfViewerActivity.class);
+        // CORRECCIÓN 1: Usar las llaves exactas que espera el Activity
+        intent.putExtra("PDF_URL", pdfFile.getAbsolutePath());
+        intent.putExtra("NOMBRE_ARCHIVO", "Cotizacion_" + cotizacionActual.getNumeroCotizacion());
+        startActivity(intent);
+    }
     private void abrirOCompartirDocumento(File archivo) {
         try {
             Uri uri = androidx.core.content.FileProvider.getUriForFile(

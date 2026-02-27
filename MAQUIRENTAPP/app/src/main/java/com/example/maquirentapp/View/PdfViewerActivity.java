@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -117,18 +118,26 @@ public class PdfViewerActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
     private void cargarPdf() {
         progressBar.setVisibility(View.VISIBLE);
         ivPdfPage.setVisibility(View.GONE);
         fabNext.setEnabled(false);
         fabPrev.setEnabled(false);
 
+        if (!pdfUrl.startsWith("http")) {
+            File localFile = new File(pdfUrl);
+            if (localFile.exists()) {
+                mostrarPdfDesdeArchivo(localFile);
+            } else {
+                Toast.makeText(this, "El archivo no existe", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+            return;
+        }
+
         executor.execute(() -> {
             try {
-                // Descargar PDF a caché
-                pdfFile = new File(getCacheDir(), "temp_" + nombreArchivo);
-
+                pdfFile = new File(getCacheDir(), "temp_" + nombreArchivo + ".pdf");
                 URL url = new URL(pdfUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
@@ -144,27 +153,37 @@ public class PdfViewerActivity extends AppCompatActivity {
                 fos.close();
                 is.close();
 
-                // Abrir el PDF con PdfRenderer
-                parcelFileDescriptor = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY);
-                pdfRenderer = new PdfRenderer(parcelFileDescriptor);
-
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    ivPdfPage.setVisibility(View.VISIBLE);
-                    mostrarPagina(0);
-                });
+                runOnUiThread(() -> mostrarPdfDesdeArchivo(pdfFile));
 
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al cargar PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    finish();
+                    Toast.makeText(this, "Error al descargar PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
     }
+    private void mostrarPdfDesdeArchivo(File file) {
+        try {
+            pdfFile = file;
+            parcelFileDescriptor = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY);
+            pdfRenderer = new PdfRenderer(parcelFileDescriptor);
 
+            runOnUiThread(() -> {
+                progressBar.setVisibility(View.GONE);
+                ivPdfPage.setVisibility(View.VISIBLE);
+                mostrarPagina(0);
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            runOnUiThread(() -> {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(this, "Error al abrir PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
     private void mostrarPagina(int index) {
         if (pdfRenderer == null) return;
 
@@ -177,21 +196,31 @@ public class PdfViewerActivity extends AppCompatActivity {
         currentPage = pdfRenderer.openPage(index);
         currentPageIndex = index;
 
-        // Crear bitmap
-        Bitmap bitmap = Bitmap.createBitmap(
-                currentPage.getWidth(),
-                currentPage.getHeight(),
-                Bitmap.Config.ARGB_8888
-        );
+        //Previsualización en mejor resolución
+        float scaleFactor = 2.5f;
 
-        // Renderizar página en el bitmap
-        currentPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+        int width = (int) (currentPage.getWidth() * scaleFactor);
+        int height = (int) (currentPage.getHeight() * scaleFactor);
+
+        // Crear bitmap en alta resolución
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        // PINTAR FONDO BLANCO (Muy importante porque PdfRenderer dibuja con fondo transparente)
+        bitmap.eraseColor(android.graphics.Color.WHITE);
+
+        // Crear una matriz para escalar el dibujo del PDF al nuevo tamaño del Bitmap
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        matrix.postScale(scaleFactor, scaleFactor);
+
+        // Renderizar página en el bitmap aplicando la matriz
+        currentPage.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+        // -----------------------------------
 
         // Mostrar en ImageView
         ivPdfPage.setImageBitmap(bitmap);
 
         // Actualizar info de página
-        tvPageInfo.setText(String.format("Página %d de %d", index + 1, pdfRenderer.getPageCount()));
+        tvPageInfo.setText(String.format(Locale.getDefault(), "Página %d de %d", index + 1, pdfRenderer.getPageCount()));
 
         // Actualizar botones
         fabPrev.setEnabled(index > 0);

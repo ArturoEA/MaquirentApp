@@ -19,6 +19,11 @@
         <item name="fontFamily">@font/anta_font</item>
 
         <item name="colorSurface">@color/black</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorOnSurfaceVariant">@color/white</item>ss
+        <item name="colorPrimary">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
     </style>
 
     <style name="MiTextoTituloDialogo" parent="TextAppearance.Material3.TitleLarge">
