@@ -104,28 +104,23 @@ public class FichaTecnicaViewModel extends AndroidViewModel {
     }
 
     // Subir un nuevo PDF
-    public void subirPdf(Context context, Uri pdfUri) {
-        if (pdfUri == null) {
-            operacionStatus.setValue("Error: archivo no válido");
+    public void subirPdf(Context context, Uri pdfUri, String nombrePersonalizado) {
+        if (pdfUri == null || nombrePersonalizado == null || nombrePersonalizado.trim().isEmpty()) {
+            operacionStatus.setValue("Error: archivo o nombre no válido");
             return;
         }
 
         isLoading.setValue(true);
 
         try {
-            // Obtener nombre del archivo
-            String nombreArchivo = obtenerNombreArchivo(context, pdfUri);
-
-            // Validar que sea PDF
-            if (!nombreArchivo.toLowerCase().endsWith(".pdf")) {
-                operacionStatus.setValue("Error: solo se permiten archivos PDF");
-                isLoading.setValue(false);
-                return;
+            // Nos aseguramos de que el nombre personalizado termine en .pdf
+            String nombreFinal = nombrePersonalizado.trim();
+            if (!nombreFinal.toLowerCase().endsWith(".pdf")) {
+                nombreFinal = nombreFinal + ".pdf";
             }
 
-            // Crear referencia única
-            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String nombreUnico = timestamp + "_" + nombreArchivo;
+            String nombreUnico = nombreFinal;
+
             StorageReference fileRef = fichasTecnicasRef.child(nombreUnico);
 
             // Subir archivo
@@ -148,7 +143,6 @@ public class FichaTecnicaViewModel extends AndroidViewModel {
             isLoading.setValue(false);
         }
     }
-
     // Abrir PDF en visor integrado
     public void abrirPdf(Context context, FichaTecnica ficha) {
         Intent intent = com.example.maquirentapp.View.PdfViewerActivity.newIntent(
@@ -240,26 +234,6 @@ public class FichaTecnicaViewModel extends AndroidViewModel {
             isLoading.setValue(false);
         }
     }
-
-    // Mét0do auxiliar para obtener nombre del archivo
-    private String obtenerNombreArchivo(Context context, Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            try (android.database.Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                    if (index >= 0) {
-                        result = cursor.getString(index);
-                    }
-                }
-            }
-        }
-        if (result == null) {
-            result = uri.getLastPathSegment();
-        }
-        return result;
-    }
-
     // Interface para callback de descarga
     private interface OnFileDownloadedListener {
         void onFileDownloaded(File file);

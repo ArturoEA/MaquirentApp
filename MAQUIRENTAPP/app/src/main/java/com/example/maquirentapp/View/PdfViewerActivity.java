@@ -17,7 +17,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.maquirentapp.Access.PdfPageAdapter;
 import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -31,11 +33,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PdfViewerActivity extends AppCompatActivity {
-    private ImageView ivPdfPage;
-    private TextView tvPageInfo;
-    private FloatingActionButton fabNext, fabPrev;
     private ProgressBar progressBar;
     private Toolbar toolbar;
+    private RecyclerView recyclerPdf;
 
     private PdfRenderer pdfRenderer;
     private PdfRenderer.Page currentPage;
@@ -77,14 +77,10 @@ public class PdfViewerActivity extends AppCompatActivity {
 
     private void initViews() {
         toolbar = findViewById(R.id.toolbar);
-        ivPdfPage = findViewById(R.id.iv_pdf_page);
-        tvPageInfo = findViewById(R.id.tv_page_info);
-        fabNext = findViewById(R.id.fab_next_page);
-        fabPrev = findViewById(R.id.fab_prev_page);
+        recyclerPdf = findViewById(R.id.recyclerPdf);
         progressBar = findViewById(R.id.progress_bar);
 
-        fabNext.setOnClickListener(v -> mostrarSiguientePagina());
-        fabPrev.setOnClickListener(v -> mostrarPaginaAnterior());
+        recyclerPdf.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
     }
 
     private void setupToolbar() {
@@ -120,9 +116,6 @@ public class PdfViewerActivity extends AppCompatActivity {
     }
     private void cargarPdf() {
         progressBar.setVisibility(View.VISIBLE);
-        ivPdfPage.setVisibility(View.GONE);
-        fabNext.setEnabled(false);
-        fabPrev.setEnabled(false);
 
         if (!pdfUrl.startsWith("http")) {
             File localFile = new File(pdfUrl);
@@ -172,8 +165,9 @@ public class PdfViewerActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 progressBar.setVisibility(View.GONE);
-                ivPdfPage.setVisibility(View.VISIBLE);
-                mostrarPagina(0);
+
+                PdfPageAdapter adapter = new PdfPageAdapter(pdfRenderer);
+                recyclerPdf.setAdapter(adapter);
             });
 
         } catch (Exception e) {
@@ -184,61 +178,6 @@ public class PdfViewerActivity extends AppCompatActivity {
             });
         }
     }
-    private void mostrarPagina(int index) {
-        if (pdfRenderer == null) return;
-
-        // Cerrar página actual si existe
-        if (currentPage != null) {
-            currentPage.close();
-        }
-
-        // Abrir nueva página
-        currentPage = pdfRenderer.openPage(index);
-        currentPageIndex = index;
-
-        //Previsualización en mejor resolución
-        float scaleFactor = 2.5f;
-
-        int width = (int) (currentPage.getWidth() * scaleFactor);
-        int height = (int) (currentPage.getHeight() * scaleFactor);
-
-        // Crear bitmap en alta resolución
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-        // PINTAR FONDO BLANCO (Muy importante porque PdfRenderer dibuja con fondo transparente)
-        bitmap.eraseColor(android.graphics.Color.WHITE);
-
-        // Crear una matriz para escalar el dibujo del PDF al nuevo tamaño del Bitmap
-        android.graphics.Matrix matrix = new android.graphics.Matrix();
-        matrix.postScale(scaleFactor, scaleFactor);
-
-        // Renderizar página en el bitmap aplicando la matriz
-        currentPage.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-        // -----------------------------------
-
-        // Mostrar en ImageView
-        ivPdfPage.setImageBitmap(bitmap);
-
-        // Actualizar info de página
-        tvPageInfo.setText(String.format(Locale.getDefault(), "Página %d de %d", index + 1, pdfRenderer.getPageCount()));
-
-        // Actualizar botones
-        fabPrev.setEnabled(index > 0);
-        fabNext.setEnabled(index < pdfRenderer.getPageCount() - 1);
-    }
-
-    private void mostrarSiguientePagina() {
-        if (currentPageIndex < pdfRenderer.getPageCount() - 1) {
-            mostrarPagina(currentPageIndex + 1);
-        }
-    }
-
-    private void mostrarPaginaAnterior() {
-        if (currentPageIndex > 0) {
-            mostrarPagina(currentPageIndex - 1);
-        }
-    }
-
     private void compartirPdf() {
         if (pdfFile != null && pdfFile.exists()) {
             Intent shareIntent = new Intent(Intent.ACTION_SEND);

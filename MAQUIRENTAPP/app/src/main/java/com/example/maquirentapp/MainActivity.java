@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
         initializeAppCheck();
 
         EdgeToEdge.enable(this);

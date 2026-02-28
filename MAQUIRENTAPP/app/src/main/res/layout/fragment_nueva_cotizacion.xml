@@ -261,6 +261,49 @@
             </LinearLayout>
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="#CCCCCC" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Opcional: Adjuntar Ficha Técnica al PDF"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeWidth="2dp"
+            app:boxCornerRadiusBottomEnd="22dp"
+            app:boxCornerRadiusBottomStart="22dp"
+            app:boxCornerRadiusTopEnd="22dp"
+            app:boxCornerRadiusTopStart="22dp"
+            app:boxStrokeColor="@color/input_stroke_color"
+            android:textColorHint="@color/colorHints"
+            app:cursorColor="@color/black"
+            app:boxBackgroundColor="@color/background_light"
+            app:endIconTint="@color/black"
+            app:hintTextColor="@color/black"
+            android:hint="Seleccione una ficha técnica">
+
+            <AutoCompleteTextView
+                android:id="@+id/autoCompleteFichas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

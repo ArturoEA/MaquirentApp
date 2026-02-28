@@ -36,6 +36,17 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import com.example.maquirentapp.Model.FichaTecnica;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.tom_roush.pdfbox.multipdf.PDFMergerUtility;
+import com.tom_roush.pdfbox.io.MemoryUsageSetting;
+
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class NuevaCotizacionFragment extends Fragment {
 
     private FragmentNuevaCotizacionBinding binding;
@@ -45,6 +56,9 @@ public class NuevaCotizacionFragment extends Fragment {
     private List<GrupoElectrogeno> listaGruposInventario = new ArrayList<>();
     private ArrayAdapter<String> autoCompleteAdapter;
     private boolean esEdicion = false;
+    private List<FichaTecnica> listaFichas = new ArrayList<>();
+    private FichaTecnica fichaSeleccionada = null;
+    private ArrayAdapter<String> fichasAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,6 +84,8 @@ public class NuevaCotizacionFragment extends Fragment {
 
         setupRecyclerView();
         setupListeners();
+
+        cargarFichasTecnicas();
 
         actualizarFechaInput(Calendar.getInstance());
         cargarGruposParaAutocompletado();
@@ -330,12 +346,44 @@ public class NuevaCotizacionFragment extends Fragment {
             return;
         }
 
+        String seleccionVisual = binding.autoCompleteFichas.getText().toString();
+
+        if (seleccionVisual.equals("Ninguna (No adjuntar)") || seleccionVisual.isEmpty()) {
+            fichaSeleccionada = null;
+            cotizacionActual.setFichaTecnicaNombre(null);
+        } else {
+            cotizacionActual.setFichaTecnicaNombre(seleccionVisual);
+
+            // Emparejamos el texto con el objeto real para tener su URL de descarga
+            boolean fichaEncontrada = false;
+            for (FichaTecnica f : listaFichas) {
+                if (f.getNombreArchivo().equals(seleccionVisual)) {
+                    fichaSeleccionada = f;
+                    fichaEncontrada = true;
+                    break;
+                }
+            }
+
+            // Si hay texto pero el objeto no está, Firebase sigue descargando la lista.
+            if (!fichaEncontrada) {
+                Toast.makeText(getContext(), "Sincronizando ficha técnica, por favor intenta en un segundo...", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+
         cotizacionActual.setClienteNombre(binding.inputCliente.getText().toString());
         cotizacionActual.setClienteRuc(binding.inputRuc.getText().toString());
         cotizacionActual.setLugarTrabajo(binding.inputLugar.getText().toString());
         cotizacionActual.setFechaEmision(binding.inputFecha.getText().toString());
         cotizacionActual.setMoneda(binding.radioSol.isChecked() ? "SOL" : "USD");
         cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+
+        // Guardar el nombre de la ficha seleccionada (o null si eligió "Ninguna")
+        if (fichaSeleccionada != null) {
+            cotizacionActual.setFichaTecnicaNombre(fichaSeleccionada.getNombreArchivo());
+        } else {
+            cotizacionActual.setFichaTecnicaNombre(null);
+        }
 
         // Deshabilitar ambos botones para evitar doble envío
         binding.btnGenerarCotizacion.setEnabled(false);
@@ -417,11 +465,15 @@ public class NuevaCotizacionFragment extends Fragment {
         pdfGen.generarPdfDesdeWebView(binding.webViewPdfHidden, html, nombreArchivo, new PdfGenerator.OnPdfGeneratedListener() {
             @Override
             public void onPdfGenerated(File pdfFile) {
-                requireActivity().runOnUiThread(() -> {
-                    binding.btnGenerarPdf.setText("PDF");
-                    habilitarBotones();
-                    abrirEnVisorInterno(pdfFile);
-                });
+                if (fichaSeleccionada != null) {
+                    fusionarConFichaTecnica(pdfFile, fichaSeleccionada);
+                } else {
+                    requireActivity().runOnUiThread(() -> {
+                        binding.btnGenerarPdf.setText("PDF");
+                        habilitarBotones();
+                        abrirEnVisorInterno(pdfFile);
+                    });
+                }
             }
 
             @Override
@@ -436,7 +488,6 @@ public class NuevaCotizacionFragment extends Fragment {
     }
     private void abrirEnVisorInterno(File pdfFile) {
         Intent intent = new Intent(getContext(), PdfViewerActivity.class);
-        // CORRECCIÓN 1: Usar las llaves exactas que espera el Activity
         intent.putExtra("PDF_URL", pdfFile.getAbsolutePath());
         intent.putExtra("NOMBRE_ARCHIVO", "Cotizacion_" + cotizacionActual.getNumeroCotizacion());
         startActivity(intent);
@@ -460,7 +511,118 @@ public class NuevaCotizacionFragment extends Fragment {
             Toast.makeText(getContext(), "No tienes una app para abrir Word instalada.", Toast.LENGTH_LONG).show();
         }
     }
+    private void cargarFichasTecnicas() {
+        listaFichas.clear();
 
+        List<String> nombresFichas = new ArrayList<>();
+        nombresFichas.add("Ninguna (No adjuntar)");
+
+        fichasAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, nombresFichas);
+        binding.autoCompleteFichas.setAdapter(fichasAdapter);
+
+        if (esEdicion && cotizacionActual.getFichaTecnicaNombre() != null) {
+            binding.autoCompleteFichas.setText(cotizacionActual.getFichaTecnicaNombre(), false);
+        } else {
+            binding.autoCompleteFichas.setText("Ninguna (No adjuntar)", false);
+        }
+
+        // Buscar en Firebase Storage
+        FirebaseStorage.getInstance().getReference().child("fichas_tecnicas/").listAll()
+                .addOnSuccessListener(listResult -> {
+                    for (StorageReference item : listResult.getItems()) {
+                        item.getDownloadUrl().addOnSuccessListener(uri -> {
+                            FichaTecnica ficha = new FichaTecnica();
+                            ficha.setNombreArchivo(item.getName());
+                            ficha.setUrlPdf(uri.toString());
+
+                            listaFichas.add(ficha);
+                            fichasAdapter.add(item.getName());
+                            fichasAdapter.notifyDataSetChanged();
+                        });
+                    }
+                    // Si estamos en modo edición y la cotización tenía una ficha guardada, la pre-seleccionamos
+                    if (esEdicion && cotizacionActual.getFichaTecnicaNombre() != null) {
+                        binding.autoCompleteFichas.setText(cotizacionActual.getFichaTecnicaNombre(), false);
+
+                        // Buscar la ficha en la lista para asignarla a la variable global
+                        for (FichaTecnica f : listaFichas) {
+                            if (f.getNombreArchivo().equals(cotizacionActual.getFichaTecnicaNombre())) {
+                                fichaSeleccionada = f;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Escuchar qué elige el usuario
+                    binding.autoCompleteFichas.setOnItemClickListener((parent, view, position, id) -> {
+                        String seleccion = fichasAdapter.getItem(position);
+                        if (seleccion.equals("Ninguna (No adjuntar)")) {
+                            fichaSeleccionada = null;
+                        } else {
+                            for (FichaTecnica f : listaFichas) {
+                                if (f.getNombreArchivo().equals(seleccion)) {
+                                    fichaSeleccionada = f;
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                });
+    }
+    private void fusionarConFichaTecnica(File pdfCotizacion, FichaTecnica ficha) {
+        requireActivity().runOnUiThread(() -> {
+            binding.btnGenerarPdf.setText("Adjuntando Ficha...");
+        });
+
+        new Thread(() -> {
+            try {
+                // 1. Descargar el PDF de Firebase a la caché del celular
+                File tempFicha = new File(requireContext().getCacheDir(), "temp_ficha_tecnica.pdf");
+                URL url = new URL(ficha.getUrlPdf());
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+                InputStream input = connection.getInputStream();
+                FileOutputStream output = new FileOutputStream(tempFicha);
+
+                byte[] data = new byte[1024];
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    output.write(data, 0, count);
+                }
+                output.flush();
+                output.close();
+                input.close();
+
+                // 2. Fusionar los PDFs con PDFBox
+                File mergedPdf = new File(requireContext().getCacheDir(), "Cotizacion_" + cotizacionActual.getNumeroCotizacion() + ".pdf");
+
+                PDFMergerUtility merger = new PDFMergerUtility();
+                merger.addSource(pdfCotizacion);
+                merger.addSource(tempFicha);
+                merger.setDestinationFileName(mergedPdf.getAbsolutePath());
+
+                // Ejecutar la unión
+                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+
+                // 3. Abrir el PDF final consolidado
+                requireActivity().runOnUiThread(() -> {
+                    binding.btnGenerarPdf.setText("PDF");
+                    habilitarBotones();
+                    abrirEnVisorInterno(mergedPdf);
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Error al adjuntar ficha. Abriendo cotización simple.", Toast.LENGTH_LONG).show();
+                    binding.btnGenerarPdf.setText("PDF");
+                    habilitarBotones();
+                    abrirEnVisorInterno(pdfCotizacion);
+                });
+            }
+        }).start();
+    }
     private int getHorasMinimasActuales() {
         try {
             String val = binding.inputHorasMinimas.getText().toString();

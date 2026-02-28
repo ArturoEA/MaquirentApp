@@ -32,6 +32,7 @@ import com.example.maquirentapp.ViewModel.FichaTecnicaViewModel;
 import com.example.maquirentapp.adaptadores.FichasTecnicasAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 
@@ -58,7 +59,7 @@ public class FichasTecnicasFragment extends Fragment {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri pdfUri = result.getData().getData();
                         if (pdfUri != null) {
-                            viewModel.subirPdf(requireContext(), pdfUri);
+                            mostrarDialogoRenombrar(pdfUri);
                         }
                     }
                 });
@@ -181,7 +182,56 @@ public class FichasTecnicasFragment extends Fragment {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         pdfPickerLauncher.launch(intent);
     }
+    private void mostrarDialogoRenombrar(Uri pdfUri) {
+        // Extraemos el nombre original solo para dárselo como "sugerencia" al usuario
+        String nombreOriginal = "";
+        try (android.database.Cursor cursor = requireContext().getContentResolver().query(pdfUri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    nombreOriginal = cursor.getString(index);
+                }
+            }
+        }
+        if (nombreOriginal == null || nombreOriginal.isEmpty()) {
+            nombreOriginal = pdfUri.getLastPathSegment();
+        }
 
+        // Le quitamos el ".pdf" final para que sea más limpio de editar
+        if (nombreOriginal != null && nombreOriginal.toLowerCase().endsWith(".pdf")) {
+            nombreOriginal = nombreOriginal.substring(0, nombreOriginal.length() - 4);
+        }
+
+        // Crear el campo de texto para el diálogo
+        TextInputEditText inputNombre = new TextInputEditText(requireContext());
+        inputNombre.setText(nombreOriginal); // Pre-llenar
+        inputNombre.setHint("Ej. FT 75-109");
+
+        // Añadirle un poco de margen para que no se pegue a los bordes
+        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(50, 20, 50, 0);
+        inputNombre.setLayoutParams(params);
+        container.addView(inputNombre);
+
+        // Mostrar el Diálogo Material
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                .setTitle("Nombre de la Ficha Técnica")
+                .setMessage("Asigna un nombre claro para encontrar este documento fácilmente.")
+                .setView(container)
+                .setCancelable(false)
+                .setPositiveButton("Subir", (dialog, which) -> {
+                    String nombreFinal = inputNombre.getText().toString().trim();
+                    if (nombreFinal.isEmpty()) {
+                        Toast.makeText(getContext(), "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                    } else {
+                        viewModel.subirPdf(requireContext(), pdfUri, nombreFinal);
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
     private void verificarPermisoYDescargar(FichaTecnica ficha) {
         // Android 10+ no necesita permiso para usar DIRECTORY_DOWNLOADS
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

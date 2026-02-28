@@ -20,6 +20,7 @@ public class Cotizacion implements Serializable {
     private double totalGlobal;
 
     private String fechaCreacionTimestamp;
+    private String fichaTecnicaNombre;
 
     public Cotizacion() {
         this.items = new ArrayList<>();
@@ -137,5 +138,13 @@ public class Cotizacion implements Serializable {
 
     public void setFechaCreacionTimestamp(String fechaCreacionTimestamp) {
         this.fechaCreacionTimestamp = fechaCreacionTimestamp;
+    }
+
+    public String getFichaTecnicaNombre() {
+        return fichaTecnicaNombre;
+    }
+
+    public void setFichaTecnicaNombre(String fichaTecnicaNombre) {
+        this.fichaTecnicaNombre = fichaTecnicaNombre;
     }
 }
