@@ -296,7 +296,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 double horas = Double.parseDouble(horasStr);
 
                 if (horas > 0) {
-                    double precioHoraExtra = (precio / horas) * 0.75;
+                    double precioHoraExtra = (precio / 200) * 0.75;
                     inputPrecioHoraExtra.setText(String.format(Locale.US, "%.2f", precioHoraExtra));
                 }
             } catch (NumberFormatException e) {

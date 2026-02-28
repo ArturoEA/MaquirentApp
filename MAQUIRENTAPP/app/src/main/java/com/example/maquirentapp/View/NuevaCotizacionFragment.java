@@ -189,7 +189,7 @@ public class NuevaCotizacionFragment extends Fragment {
             for (ItemCotizacion item : cotizacionActual.getItems()) {
                 double precioMensual = item.getPrecioMensual();
 
-                double nuevoPrecioHE = (precioMensual / horasMinimas) * 0.75;
+                double nuevoPrecioHE = (precioMensual / 200) * 0.75;
 
                 nuevoPrecioHE = Math.round(nuevoPrecioHE * 100.0) / 100.0;
 
@@ -317,7 +317,7 @@ public class NuevaCotizacionFragment extends Fragment {
 
             if (horas > 0) {
                 // Fórmula: (Precio / Horas) * 0.75
-                double precioHE = (precioMensual / horas) * 0.75;
+                double precioHE = (precioMensual / 200) * 0.75;
 
                 inputHE.setText(String.format(Locale.US, "%.2f", precioHE));
             }
