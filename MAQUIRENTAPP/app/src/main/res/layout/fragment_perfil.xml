@@ -14,8 +14,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="vertical">
 
             <!-- FOTO DE PERFIL -->
             <LinearLayout
@@ -97,6 +96,62 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Firma digital (Para informes PDF)"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="@color/black"
+                app:cardBackgroundColor="@color/background_light"
+                android:layout_marginBottom="24dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/imgFirmaPerfil"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitCenter"
+                        android:padding="16dp"
+                        android:src="@drawable/icon_imagenes_blanco"
+                        app:tint="@color/gray_light" />
+
+                    <TextView
+                        android:id="@+id/tvPlaceholderFirma"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="Toca el botón para subir tu firma\n(Fondo blanco o transparente)"
+                        android:textAlignment="center"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fabSubirFirma"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_margin="8dp"
+                        app:fabSize="mini"
+                        app:elevation="2dp"
+                        app:backgroundTint="@color/black"
+                        app:tint="@color/white"
+                        app:srcCompat="@drawable/icon_editar_blanco" />
+
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <include layout="@layout/item_configuracion"
                 android:id="@+id/cambiar_contraseña"

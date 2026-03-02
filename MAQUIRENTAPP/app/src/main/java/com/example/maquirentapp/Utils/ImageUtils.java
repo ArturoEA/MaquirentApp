@@ -36,8 +36,19 @@ public class ImageUtils {
                 original = Bitmap.createScaledBitmap(original, maxWidth, newHeight, true);
             }
 
+            // 1. Creamos un "lienzo" en blanco del mismo tamaño
+            Bitmap imagenConFondo = Bitmap.createBitmap(original.getWidth(), original.getHeight(), Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas = new android.graphics.Canvas(imagenConFondo);
+
+            // 2. Pintamos el lienzo de blanco puro
+            canvas.drawColor(android.graphics.Color.WHITE);
+
+            // 3. Pegamos la imagen original (la firma transparente) encima del lienzo blanco
+            canvas.drawBitmap(original, 0f, 0f, null);
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            original.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            // 4. Ahora comprimimos la imagen combinada (que ya tiene fondo blanco)
+            imagenConFondo.compress(Bitmap.CompressFormat.JPEG, 70, baos);
 
             return baos.toByteArray();
 

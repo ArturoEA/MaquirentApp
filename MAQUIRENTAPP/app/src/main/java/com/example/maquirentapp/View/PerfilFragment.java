@@ -51,6 +51,12 @@ public class PerfilFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseStorage storage;
     private StorageReference storageRef;
+    private ImageView imgFirmaPerfil;
+    private TextView tvPlaceholderFirma;
+    private FloatingActionButton fabSubirFirma;
+
+    private Uri firmaSeleccionada;
+    private ActivityResultLauncher<String> abrirGaleriaFirma;
 
     private Uri imagenSeleccionada;
     private boolean nombreModificado = false;
@@ -72,6 +78,17 @@ public class PerfilFragment extends Fragment {
                     if (uri != null) {
                         imagenSeleccionada = uri;
                         imgFotoPerfil.setImageURI(uri);
+                    }
+                }
+        );
+        abrirGaleriaFirma = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        firmaSeleccionada = uri;
+                        imgFirmaPerfil.setImageURI(uri);
+                        imgFirmaPerfil.setImageTintList(null);
+                        tvPlaceholderFirma.setVisibility(View.GONE);
                     }
                 }
         );
@@ -152,11 +169,16 @@ public class PerfilFragment extends Fragment {
         ((ImageView) btnSignOut.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_cerrar_sesion_negro);
 
+        imgFirmaPerfil = view.findViewById(R.id.imgFirmaPerfil);
+        tvPlaceholderFirma = view.findViewById(R.id.tvPlaceholderFirma);
+        fabSubirFirma = view.findViewById(R.id.fabSubirFirma);
     }
 
     private void setupListeners() {
         // Cambiar foto
         fabCambiarFoto.setOnClickListener(v -> abrirGaleria.launch("image/*"));
+
+        fabSubirFirma.setOnClickListener(v -> abrirGaleriaFirma.launch("image/*"));
 
         // Cambiar contraseña
         btnCambiarPassword.setOnClickListener(v -> mostrarDialogoCambiarPassword());
@@ -209,6 +231,25 @@ public class PerfilFragment extends Fragment {
                                         .circleCrop()
                                         .into(imgFotoPerfil);
                             }
+
+                            // Obtener firmaUrl de forma segura
+                            String firmaUrl = "";
+                            try {
+                                Object firmaObj = documentSnapshot.get("firmaUrl");
+                                if (firmaObj instanceof String) {
+                                    firmaUrl = (String) firmaObj;
+                                }
+                            } catch (Exception e) {}
+
+                            // Cargar firma si existe
+                            if (firmaUrl != null && !firmaUrl.isEmpty()) {
+                                tvPlaceholderFirma.setVisibility(View.GONE);
+                                imgFirmaPerfil.setImageTintList(null);
+                                Glide.with(this)
+                                        .load(firmaUrl)
+                                        .fitCenter()
+                                        .into(imgFirmaPerfil);
+                            }
                         }
                     })
                     .addOnFailureListener(e -> {
@@ -219,104 +260,74 @@ public class PerfilFragment extends Fragment {
                     });
         }
     }
-
     private void guardarCambios() {
         FirebaseUser user = auth.getCurrentUser();
-        if (user == null) {
-            Toast.makeText(getContext(), "No estás autenticado", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        android.util.Log.d("PerfilFragment", "Usuario autenticado: " + user.getUid());
-        android.util.Log.d("PerfilFragment", "Email: " + user.getEmail());
+        if (user == null) return;
 
         String nuevoNombre = inputNombrePerfil.getText().toString().trim();
-
         if (nuevoNombre.isEmpty()) {
-            if (getContext() == null) return;
             Toast.makeText(getContext(), "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Si hay foto nueva, subirla primero
-        if (imagenSeleccionada != null) {
-            android.util.Log.d("PerfilFragment", "Imagen seleccionada, procediendo a subir");
-            subirFotoPerfil(user.getUid(), nuevoNombre);
-        } else {
-            android.util.Log.d("PerfilFragment", "Sin imagen, solo actualizando nombre");
-            actualizarDatosUsuario(user.getUid(), nuevoNombre, null);
-        }
-    }
+        Toast.makeText(getContext(), "Guardando cambios, por favor espera...", Toast.LENGTH_SHORT).show();
 
-    private void subirFotoPerfil(String userId, String nuevoNombre) {
-        if (imagenSeleccionada == null) {
-            Toast.makeText(getContext(), "No hay imagen seleccionada", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        StorageReference fotoRef = storageRef.child("perfiles/" + userId + "/foto.jpg");
-
-        byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), imagenSeleccionada);
-
-        if (dataImagen != null) {
-            fotoRef.putBytes(dataImagen)
-                    .addOnProgressListener(snapshot -> {
-                        double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
-                        android.util.Log.d("PerfilFragment", "Progreso de subida: " + progress + "%");
-                    })
-                    .addOnSuccessListener(taskSnapshot -> {
-                        android.util.Log.d("PerfilFragment", "Foto comprimida subida exitosamente");
-
-                        fotoRef.getDownloadUrl()
-                                .addOnSuccessListener(downloadUri -> {
-                                    if (getContext() == null) return;
-                                    String fotoUrl = downloadUri.toString();
-                                    actualizarDatosUsuario(userId, nuevoNombre, fotoUrl);
-                                })
-                                .addOnFailureListener(e -> {
-                                    if (getContext() == null) return;
-                                    android.util.Log.e("PerfilFragment", "Error URL: " + e.getMessage());
-                                    Toast.makeText(getContext(), "Error al obtener URL", Toast.LENGTH_SHORT).show();
-                                });
-                    })
-                    .addOnFailureListener(e -> {
-                        if (getContext() == null) return;
-                        android.util.Log.e("PerfilFragment", "Error al subir: " + e.getMessage());
-                        Toast.makeText(getContext(), "Error al subir foto: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-        } else {
-            android.util.Log.e("PerfilFragment", "Error al comprimir la imagen");
-            Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void actualizarDatosUsuario(String userId, String nuevoNombre, String fotoUrl) {
+        // Mapa para guardar las URLs que se vayan subiendo
         Map<String, Object> updates = new HashMap<>();
         updates.put("nombre", nuevoNombre);
 
-        // Solo actualizar fotoPerfil si hay una nueva foto
-        if (fotoUrl != null && !fotoUrl.isEmpty()) {
-            updates.put("fotoPerfil", fotoUrl);
-        }
+        // Validamos qué imágenes hay que subir
+        boolean subirFoto = (imagenSeleccionada != null);
+        boolean subirFirma = (firmaSeleccionada != null);
 
+        if (!subirFoto && !subirFirma) {
+            // No hay imágenes nuevas, guardamos solo el nombre directo
+            actualizarDatosFirestore(user.getUid(), updates);
+        } else if (subirFoto && !subirFirma) {
+            subirArchivoStorage(user.getUid(), imagenSeleccionada, "perfiles/" + user.getUid() + "/foto.jpg", "fotoPerfil", updates, false);
+        } else if (!subirFoto && subirFirma) {
+            subirArchivoStorage(user.getUid(), firmaSeleccionada, "firmas/" + user.getUid() + "/firma.jpg", "firmaUrl", updates, false);
+        } else {
+            // Sube ambas: Sube la foto primero, y en su callback manda a subir la firma
+            subirArchivoStorage(user.getUid(), imagenSeleccionada, "perfiles/" + user.getUid() + "/foto.jpg", "fotoPerfil", updates, true);
+        }
+    }
+
+    private void subirArchivoStorage(String userId, Uri uriImagen, String rutaStorage, String campoFirestore, Map<String, Object> updates, boolean hayOtroPendiente) {
+        StorageReference ref = storageRef.child(rutaStorage);
+        byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uriImagen);
+
+        if (dataImagen != null) {
+            ref.putBytes(dataImagen)
+                    .addOnSuccessListener(taskSnapshot -> {
+                        ref.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                            updates.put(campoFirestore, downloadUri.toString());
+
+                            if (hayOtroPendiente) {
+                                // Terminó la foto, ahora subimos la firma
+                                subirArchivoStorage(userId, firmaSeleccionada, "firmas/" + userId + "/firma.jpg", "firmaUrl", updates, false);
+                            } else {
+                                // Ya no hay más archivos pendientes, actualizamos Firestore
+                                actualizarDatosFirestore(userId, updates);
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Error subiendo imagen", Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void actualizarDatosFirestore(String userId, Map<String, Object> updates) {
         db.collection("usuarios").document(userId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
                     if (getContext() == null) return;
-                    Toast.makeText(getContext(),
-                            "Cambios guardados correctamente",
-                            Toast.LENGTH_SHORT).show();
-
-                    nombreModificado = false;
-                    inputNombrePerfil.setEnabled(false);
+                    Toast.makeText(getContext(), "Cambios guardados correctamente", Toast.LENGTH_SHORT).show();
                     imagenSeleccionada = null;
-
+                    firmaSeleccionada = null;
                 })
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
-                    Toast.makeText(getContext(),
-                            "Error al guardar cambios",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Error al guardar en base de datos", Toast.LENGTH_SHORT).show();
                 });
     }
 

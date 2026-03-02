@@ -13,6 +13,7 @@ public class Usuario {
     private long fechaUltimaActividad;
     private String creadoPor; // UID del admin que aprobó
     private String fotoPerfil; // URL de la foto de perfil en Storage
+    private String firmaUrl; // URL de la firma en Storage
     private List<String> fcmTokens;
 
     public Usuario() {
@@ -96,9 +97,19 @@ public class Usuario {
     public String getFotoPerfil() {
         return fotoPerfil;
     }
+
     public void setFotoPerfil(String fotoPerfil) {
         this.fotoPerfil = (fotoPerfil != null && !fotoPerfil.isEmpty()) ? fotoPerfil : "";
     }
+
+    public String getFirmaUrl() {
+        return firmaUrl;
+    }
+
+    public void setFirmaUrl(String firmaUrl) {
+        this.firmaUrl = (firmaUrl != null && !firmaUrl.isEmpty()) ? firmaUrl : "";
+    }
+
     public List<String> getFcmTokens() {
         if (fcmTokens == null) {
             fcmTokens = new ArrayList<>();
