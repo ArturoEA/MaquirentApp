@@ -1,28 +1,42 @@
 package com.example.maquirentapp.View;
 
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
+import android.print.PrintDocumentAdapter;
 import android.provider.MediaStore;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -30,7 +44,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -39,11 +55,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
+import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Access.ItemsMantenimientoSeleccionablesAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
+import com.example.maquirentapp.Utils.InformeMantenimientoPdfGenerator;
+import com.example.maquirentapp.Utils.InformePdfVectorialGenerator;
+import com.example.maquirentapp.Utils.PdfGenerator;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -54,11 +76,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class NuevoMantenimientoFragment extends Fragment {
     private static final String TAG = "NuevoMantenimiento";
@@ -88,6 +113,7 @@ public class NuevoMantenimientoFragment extends Fragment {
     private ActivityResultLauncher<String> imagePickerLauncher;
 
     private Mantenimiento mantenimientoActual;
+    private MaterialButton btnAbrirInforme;
 
     public static NuevoMantenimientoFragment newInstance(String codigo, String mantenimientoId) {
         NuevoMantenimientoFragment fragment = new NuevoMantenimientoFragment();
@@ -139,6 +165,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             mostrarFotos();
         }
     }
+
     private void initializeFirebase() {
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -152,6 +179,12 @@ public class NuevoMantenimientoFragment extends Fragment {
         recyclerItems = view.findViewById(R.id.recyclerItemsMantenimiento);
         layoutFotos = view.findViewById(R.id.layoutFotos);
         progressBar = view.findViewById(R.id.progressBarMantenimiento);
+
+        btnAbrirInforme = view.findViewById(R.id.btnAbrirInforme);
+        if (mantenimientoId != null) {
+            btnAbrirInforme.setVisibility(View.VISIBLE);
+            btnAbrirInforme.setOnClickListener(v -> mostrarDialogoInforme());
+        }
     }
 
     private void setupRecyclerItems() {
@@ -386,6 +419,7 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         dialog.show();
     }
+
     private void descargarFoto(String urlOrUri, boolean esUrl) {
         try {
             if (esUrl) {
@@ -436,6 +470,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             Toast.makeText(getContext(), "Error al descargar", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void compartirFoto(String urlOrUri, boolean esUrl) {
         try {
             if (esUrl) {
@@ -500,6 +535,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             Toast.makeText(getContext(), "No se pudo compartir la foto", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void confirmarEliminarFoto(int index, boolean esUrl) {
         new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
                 .setTitle("Eliminar foto")
@@ -598,6 +634,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             }
         }
     }
+
     private void verificarFinSubida(int total, int[] procesadas, List<String> urls, OnFotosSubidasListener listener) {
         procesadas[0]++;
         if (procesadas[0] == total) {
@@ -659,6 +696,348 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
     }
 
+    private void mostrarDialogoInforme() {
+        // 1. Crear el Diálogo a pantalla completa
+        Dialog dialog = new android.app.Dialog(requireContext(), android.R.style.Theme_DeviceDefault_Light_NoActionBar);
+        dialog.setContentView(R.layout.dialog_informe_mantenimiento);
+
+        // 2. Enlazar las vistas del diálogo
+        Toolbar toolbar = dialog.findViewById(R.id.toolbarDialog);
+        RadioGroup rgEstado = dialog.findViewById(R.id.rgEstado);
+        android.widget.RadioGroup rgUbicacion = dialog.findViewById(R.id.rgUbicacion);
+        TextInputEditText inputCliente = dialog.findViewById(R.id.inputClienteReporte);
+        TextInputEditText inputLugar = dialog.findViewById(R.id.inputLugarReporte);
+        AutoCompleteTextView spinnerAceite = dialog.findViewById(R.id.spinnerAceite);
+        AutoCompleteTextView inputContacto = dialog.findViewById(R.id.inputContacto);
+
+        RadioButton rbMantenimiento = dialog.findViewById(R.id.rbServMantenimiento);
+        RadioButton rbEvaluacion = dialog.findViewById(R.id.rbServEvaluacion);
+        RadioButton rbEntrega = dialog.findViewById(R.id.rbServEntrega);
+        RadioButton rbAjuste = dialog.findViewById(R.id.rbServAjuste);
+
+        TextInputEditText inputTrabajos = dialog.findViewById(R.id.inputTrabajosRealizados);
+        AutoCompleteTextView spinnerTecnico = dialog.findViewById(R.id.spinnerTecnico);
+        AutoCompleteTextView spinnerSupervisor = dialog.findViewById(R.id.spinnerSupervisor);
+
+        AutoCompleteTextView spinnerCantidadAceite = dialog.findViewById(R.id.spinnerCantidadAceite);
+        TextInputEditText inputFallas = dialog.findViewById(R.id.inputFallas);
+
+        List<Usuario> listaUsuarios = new ArrayList<>();
+        LinearLayout layoutFiltros = dialog.findViewById(R.id.layoutCodigosFiltros);
+
+        // Opciones sugeridas de Aceite
+        String[] aceitesComunes = new String[]{
+                "Mobil Delvac Mx Esp 15W-40",
+                "Shell Rimula R4 X 15W-40",
+                "Chevron Delo 400 15W-40",
+                "Castrol CRB Turbomax 15W-40"
+        };
+        ArrayAdapter<String> adapterAceite = new ArrayAdapter<>(
+                requireContext(),
+                R.layout.spinner_item_black,
+                aceitesComunes
+        );
+        spinnerAceite.setAdapter(adapterAceite);
+
+        // Opciones sugeridas de Cantidad de Aceite
+        String[] cantidadesAceite = new String[]{
+                "1 galón", "2 galones", "3 galones", "4 galones", "5 galones", "6 galones"
+        };
+        android.widget.ArrayAdapter<String> adapterCantidad = new android.widget.ArrayAdapter<>(
+                requireContext(),
+                R.layout.spinner_item_black,
+                cantidadesAceite
+        );
+        spinnerCantidadAceite.setAdapter(adapterCantidad);
+
+        // 3. Configurar Toolbar
+        toolbar.setNavigationOnClickListener(v -> dialog.dismiss());
+        toolbar.inflateMenu(R.menu.menu_guardar_informe);
+
+        // 4. Auto-generar texto de Trabajos Realizados
+        StringBuilder trabajosAuto = new StringBuilder("Mantenimiento preventivo. ");
+        List<String> nombresCambiados = new ArrayList<>();
+        for (String idItem : mantenimientoActual.getItemsRealizados()) {
+            for (MantenimientoConfiguracion config : itemsConfigList) {
+                if (config.getId().equals(idItem)) {
+                    nombresCambiados.add("cambio de " + config.getNombre().toLowerCase());
+                }
+            }
+        }
+        if (!nombresCambiados.isEmpty()) {
+            trabajosAuto.append("Se realizó ").append(String.join(", ", nombresCambiados)).append(".");
+        }
+        inputTrabajos.setText(trabajosAuto.toString());
+
+        // 5. Pre-llenar cliente y lugar si ya existen en el objeto
+        if (mantenimientoActual.getCliente() != null)
+            inputCliente.setText(mantenimientoActual.getCliente());
+        if (mantenimientoActual.getLugar() != null)
+            inputLugar.setText(mantenimientoActual.getLugar());
+
+        // 6. Cargar Técnicos y Supervisores (Usuarios con firma)
+        db.collection("usuarios").whereEqualTo("estado", "activo").get().addOnSuccessListener(query -> {
+            List<String> nombresUsuarios = new ArrayList<>();
+            nombresUsuarios.add("Ninguno"); // Opción vacía para el supervisor
+
+            for (QueryDocumentSnapshot doc : query) {
+                Usuario u = doc.toObject(Usuario.class);
+                if (u.getFirmaUrl() != null && !u.getFirmaUrl().isEmpty()) {
+                    nombresUsuarios.add(u.getNombre());
+                    listaUsuarios.add(u);
+                }
+            }
+
+            ArrayAdapter<String> adapterUsers = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_black, nombresUsuarios);
+            spinnerTecnico.setAdapter(adapterUsers);
+            spinnerSupervisor.setAdapter(adapterUsers);
+            spinnerSupervisor.setText("Ninguno", false);
+        });
+
+        // 7. Lógica para guardar al presionar el ícono de PDF en el Toolbar
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_guardar_pdf) {
+                Toast.makeText(requireContext(), "Generando documento...", Toast.LENGTH_SHORT).show();
+
+                // 7.1 Recolectar Estado y Ubicación
+                String estado = "Operativa";
+                if (rgEstado.getCheckedRadioButtonId() == R.id.rbInoperativa) estado = "Inoperativa";
+                else if (rgEstado.getCheckedRadioButtonId() == R.id.rbReparacionTerceros) estado = "Proceso reparación por terceros";
+                else if (rgEstado.getCheckedRadioButtonId() == R.id.rbReparadoTerceros) estado = "Reparado por terceros";
+
+                String ubicacion = "Taller del cliente";
+                if (rgUbicacion.getCheckedRadioButtonId() == R.id.rbCampo) ubicacion = "Campo";
+                else if (rgUbicacion.getCheckedRadioButtonId() == R.id.rbTallerTerceros) ubicacion = "Taller de terceros";
+
+                // 7.2 Recolectar Definición del Servicio
+                String defServicio = "Mantenimiento";
+                RadioGroup rgDefServicio = dialog.findViewById(R.id.rgDefinicionServicio);
+                if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEvaluacion) defServicio = "Evaluación";
+                else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEntrega) defServicio = "Entrega";
+                else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServAjuste) defServicio = "Realizar Ajuste";
+
+                // 7.3 Recolectar Textos
+                String cliente = inputCliente.getText().toString().trim();
+                String lugar = inputLugar.getText().toString().trim();
+                String aceite = spinnerAceite.getText().toString().trim();
+                String cantAceite = spinnerCantidadAceite.getText().toString().trim();
+                String contacto = inputContacto.getText().toString().trim();
+                String fallas = inputFallas.getText().toString().trim();
+                String trabajos = inputTrabajos.getText().toString().trim();
+
+                // 7.4 Recolectar Firmas (Buscamos el URL en la lista que descargamos antes)
+                String nombreTecnico = spinnerTecnico.getText().toString();
+                String nombreSupervisor = spinnerSupervisor.getText().toString();
+                String urlFirmaTecnico = "";
+                String urlFirmaSupervisor = "";
+
+                for (Usuario u : listaUsuarios) {
+                    if (u.getNombre().equals(nombreTecnico)) urlFirmaTecnico = u.getFirmaUrl();
+                    if (u.getNombre().equals(nombreSupervisor)) urlFirmaSupervisor = u.getFirmaUrl();
+                }
+
+                // 7.5 Recolectar Códigos de Filtros Dinámicos
+                Map<String, String> codigosIngresados = new HashMap<>();
+                for (int i = 0; i < layoutFiltros.getChildCount(); i++) {
+                    View child = layoutFiltros.getChildAt(i);
+                    if (child instanceof TextInputLayout) {
+                        TextInputLayout til = (TextInputLayout) child;
+                        AutoCompleteTextView actv = (AutoCompleteTextView) til.getEditText();
+                        if (actv != null && !actv.getText().toString().isEmpty() && !actv.getText().toString().contains("Escribir manualmente")) {
+                            String nombreFiltro = til.getHint().toString().replace("Código para ", "");
+                            codigosIngresados.put(nombreFiltro, actv.getText().toString());
+                        }
+                    }
+                }
+
+                // CERRAR DIÁLOGO Y LLAMAR AL GENERADOR
+                String htmlFinal = InformeMantenimientoPdfGenerator.generarInforme(
+                        mantenimientoActual, codigoGrupo, estado, ubicacion, defServicio,
+                        cliente, lugar, aceite, cantAceite, contacto, fallas, trabajos,
+                        nombreTecnico, urlFirmaTecnico, nombreSupervisor, urlFirmaSupervisor, codigosIngresados
+                );
+
+                generarPdfVectorial(
+                        estado, ubicacion, defServicio,
+                        cliente, lugar, aceite, cantAceite, contacto, fallas, trabajos,
+                        nombreTecnico, urlFirmaTecnico, nombreSupervisor, urlFirmaSupervisor, codigosIngresados
+                );
+
+                dialog.dismiss();
+                return true;
+            }
+            return false;
+        });
+
+        // -- LÓGICA DE FILTROS DINÁMICOS CORREGIDA --
+        layoutFiltros.removeAllViews();
+
+        // 1. Identificar qué filtros se cambiaron revisando los itemsRealizados
+        List<String> filtrosCambiados = new ArrayList<>();
+        if (mantenimientoActual.getItemsRealizados() != null) {
+            for (String idItem : mantenimientoActual.getItemsRealizados()) {
+                for (MantenimientoConfiguracion config : itemsConfigList) {
+                    if (config.getId().equals(idItem) && config.getNombre().toLowerCase().contains("filtro")) {
+                        filtrosCambiados.add(config.getNombre());
+                    }
+                }
+            }
+        }
+
+        // 2. Si se cambió algún filtro, mostramos el contenedor y consultamos Firebase
+        if (!filtrosCambiados.isEmpty()) {
+            layoutFiltros.setVisibility(View.VISIBLE);
+
+            TextView tvTituloFiltros = new TextView(requireContext());
+            tvTituloFiltros.setText("Códigos de filtros utilizados:");
+            Typeface typefaceAnta = ResourcesCompat.getFont(requireContext(), R.font.anta_font);
+            tvTituloFiltros.setTypeface(typefaceAnta, Typeface.BOLD);
+            tvTituloFiltros.setTextColor(Color.BLACK);
+            tvTituloFiltros.setPadding(0, 0, 0, 16);
+            layoutFiltros.addView(tvTituloFiltros);
+
+            //Primero se obtiene el ID autogenerado por Firebase
+            db.collection("gruposElectrogenos")
+                    .whereEqualTo("codigo", codigoGrupo)
+                    .get()
+                    .addOnSuccessListener(equipoSnapshot -> {
+
+                        if (!equipoSnapshot.isEmpty()) {
+                            String idRealEquipo = equipoSnapshot.getDocuments().get(0).getId();
+
+                            // 2. AHORA SÍ BUSCAMOS LOS FILTROS USANDO ESE ID REAL
+                            db.collection("filtrosGrupo")
+                                    .whereEqualTo("idGrupo", idRealEquipo)
+                                    .get()
+                                    .addOnSuccessListener(queryDocumentSnapshots -> {
+
+                                        for (String nombreFiltro : filtrosCambiados) {
+                                            List<String> opcionesCodigos = new ArrayList<>();
+                                            String filtroMarcado = nombreFiltro.toLowerCase().trim();
+
+                                            for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                                String nombreCategoria = doc.getString("nombreCategoria");
+                                                if (nombreCategoria == null) continue;
+
+                                                String categoriaDB = nombreCategoria.toLowerCase().trim();
+                                                boolean esMatch = false;
+
+                                                // LÓGICA DE SINÓNIMOS E INTELIGENCIA
+                                                if (filtroMarcado.contains("aire") && categoriaDB.contains("aire")) {
+                                                    esMatch = true;
+                                                } else if (filtroMarcado.contains("aceite") && categoriaDB.contains("aceite")) {
+                                                    esMatch = true;
+                                                } else if ((filtroMarcado.contains("combustible") || filtroMarcado.contains("petróleo") || filtroMarcado.contains("petroleo")) &&
+                                                        (categoriaDB.contains("combustible") || categoriaDB.contains("petróleo") || categoriaDB.contains("petroleo"))) {
+                                                    esMatch = true;
+                                                } else if ((filtroMarcado.contains("separador") || filtroMarcado.contains("agua")) &&
+                                                        (categoriaDB.contains("separador") || categoriaDB.contains("agua"))) {
+                                                    esMatch = true;
+                                                }
+
+                                                if (esMatch) {
+                                                    try {
+                                                        List<java.util.Map<String, Object>> items = (List<java.util.Map<String, Object>>) doc.get("items");
+                                                        if (items != null) {
+                                                            for (java.util.Map<String, Object> item : items) {
+                                                                String codigo = (String) item.get("codigo");
+                                                                String marca = (String) item.get("marca");
+                                                                if (codigo != null && !codigo.trim().isEmpty()) {
+                                                                    String opcion = codigo;
+                                                                    if (marca != null && !marca.trim().isEmpty()) {
+                                                                        opcion += " (" + marca + ")";
+                                                                    }
+                                                                    opcionesCodigos.add(opcion);
+                                                                }
+                                                            }
+                                                        }
+                                                    } catch (Exception e) {
+                                                        android.util.Log.e("FILTROS", "Error extrayendo array", e);
+                                                    }
+                                                }
+                                            }
+
+                                            opcionesCodigos.add("");
+
+                                            TextInputLayout textInputLayout =
+                                                    (TextInputLayout) LayoutInflater.from(requireContext())
+                                                            .inflate(R.layout.item_input_filtro, layoutFiltros, false);
+                                            textInputLayout.setHint("Código para " + nombreFiltro);
+
+                                            // 3. Enlazar el AutoCompleteTextView que está adentro del molde
+                                            AutoCompleteTextView autoComplete = textInputLayout.findViewById(R.id.autoCompleteFiltro);
+                                            autoComplete.setDropDownBackgroundDrawable(new ColorDrawable(Color.WHITE));
+                                            autoComplete.setTextColor(Color.BLACK);
+
+                                            // 4. Ponerle la lista de opciones (Donaldson, Perkins, etc.)
+                                            ArrayAdapter<String> adapterCodigos = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_black, opcionesCodigos);
+                                            autoComplete.setAdapter(adapterCodigos);
+
+                                            // Truco para que despliegue al tocarlo
+                                            autoComplete.setOnClickListener(v -> autoComplete.showDropDown());
+                                            autoComplete.setOnFocusChangeListener((v, hasFocus) -> {
+                                                if (hasFocus) autoComplete.showDropDown();
+                                            });
+
+                                            // 5. Agregarlo a la pantalla
+                                            layoutFiltros.addView(textInputLayout);
+                                        }
+                                    });
+                        } else {
+                            // Opcional: Mostrar un mensaje si no se encuentra el equipo
+                            android.util.Log.e("FILTROS", "No se encontró el equipo con código: " + codigoGrupo);
+                        }
+                    });
+        }
+
+        dialog.show();
+    }
+    private void generarPdfVectorial(
+            String estado, String ubicacion, String defServicio,
+            String cliente, String lugar, String aceite, String cantAceite,
+            String contacto, String fallas, String trabajos,
+            String nombreTecnico, String urlFirmaTecnico,
+            String nombreSupervisor, String urlFirmaSupervisor,
+            Map<String, String> codigosFiltros) {
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        new Thread(() -> {
+            try {
+                String nombreArchivo = "InformeMantenimiento_" + codigoGrupo.replace(" ", "_");
+                File pdfDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "InformesMantenimientos");
+                if (!pdfDir.exists()) pdfDir.mkdirs();
+
+                File archivoFinal = new File(pdfDir, nombreArchivo + ".pdf");
+
+                InformePdfVectorialGenerator.generarPdf(
+                        requireContext(), archivoFinal, mantenimientoActual, codigoGrupo,
+                        estado, ubicacion, defServicio, cliente, lugar, aceite, cantAceite,
+                        contacto, fallas, trabajos, nombreTecnico, urlFirmaTecnico,
+                        nombreSupervisor, urlFirmaSupervisor, codigosFiltros
+                );
+
+                if (getActivity() != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        progressBar.setVisibility(View.GONE);
+                        Intent intent = new Intent(requireContext(), PdfViewerActivity.class);
+                        intent.putExtra("PDF_URL", archivoFinal.getAbsolutePath());
+                        intent.putExtra("NOMBRE_ARCHIVO", nombreArchivo);
+                        startActivity(intent);
+                    });
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error al generar PDF vectorial", e);
+                if (getActivity() != null) {
+                    requireActivity().runOnUiThread(() -> {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(requireContext(), "Error creando PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+                }
+            }
+        }).start();
+    }
     @Override
     public void onResume() {
         super.onResume();

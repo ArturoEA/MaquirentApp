@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.textfield.TextInputLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:boxBackgroundMode="outline"
+    app:boxStrokeWidth="2dp"
+    app:boxCornerRadiusBottomEnd="22dp"
+    app:boxCornerRadiusBottomStart="22dp"
+    app:boxCornerRadiusTopEnd="22dp"
+    app:boxCornerRadiusTopStart="22dp"
+    app:boxStrokeColor="@color/input_stroke_color"
+    android:textColorHint="@color/colorHints"
+    app:cursorColor="@color/black"
+    app:boxBackgroundColor="@color/background_light"
+    app:endIconTint="@color/black"
+    app:hintTextColor="@color/black">
+
+    <AutoCompleteTextView
+        android:id="@+id/autoCompleteFiltro"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textCapCharacters"
+        android:fontFamily="@font/anta_font"
+        android:textColor="@color/black" />
+
+</com.google.android.material.textfield.TextInputLayout>

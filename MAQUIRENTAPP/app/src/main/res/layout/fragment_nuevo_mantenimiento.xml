@@ -116,6 +116,17 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAbrirInforme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="55dp"
+            android:text="Generar informe PDF"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
+            android:visibility="gone"/>
+
         <ProgressBar
             android:id="@+id/progressBarMantenimiento"
             android:layout_width="wrap_content"
@@ -125,6 +136,20 @@
             android:indeterminateTint="@color/black"
             android:visibility="gone" />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+            <WebView
+                android:id="@+id/webViewPdfHidden"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:visibility="visible" />
+
+        </FrameLayout>
+
     </LinearLayout>
+
 
 </androidx.core.widget.NestedScrollView>
