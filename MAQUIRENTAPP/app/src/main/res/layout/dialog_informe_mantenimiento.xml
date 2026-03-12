@@ -16,10 +16,10 @@
             android:id="@+id/toolbarDialog"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            android:paddingTop="10dp"
             app:navigationIconTint="@color/white"
             app:title="Reporte de Servicio"
-            app:titleTextColor="@color/white"
-            android:paddingTop="10dp"/>
+            app:titleTextColor="@color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -60,7 +60,6 @@
                 style="@style/CustomTextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
                 android:hint="Lugar del servicio">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -71,6 +70,85 @@
                     android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/CustomTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Próxima fecha de intervención">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputProxFecha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:inputType="none"
+                    android:textColor="@color/black" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Accesorios del equipo:"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chkBandeja"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Bandeja antiderrame"
+                    android:textColor="@color/black"
+                    android:button="@drawable/checkbox_custom"
+                    android:paddingStart="10dp"/>
+
+                <CheckBox
+                    android:id="@+id/chkExtintor"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Extintor PQS"
+                    android:textColor="@color/black"
+                    android:button="@drawable/checkbox_custom"
+                    android:paddingStart="10dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/chkKit"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Kit antiderrame"
+                    android:textColor="@color/black"
+                    android:button="@drawable/checkbox_custom"
+                    android:paddingStart="10dp"/>
+
+                <CheckBox
+                    android:id="@+id/chkTierra"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="Puesta a tierra"
+                    android:textColor="@color/black"
+                    android:button="@drawable/checkbox_custom"
+                    android:paddingStart="10dp" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -90,34 +168,34 @@
                     android:id="@+id/rbOperativa"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Operativa"
                     android:checked="true"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:text="Operativa"
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbInoperativa"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Inoperativa"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbReparacionTerceros"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Proceso reparación por terceros"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbReparadoTerceros"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Reparado por terceros"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
             </RadioGroup>
 
             <TextView
@@ -139,42 +217,42 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Taller del cliente"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbCampo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Campo"
                     android:checked="true"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:text="Campo"
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbTallerTerceros"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Taller de terceros"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
             </RadioGroup>
 
             <LinearLayout
                 android:id="@+id/layoutCodigosFiltros"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
                 android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_marginBottom="20dp">
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:text="Códigos de Filtros Cambiados"
                     android:textColor="@color/black"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -191,19 +269,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                android:hint="Aceite de motor utilizado"
+                android:textColorHint="@color/colorHints"
+                app:boxBackgroundColor="@color/background_light"
                 app:boxBackgroundMode="outline"
-                app:boxStrokeWidth="2dp"
                 app:boxCornerRadiusBottomEnd="22dp"
                 app:boxCornerRadiusBottomStart="22dp"
                 app:boxCornerRadiusTopEnd="22dp"
                 app:boxCornerRadiusTopStart="22dp"
                 app:boxStrokeColor="@color/input_stroke_color"
-                android:textColorHint="@color/colorHints"
+                app:boxStrokeWidth="2dp"
                 app:cursorColor="@color/black"
-                app:boxBackgroundColor="@color/background_light"
                 app:endIconTint="@color/black"
-                app:hintTextColor="@color/black"
-                android:hint="Aceite de motor utilizado">
+                app:hintTextColor="@color/black">
 
                 <AutoCompleteTextView
                     android:id="@+id/spinnerAceite"
@@ -218,19 +296,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                android:hint="Cantidad"
+                android:textColorHint="@color/colorHints"
+                app:boxBackgroundColor="@color/background_light"
                 app:boxBackgroundMode="outline"
-                app:boxStrokeWidth="2dp"
                 app:boxCornerRadiusBottomEnd="22dp"
                 app:boxCornerRadiusBottomStart="22dp"
                 app:boxCornerRadiusTopEnd="22dp"
                 app:boxCornerRadiusTopStart="22dp"
                 app:boxStrokeColor="@color/input_stroke_color"
-                android:textColorHint="@color/colorHints"
+                app:boxStrokeWidth="2dp"
                 app:cursorColor="@color/black"
-                app:boxBackgroundColor="@color/background_light"
                 app:endIconTint="@color/black"
-                app:hintTextColor="@color/black"
-                android:hint="Cantidad">
+                app:hintTextColor="@color/black">
 
                 <AutoCompleteTextView
                     android:id="@+id/spinnerCantidadAceite"
@@ -251,9 +329,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName|textCapWords"
+                    android:padding="15dp"
                     android:textColor="@color/black"
-                    android:textSize="16dp"
-                    android:padding="15dp"/>
+                    android:textSize="16dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
@@ -264,52 +342,52 @@
                 android:textColor="@color/black"
                 android:textStyle="bold" />
 
-<!--            <GridLayout-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginBottom="20dp"-->
-<!--                android:columnCount="2">-->
+            <!--            <GridLayout-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_marginBottom="20dp"-->
+            <!--                android:columnCount="2">-->
 
-<!--                <RadioButton-->
-<!--                    android:id="@+id/rbServMantenimiento"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:checked="true"-->
-<!--                    android:text="Mantenimiento"-->
-<!--                    android:layout_marginEnd="25dp"-->
-<!--                    app:buttonTint="@color/black"-->
-<!--                    android:textColor="@color/black" />-->
+            <!--                <RadioButton-->
+            <!--                    android:id="@+id/rbServMantenimiento"-->
+            <!--                    android:layout_width="wrap_content"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:checked="true"-->
+            <!--                    android:text="Mantenimiento"-->
+            <!--                    android:layout_marginEnd="25dp"-->
+            <!--                    app:buttonTint="@color/black"-->
+            <!--                    android:textColor="@color/black" />-->
 
-<!--                <RadioButton-->
-<!--                    android:id="@+id/rbServEvaluacion"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Evaluación"-->
-<!--                    app:buttonTint="@color/black"-->
-<!--                    android:textColor="@color/black" />-->
+            <!--                <RadioButton-->
+            <!--                    android:id="@+id/rbServEvaluacion"-->
+            <!--                    android:layout_width="wrap_content"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:text="Evaluación"-->
+            <!--                    app:buttonTint="@color/black"-->
+            <!--                    android:textColor="@color/black" />-->
 
-<!--                <RadioButton-->
-<!--                    android:id="@+id/rbServEntrega"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Entrega"-->
-<!--                    app:buttonTint="@color/black"-->
-<!--                    android:textColor="@color/black" />-->
+            <!--                <RadioButton-->
+            <!--                    android:id="@+id/rbServEntrega"-->
+            <!--                    android:layout_width="wrap_content"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:text="Entrega"-->
+            <!--                    app:buttonTint="@color/black"-->
+            <!--                    android:textColor="@color/black" />-->
 
-<!--                <RadioButton-->
-<!--                    android:id="@+id/rbServAjuste"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Realizar Ajuste"-->
-<!--                    app:buttonTint="@color/black"-->
-<!--                    android:textColor="@color/black" />-->
-<!--            </GridLayout>-->
+            <!--                <RadioButton-->
+            <!--                    android:id="@+id/rbServAjuste"-->
+            <!--                    android:layout_width="wrap_content"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:text="Realizar Ajuste"-->
+            <!--                    app:buttonTint="@color/black"-->
+            <!--                    android:textColor="@color/black" />-->
+            <!--            </GridLayout>-->
 
             <RadioGroup
                 android:id="@+id/rgDefinicionServicio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="10dp"
                 android:orientation="vertical">
 
                 <RadioButton
@@ -318,33 +396,55 @@
                     android:layout_height="wrap_content"
                     android:checked="true"
                     android:text="Mantenimiento"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbServEvaluacion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Evaluación"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbServEntrega"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Entrega"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/rbServAjuste"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Realizar Ajuste"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
             </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Actividades a incluir en el PDF:"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/layoutListaRutinas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="10dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAgregarRutina"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ Añadir nueva rutina"
+                android:textColor="@color/black" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -353,6 +453,7 @@
                 android:text="3. TRABAJOS Y FIRMAS"
                 android:textColor="@color/black"
                 android:textStyle="bold" />
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_width="match_parent"
@@ -391,19 +492,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
+                android:hint="Mecánico / Encargado (Firma 1)"
+                android:textColorHint="@color/colorHints"
+                app:boxBackgroundColor="@color/background_light"
                 app:boxBackgroundMode="outline"
-                app:boxStrokeWidth="2dp"
                 app:boxCornerRadiusBottomEnd="22dp"
                 app:boxCornerRadiusBottomStart="22dp"
                 app:boxCornerRadiusTopEnd="22dp"
                 app:boxCornerRadiusTopStart="22dp"
                 app:boxStrokeColor="@color/input_stroke_color"
-                android:textColorHint="@color/colorHints"
+                app:boxStrokeWidth="2dp"
                 app:cursorColor="@color/black"
-                app:boxBackgroundColor="@color/background_light"
                 app:endIconTint="@color/black"
-                app:hintTextColor="@color/black"
-                android:hint="Mecánico / Encargado (Firma 1)">
+                app:hintTextColor="@color/black">
 
                 <AutoCompleteTextView
                     android:id="@+id/spinnerTecnico"
@@ -418,19 +519,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
+                android:hint="Supervisor (Opcional - Firma 2)"
+                android:textColorHint="@color/colorHints"
+                app:boxBackgroundColor="@color/background_light"
                 app:boxBackgroundMode="outline"
-                app:boxStrokeWidth="2dp"
                 app:boxCornerRadiusBottomEnd="22dp"
                 app:boxCornerRadiusBottomStart="22dp"
                 app:boxCornerRadiusTopEnd="22dp"
                 app:boxCornerRadiusTopStart="22dp"
                 app:boxStrokeColor="@color/input_stroke_color"
-                android:textColorHint="@color/colorHints"
+                app:boxStrokeWidth="2dp"
                 app:cursorColor="@color/black"
-                app:boxBackgroundColor="@color/background_light"
                 app:endIconTint="@color/black"
-                app:hintTextColor="@color/black"
-                android:hint="Supervisor (Opcional - Firma 2)">
+                app:hintTextColor="@color/black">
 
                 <AutoCompleteTextView
                     android:id="@+id/spinnerSupervisor"
