@@ -40,7 +40,6 @@ import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.adaptadores.PlanoAdapter;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -163,7 +162,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
     private void mostrarDialogoPlano(Plano plano) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_plano, null);
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_foto, null);
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
 

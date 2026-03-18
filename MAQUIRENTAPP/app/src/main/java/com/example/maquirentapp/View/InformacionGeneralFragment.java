@@ -1,12 +1,13 @@
 package com.example.maquirentapp.View;
 
+import static android.view.View.GONE;
+
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -515,19 +516,21 @@ public class InformacionGeneralFragment extends Fragment {
     }
 
     private void mostrarFotoGrande(String url) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), android.R.style.Theme_Translucent_NoTitleBar);
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_foto_grande, null);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_foto, null);
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+//        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogFadeAnimation;
 
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC000000")));
-
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogFadeAnimation;
-
-        ImageView ivFoto = dialogView.findViewById(R.id.ivFotoGrande);
-        Button btnCerrar = dialogView.findViewById(R.id.btnCerrar);
-        Button btnDescargar = dialogView.findViewById(R.id.btnDescargar);
-        Button btnCompartir = dialogView.findViewById(R.id.btnCompartir);
+        ImageView ivFoto = dialogView.findViewById(R.id.imgFull);
+        ImageView btnCerrar = dialogView.findViewById(R.id.btnClose);
+        LinearLayout btnDescargar = dialogView.findViewById(R.id.btnDownload);
+        LinearLayout btnCompartir = dialogView.findViewById(R.id.btnShare);
+        ImageView btnDelete = dialogView.findViewById(R.id.btnDelete);
+        btnDelete.setVisibility(GONE);
 
         CircularProgressDrawable progressDrawable = new CircularProgressDrawable(requireContext());
         progressDrawable.setStrokeWidth(10f);

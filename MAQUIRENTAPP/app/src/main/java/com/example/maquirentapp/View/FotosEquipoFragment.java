@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +37,6 @@ import com.example.maquirentapp.Access.FotosEquipoAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -166,7 +164,7 @@ public class FotosEquipoFragment extends Fragment {
 
     private void mostrarDialogoFoto(FotoEquipo foto) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_plano, null);
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ver_foto, null);
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
 

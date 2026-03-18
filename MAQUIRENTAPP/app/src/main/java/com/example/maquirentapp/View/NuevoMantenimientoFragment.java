@@ -1,5 +1,7 @@
 package com.example.maquirentapp.View;
 
+import static android.view.View.GONE;
+
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
@@ -254,7 +256,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                                     });
                         }
                     }
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(GONE);
                 });
     }
 
@@ -318,7 +320,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                     confirmarEliminarFoto(index, true);
                 });
             } else {
-                fotoView.findViewById(R.id.btnEliminarFoto).setVisibility(View.GONE);
+                fotoView.findViewById(R.id.btnEliminarFoto).setVisibility(GONE);
             }
 
             layoutFotos.addView(fotoView);
@@ -375,20 +377,23 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void mostrarFotoGrande(String urlOrUri, boolean esUrl) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), android.R.style.Theme_Translucent_NoTitleBar);
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_foto_grande, null);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_ver_foto, null);
         builder.setView(dialogView);
 
         AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
 
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#CC000000")));
+//        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogFadeAnimation;
 
-        dialog.getWindow().getAttributes().windowAnimations = R.style.DialogFadeAnimation;
-
-        ImageView ivFoto = dialogView.findViewById(R.id.ivFotoGrande);
-        Button btnDescargar = dialogView.findViewById(R.id.btnDescargar);
-        Button btnCompartir = dialogView.findViewById(R.id.btnCompartir);
-        Button btnCerrar = dialogView.findViewById(R.id.btnCerrar);
+        ImageView ivFoto = dialogView.findViewById(R.id.imgFull);
+        LinearLayout btnDescargar = dialogView.findViewById(R.id.btnDownload);
+        LinearLayout btnCompartir = dialogView.findViewById(R.id.btnShare);
+        ImageView btnCerrar = dialogView.findViewById(R.id.btnClose);
+        ImageView btnDelete = dialogView.findViewById(R.id.btnDelete);
+        btnDelete.setVisibility(GONE);
 
         try {
             if (esUrl) {
@@ -646,14 +651,14 @@ public class NuevoMantenimientoFragment extends Fragment {
                 .add(mantenimiento)
                 .addOnSuccessListener(documentReference -> {
                     if (getContext() == null) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Mantenimiento guardado", Toast.LENGTH_SHORT).show();
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
                     Log.e(TAG, "Error guardando", e);
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Error al guardar", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -663,7 +668,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                 .set(mantenimiento)
                 .addOnSuccessListener(aVoid -> {
                     if (getContext() == null) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Mantenimiento actualizado", Toast.LENGTH_SHORT).show();
 
                     eliminarFotosRemovidasDeStorage();
@@ -673,7 +678,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     if (getContext() == null) return;
                     Log.e(TAG, "Error actualizando", e);
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
                 });
     }
