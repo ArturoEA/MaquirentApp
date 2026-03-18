@@ -64,6 +64,7 @@
 
     <style name="Theme.TextMain" parent="Base.Theme.MAQUIRENTAPP">
         <item name="android:fontFamily">@font/anta_font</item>
+        <item name="colorControlActivated">@color/black</item>
     </style>
 
     <style name="SpinnerTheme" parent="Theme.AppCompat.Light">

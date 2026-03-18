@@ -65,6 +65,7 @@ import com.example.maquirentapp.Utils.InformePdfVectorialGenerator;
 import com.example.maquirentapp.Utils.PdfGenerator;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -731,6 +732,11 @@ public class NuevoMantenimientoFragment extends Fragment {
         android.widget.CheckBox chkKit = dialog.findViewById(R.id.chkKit);
         android.widget.CheckBox chkTierra = dialog.findViewById(R.id.chkTierra);
 
+        chkBandeja.setButtonTintList(null);
+        chkExtintor.setButtonTintList(null);
+        chkKit.setButtonTintList(null);
+        chkTierra.setButtonTintList(null);
+
         inputProxFecha.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
             new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
@@ -766,7 +772,6 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         // 3. Configurar Toolbar
         toolbar.setNavigationOnClickListener(v -> dialog.dismiss());
-        toolbar.inflateMenu(R.menu.menu_guardar_informe);
 
         List<Usuario> listaUsuarios = new ArrayList<>();
         db.collection("usuarios").whereEqualTo("estado", "activo").get().addOnSuccessListener(query -> {
@@ -812,23 +817,30 @@ public class NuevoMantenimientoFragment extends Fragment {
                         cargarRutinasPorDefecto(layoutListaRutinas);
                     }
 
-                    if (mapGuardado.containsKey("chkBandeja")) chkBandeja.setChecked((Boolean) mapGuardado.get("chkBandeja"));
-                    if (mapGuardado.containsKey("chkExtintor")) chkExtintor.setChecked((Boolean) mapGuardado.get("chkExtintor"));
-                    if (mapGuardado.containsKey("chkKit")) chkKit.setChecked((Boolean) mapGuardado.get("chkKit"));
-                    if (mapGuardado.containsKey("chkTierra")) chkTierra.setChecked((Boolean) mapGuardado.get("chkTierra"));
+                    if (mapGuardado.containsKey("chkBandeja"))
+                        chkBandeja.setChecked((Boolean) mapGuardado.get("chkBandeja"));
+                    if (mapGuardado.containsKey("chkExtintor"))
+                        chkExtintor.setChecked((Boolean) mapGuardado.get("chkExtintor"));
+                    if (mapGuardado.containsKey("chkKit"))
+                        chkKit.setChecked((Boolean) mapGuardado.get("chkKit"));
+                    if (mapGuardado.containsKey("chkTierra"))
+                        chkTierra.setChecked((Boolean) mapGuardado.get("chkTierra"));
                 }
             } else {
                 StringBuilder trabajosAuto = new StringBuilder("Mantenimiento preventivo. ");
                 if (mantenimientoActual.getItemsRealizados() != null) {
                     for (String idItem : mantenimientoActual.getItemsRealizados()) {
                         for (MantenimientoConfiguracion config : itemsConfigList) {
-                            if (config.getId().equals(idItem)) trabajosAuto.append("Cambio de ").append(config.getNombre().toLowerCase()).append(". ");
+                            if (config.getId().equals(idItem))
+                                trabajosAuto.append("Cambio de ").append(config.getNombre().toLowerCase()).append(". ");
                         }
                     }
                 }
                 inputTrabajos.setText(trabajosAuto.toString());
-                if (mantenimientoActual.getCliente() != null) inputCliente.setText(mantenimientoActual.getCliente());
-                if (mantenimientoActual.getLugar() != null) inputLugar.setText(mantenimientoActual.getLugar());
+                if (mantenimientoActual.getCliente() != null)
+                    inputCliente.setText(mantenimientoActual.getCliente());
+                if (mantenimientoActual.getLugar() != null)
+                    inputLugar.setText(mantenimientoActual.getLugar());
                 cargarRutinasPorDefecto(layoutListaRutinas);
             }
         });
@@ -954,95 +966,98 @@ public class NuevoMantenimientoFragment extends Fragment {
                     });
         }
 
+        ExtendedFloatingActionButton btnGenerarPdfDialog = dialog.findViewById(R.id.btnGenerarPdfDialog);
 
+        btnGenerarPdfDialog.setOnClickListener(item -> {
+            // 1. RECOLECTAR T0DO EN UN MAPA
+            Map<String, Object> mapDatos = new HashMap<>();
 
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_guardar_pdf) {
-                // 1. RECOLECTAR T0DO EN UN MAPA
-                Map<String, Object> mapDatos = new HashMap<>();
+            String estado = "Operativa";
+            if (rgEstado.getCheckedRadioButtonId() == R.id.rbInoperativa) estado = "Inoperativa";
+            else if (rgEstado.getCheckedRadioButtonId() == R.id.rbReparacionTerceros)
+                estado = "En reparación por terceros";
 
-                String estado = "Operativa";
-                if (rgEstado.getCheckedRadioButtonId() == R.id.rbInoperativa) estado = "Inoperativa";
-                else if (rgEstado.getCheckedRadioButtonId() == R.id.rbReparacionTerceros) estado = "En reparación por terceros";
+            String ubicacion = "Taller del cliente";
+            if (rgUbicacion.getCheckedRadioButtonId() == R.id.rbCampo) ubicacion = "Campo";
 
-                String ubicacion = "Taller del cliente";
-                if (rgUbicacion.getCheckedRadioButtonId() == R.id.rbCampo) ubicacion = "Campo";
+            String defServicio = "Mantenimiento";
+            if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEvaluacion)
+                defServicio = "Evaluación";
+            else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEntrega)
+                defServicio = "Entrega";
+            else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServAjuste)
+                defServicio = "Realizar Ajuste";
 
-                String defServicio = "Mantenimiento";
-                if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEvaluacion) defServicio = "Evaluación";
-                else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServEntrega) defServicio = "Entrega";
-                else if (rgDefServicio.getCheckedRadioButtonId() == R.id.rbServAjuste) defServicio = "Realizar Ajuste";
+            mapDatos.put("estado", estado);
+            mapDatos.put("ubicacion", ubicacion);
+            mapDatos.put("defServicio", defServicio);
+            mapDatos.put("cliente", inputCliente.getText().toString().trim());
+            mapDatos.put("lugar", inputLugar.getText().toString().trim());
+            mapDatos.put("aceite", spinnerAceite.getText().toString().trim());
+            mapDatos.put("cantAceite", spinnerCantidadAceite.getText().toString().trim());
+            mapDatos.put("contacto", inputContacto.getText().toString().trim());
+            mapDatos.put("fallas", inputFallas.getText().toString().trim());
+            mapDatos.put("trabajos", inputTrabajos.getText().toString().trim());
+            mapDatos.put("tecnico", spinnerTecnico.getText().toString());
+            mapDatos.put("supervisor", spinnerSupervisor.getText().toString());
+            mapDatos.put("proxFecha", inputProxFecha.getText().toString().trim());
 
-                mapDatos.put("estado", estado);
-                mapDatos.put("ubicacion", ubicacion);
-                mapDatos.put("defServicio", defServicio);
-                mapDatos.put("cliente", inputCliente.getText().toString().trim());
-                mapDatos.put("lugar", inputLugar.getText().toString().trim());
-                mapDatos.put("aceite", spinnerAceite.getText().toString().trim());
-                mapDatos.put("cantAceite", spinnerCantidadAceite.getText().toString().trim());
-                mapDatos.put("contacto", inputContacto.getText().toString().trim());
-                mapDatos.put("fallas", inputFallas.getText().toString().trim());
-                mapDatos.put("trabajos", inputTrabajos.getText().toString().trim());
-                mapDatos.put("tecnico", spinnerTecnico.getText().toString());
-                mapDatos.put("supervisor", spinnerSupervisor.getText().toString());
-                mapDatos.put("proxFecha", inputProxFecha.getText().toString().trim());
+            mapDatos.put("chkBandeja", chkBandeja.isChecked());
+            mapDatos.put("chkExtintor", chkExtintor.isChecked());
+            mapDatos.put("chkKit", chkKit.isChecked());
+            mapDatos.put("chkTierra", chkTierra.isChecked());
 
-                mapDatos.put("chkBandeja", chkBandeja.isChecked());
-                mapDatos.put("chkExtintor", chkExtintor.isChecked());
-                mapDatos.put("chkKit", chkKit.isChecked());
-                mapDatos.put("chkTierra", chkTierra.isChecked());
-
-                String urlFirmaTecnico = "";
-                String urlFirmaSupervisor = "";
-                for (Usuario u : listaUsuarios) {
-                    if (u.getNombre().equals(spinnerTecnico.getText().toString())) urlFirmaTecnico = u.getFirmaUrl();
-                    if (u.getNombre().equals(spinnerSupervisor.getText().toString())) urlFirmaSupervisor = u.getFirmaUrl();
-                }
-                mapDatos.put("urlFirmaTecnico", urlFirmaTecnico);
-                mapDatos.put("urlFirmaSupervisor", urlFirmaSupervisor);
-
-                Map<String, String> codigosIngresados = new HashMap<>();
-                for (int i = 0; i < layoutFiltros.getChildCount(); i++) {
-                    View child = layoutFiltros.getChildAt(i);
-                    if (child instanceof TextInputLayout) {
-                        TextInputLayout til = (TextInputLayout) child;
-                        AutoCompleteTextView actv = (AutoCompleteTextView) til.getEditText();
-                        if (actv != null && !actv.getText().toString().isEmpty()) {
-                            String nombreFiltro = til.getHint().toString().replace("Código para ", "");
-                            codigosIngresados.put(nombreFiltro, actv.getText().toString());
-                        }
-                    }
-                }
-                mapDatos.put("codigosFiltros", codigosIngresados);
-
-                List<Map<String, Object>> listaRutinasFinal = new ArrayList<>();
-                for (int i = 0; i < layoutListaRutinas.getChildCount(); i++) {
-                    View fila = layoutListaRutinas.getChildAt(i);
-                    if (fila instanceof LinearLayout) {
-                        android.widget.CheckBox chk = (android.widget.CheckBox) ((LinearLayout) fila).getChildAt(0);
-                        TextInputEditText txt = (TextInputEditText) ((LinearLayout) fila).getChildAt(1);
-
-                        Map<String, Object> rutinaObj = new HashMap<>();
-                        rutinaObj.put("activa", chk.isChecked());
-                        rutinaObj.put("nombre", txt.getText().toString().trim());
-                        listaRutinasFinal.add(rutinaObj);
-                    }
-                }
-                mapDatos.put("rutinasList", listaRutinasFinal);
-
-                // 2. GUARDAR EN FIREBASE (Persistencia)
-                db.collection("mantenimientos").document(mantenimientoId).update("datosInforme", mapDatos);
-
-                // 3. GENERAR PDF (Cargador Visual)
-                dialog.dismiss();
-                mostrarLoaderYGenerar(mapDatos);
-                return true;
+            String urlFirmaTecnico = "";
+            String urlFirmaSupervisor = "";
+            for (Usuario u : listaUsuarios) {
+                if (u.getNombre().equals(spinnerTecnico.getText().toString()))
+                    urlFirmaTecnico = u.getFirmaUrl();
+                if (u.getNombre().equals(spinnerSupervisor.getText().toString()))
+                    urlFirmaSupervisor = u.getFirmaUrl();
             }
-            return false;
+            mapDatos.put("urlFirmaTecnico", urlFirmaTecnico);
+            mapDatos.put("urlFirmaSupervisor", urlFirmaSupervisor);
+
+            Map<String, String> codigosIngresados = new HashMap<>();
+            for (int i = 0; i < layoutFiltros.getChildCount(); i++) {
+                View child = layoutFiltros.getChildAt(i);
+                if (child instanceof TextInputLayout) {
+                    TextInputLayout til = (TextInputLayout) child;
+                    AutoCompleteTextView actv = (AutoCompleteTextView) til.getEditText();
+                    if (actv != null && !actv.getText().toString().isEmpty()) {
+                        String nombreFiltro = til.getHint().toString().replace("Código para ", "");
+                        codigosIngresados.put(nombreFiltro, actv.getText().toString());
+                    }
+                }
+            }
+            mapDatos.put("codigosFiltros", codigosIngresados);
+
+            List<Map<String, Object>> listaRutinasFinal = new ArrayList<>();
+            for (int i = 0; i < layoutListaRutinas.getChildCount(); i++) {
+                View fila = layoutListaRutinas.getChildAt(i);
+                if (fila instanceof LinearLayout) {
+                    android.widget.CheckBox chk = (android.widget.CheckBox) ((LinearLayout) fila).getChildAt(0);
+                    TextInputEditText txt = (TextInputEditText) ((LinearLayout) fila).getChildAt(1);
+
+                    Map<String, Object> rutinaObj = new HashMap<>();
+                    rutinaObj.put("activa", chk.isChecked());
+                    rutinaObj.put("nombre", txt.getText().toString().trim());
+                    listaRutinasFinal.add(rutinaObj);
+                }
+            }
+            mapDatos.put("rutinasList", listaRutinasFinal);
+
+            // 2. GUARDAR EN FIREBASE (Persistencia)
+            db.collection("mantenimientos").document(mantenimientoId).update("datosInforme", mapDatos);
+
+            // 3. GENERAR PDF (Cargador Visual)
+            dialog.dismiss();
+            mostrarLoaderYGenerar(mapDatos);
         });
 
         dialog.show();
     }
+
     private void cargarRutinasPorDefecto(LinearLayout layout) {
         String[] rutinasBase = {"Filtros de aire", "Limpieza exterior del radiador", "Cambio de aceite de motor", "Cambio de filtro(s) petróleo", "Cambio de filtro de aceite de motor",
                 "Tensión de la correa del ventilador", "Revisar las RPM del motor en vacío", "Mantenimiento al sistema de enfriamiento del motor"};
@@ -1050,6 +1065,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             agregarFilaRutinaVisual(layout, r, true);
         }
     }
+
     // EL NUEVO MÉT0DO DE CARGA VISUAL Y LLAMADA A VECTORIAL
     private void mostrarLoaderYGenerar(Map<String, Object> mapDatos) {
         // 1. Creamos la vista del cargador ("Loader") directamente por código
@@ -1072,7 +1088,8 @@ public class NuevoMantenimientoFragment extends Fragment {
         try {
             Typeface typefaceAnta = ResourcesCompat.getFont(requireContext(), R.font.anta_font);
             tvTexto.setTypeface(typefaceAnta);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         layout.addView(tvTexto);
 
@@ -1086,8 +1103,8 @@ public class NuevoMantenimientoFragment extends Fragment {
         // 3. Ejecutamos la generación del PDF en segundo plano
         new Thread(() -> {
             try {
-                String nombreArchivo = "Informe_" + codigoGrupo.replace(" ", "_") + ".pdf";
-                File pdfDir = new File(requireContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "InformeMantenimientos");
+                String nombreArchivo = "InformeMantenimiento_" + codigoGrupo.replace(" ", "_") + ".pdf";
+                File pdfDir = new File(requireContext().getCacheDir(), "InformesMantenimientosTemporales");
                 if (!pdfDir.exists()) pdfDir.mkdirs();
                 File archivoFinal = new File(pdfDir, nombreArchivo);
 
@@ -1114,6 +1131,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             }
         }).start();
     }
+
     // Mét0do para crear visualmente una fila de rutina editable en el diálogo
     private void agregarFilaRutinaVisual(LinearLayout layoutPadre, String nombreRutina, boolean estaActiva) {
         LinearLayout fila = new LinearLayout(requireContext());
@@ -1123,10 +1141,10 @@ public class NuevoMantenimientoFragment extends Fragment {
         fila.setPadding(0, 8, 0, 8);
 
         // Checkbox para Habilitar/Deshabilitar
-        android.widget.CheckBox chkActiva = new android.widget.CheckBox (requireContext());
+        android.widget.CheckBox chkActiva = new android.widget.CheckBox(requireContext());
         chkActiva.setChecked(estaActiva);
         chkActiva.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.5f));
-        chkActiva.setButtonDrawable(R.drawable.checkbox_custom);
+        chkActiva.setButtonDrawable(R.drawable.checbox_custom_informe_mantenimiento);
         fila.addView(chkActiva);
 
         // EditText para el nombre (Editable)
@@ -1138,7 +1156,8 @@ public class NuevoMantenimientoFragment extends Fragment {
         try {
             Typeface typefaceAnta = ResourcesCompat.getFont(requireContext(), R.font.anta_font);
             inputNombre.setTypeface(typefaceAnta);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         LinearLayout.LayoutParams paramsText = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 7.5f);
         inputNombre.setLayoutParams(paramsText);
         fila.addView(inputNombre);
@@ -1146,12 +1165,14 @@ public class NuevoMantenimientoFragment extends Fragment {
         // Botón Eliminar
         ImageView btnEliminar = new ImageView(requireContext());
         btnEliminar.setImageResource(R.drawable.icon_eliminar_rojo);
+        btnEliminar.setPadding(0, 0, 0, 0);
         btnEliminar.setLayoutParams(new LinearLayout.LayoutParams(0, 50, 1f));
         btnEliminar.setOnClickListener(v -> layoutPadre.removeView(fila));
         fila.addView(btnEliminar);
 
         layoutPadre.addView(fila);
     }
+
     @Override
     public void onResume() {
         super.onResume();

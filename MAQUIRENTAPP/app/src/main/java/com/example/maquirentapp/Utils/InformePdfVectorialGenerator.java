@@ -16,6 +16,7 @@ import android.text.TextPaint;
 
 import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.Model.Mantenimiento;
+import com.example.maquirentapp.R;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -140,8 +141,19 @@ public class InformePdfVectorialGenerator {
 
         y += 60;
         canvas.drawText("Atentamente:", MARGIN, y, paintTexto);
-        y += 60;
-        canvas.drawText("_______________________________", MARGIN, y, paintTexto);
+
+        y += 10;
+
+        Bitmap bmpFirmaHugo = BitmapFactory.decodeResource(context.getResources(), R.drawable.firmahep);
+        if (bmpFirmaHugo != null) {
+            android.graphics.Rect rectFirma = new android.graphics.Rect(MARGIN, y, MARGIN + 120, y + 50);
+            canvas.drawBitmap(bmpFirmaHugo, null, rectFirma, null);
+        }
+
+        y += 55;
+
+        canvas.drawLine(MARGIN, y, MARGIN + 160, y, paintLineas);
+
         y += 15;
         canvas.drawText("Hugo Esquivel Pando", MARGIN, y, paintNegrita);
         y += 15;
@@ -242,8 +254,8 @@ public class InformePdfVectorialGenerator {
         }
 
         y += 60;
-        canvas.drawText("_________________________", MARGIN + 20, y, paintTexto);
-        canvas.drawText("_________________________", MARGIN + 300, y, paintTexto);
+        canvas.drawLine(MARGIN + 20, y, MARGIN + 170, y, paintLineas);  // Línea Técnico (150px de ancho)
+        canvas.drawLine(MARGIN + 300, y, MARGIN + 450, y, paintLineas);
         y += 15;
         canvas.drawText((String) datos.get("tecnico"), MARGIN + 40, y, paintNegrita);
         String sup = (String) datos.get("supervisor");
