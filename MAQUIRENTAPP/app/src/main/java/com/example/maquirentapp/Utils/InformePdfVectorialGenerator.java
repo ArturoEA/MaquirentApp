@@ -245,11 +245,11 @@ public class InformePdfVectorialGenerator {
         String urlTec = (String) datos.get("urlFirmaTecnico");
         String urlSup = (String) datos.get("urlFirmaSupervisor");
         if (urlTec != null && !urlTec.isEmpty()) {
-            Bitmap bmpTec = descargarImagen(urlTec);
+            Bitmap bmpTec = descargarImagen(urlTec, 300);
             if (bmpTec != null) canvas.drawBitmap(bmpTec, null, new android.graphics.Rect(MARGIN + 40, y, MARGIN + 40 + 120, y + 60), null);
         }
         if (urlSup != null && !urlSup.isEmpty()) {
-            Bitmap bmpSup = descargarImagen(urlSup);
+            Bitmap bmpSup = descargarImagen(urlSup, 300);
             if (bmpSup != null) canvas.drawBitmap(bmpSup, null, new android.graphics.Rect(MARGIN + 320, y, MARGIN + 320 + 120, y + 60), null);
         }
 
@@ -370,7 +370,7 @@ public class InformePdfVectorialGenerator {
                     currentX = startX;
                     currentY += imgHeight + 20;
                 }
-                Bitmap bmp = descargarImagen(mantenimientoActual.getFotos().get(i));
+                Bitmap bmp = descargarImagen(mantenimientoActual.getFotos().get(i), 500);
                 if (bmp != null) {
                     android.graphics.Rect rectFoto = new android.graphics.Rect(currentX, currentY, currentX + imgWidth, currentY + imgHeight);
                     canvas.drawBitmap(bmp, null, rectFoto, null);
@@ -450,15 +450,39 @@ public class InformePdfVectorialGenerator {
         canvas.restore();
         return y + height;
     }
-
-    private static Bitmap descargarImagen(String strUrl) {
+    private static Bitmap descargarImagen(String strUrl, int maxDimension) {
         try {
             URL url = new URL(strUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            return BitmapFactory.decodeStream(input);
+            Bitmap originalBitmap = BitmapFactory.decodeStream(input);
+
+            if (originalBitmap == null) return null;
+
+            int width = originalBitmap.getWidth();
+            int height = originalBitmap.getHeight();
+
+            if (width > maxDimension || height > maxDimension) {
+                float ratio = (float) width / height;
+                if (ratio > 1) {
+                    width = maxDimension;
+                    height = (int) (maxDimension / ratio);
+                } else {
+                    height = maxDimension;
+                    width = (int) (maxDimension * ratio);
+                }
+
+                Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, true);
+
+                if (originalBitmap != resizedBitmap) {
+                    originalBitmap.recycle();
+                }
+                return resizedBitmap;
+            }
+
+            return originalBitmap;
         } catch (Exception e) {
             return null;
         }
