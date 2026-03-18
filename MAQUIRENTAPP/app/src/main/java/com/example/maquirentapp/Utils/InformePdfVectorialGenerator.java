@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -81,9 +82,17 @@ public class InformePdfVectorialGenerator {
         String fechaHoy = new SimpleDateFormat("dd 'de' MMMM 'del' yyyy", new Locale("es", "ES")).format(new Date());
         String cliente = (String) datos.getOrDefault("cliente", "");
         if (cliente.isEmpty()) cliente = mantenimientoActual.getEmpresa() != null ? mantenimientoActual.getEmpresa() : "";
+        String proxHorometro = "";
 
-        String proxHorometro = "N/A";
-        try { proxHorometro = String.valueOf(Double.parseDouble(mantenimientoActual.getHorometro()) + 250); } catch (Exception ignored){}
+        try {
+
+            double hActual = Double.parseDouble(mantenimientoActual.getHorometro());
+
+            DecimalFormat df = new DecimalFormat("#.##", new java.text.DecimalFormatSymbols(java.util.Locale.US));
+
+            proxHorometro = df.format(hActual + 250);
+
+        } catch (Exception e) { proxHorometro = "N/A"; }
 
         String marca = placa != null && placa.getMarcaGrupo() != null ? placa.getMarcaGrupo() : "N/A";
         String modelo = placa != null && placa.getModeloGrupo() != null ? placa.getModeloGrupo() : "N/A";
@@ -172,7 +181,7 @@ public class InformePdfVectorialGenerator {
         canvas.drawText("INFORME DE SERVICIO EN TALLER Y CAMPO", PAGE_WIDTH / 2f, y, paintTitulo);
 
         y += 20;
-        dibujarCeldaTabla(canvas, MARGIN, y, 100, 20, "CÓDIGO DE EQUIPO:", paintNegrita, paintLineas);
+        dibujarCeldaTabla(canvas, MARGIN, y, 100, 20, "EQUIPO:", paintNegrita, paintLineas);
         dibujarCeldaTabla(canvas, MARGIN + 100, y, 200, 20, codigoGrupo, paintTexto, paintLineas);
         dibujarCeldaTabla(canvas, MARGIN + 300, y, 60, 20, "FECHA:", paintNegrita, paintLineas);
         dibujarCeldaTabla(canvas, MARGIN + 360, y, PAGE_WIDTH - MARGIN - (MARGIN + 360), 20, mantenimientoActual.getFecha(), paintTexto, paintLineas);
