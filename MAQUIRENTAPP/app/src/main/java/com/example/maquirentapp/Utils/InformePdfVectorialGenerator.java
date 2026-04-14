@@ -216,16 +216,36 @@ public class InformePdfVectorialGenerator {
         y += 20;
 
         Map<String, String> filtros = (Map<String, String>) datos.get("codigosFiltros");
-        String cAceite = filtros.containsKey("Filtro de aceite") ? "[ X ]" : "[   ]";
-        String cAire = filtros.containsKey("Filtro de aire") ? "[ X ]" : "[   ]";
-        String cComb = filtros.containsKey("Filtro de combustible") ? "[ X ]" : "[   ]";
-        String cSep = filtros.containsKey("Filtro separador de agua") ? "[ X ]" : "[   ]";
+        String cAceite = "[   ]", cAire = "[   ]", cComb = "[   ]", cSep = "[   ]";
+        String valAceite = "----", valAire = "----", valComb = "----", valSep = "----";
 
-        dibujarCeldaTabla(canvas, MARGIN, y, 257, 20, cAceite + " De aceite: " + filtros.getOrDefault("Filtro de aceite", "----"), paintTexto, paintLineas);
-        dibujarCeldaTabla(canvas, MARGIN + 257, y, 258, 20, cAire + " De aire: " + filtros.getOrDefault("Filtro de aire", "----"), paintTexto, paintLineas);
+        if (filtros != null) {
+            for (Map.Entry<String, String> entry : filtros.entrySet()) {
+                String nombreFiltro = entry.getKey().toLowerCase();
+                String codigo = entry.getValue();
+
+                if (nombreFiltro.contains("aceite")) {
+                    cAceite = "[ X ]";
+                    valAceite = codigo;
+                } else if (nombreFiltro.contains("aire")) {
+                    cAire = "[ X ]";
+                    valAire = codigo;
+                } else if (nombreFiltro.contains("combustible") || nombreFiltro.contains("petróleo") || nombreFiltro.contains("petroleo")) {
+                    cComb = "[ X ]";
+                    valComb = codigo;
+                } else if (nombreFiltro.contains("separador") || nombreFiltro.contains("agua")) {
+                    cSep = "[ X ]";
+                    valSep = codigo;
+                }
+            }
+        }
+
+        // Dibujado de las celdas con los valores detectados
+        dibujarCeldaTabla(canvas, MARGIN, y, 257, 20, cAceite + " De aceite: " + valAceite, paintTexto, paintLineas);
+        dibujarCeldaTabla(canvas, MARGIN + 257, y, 258, 20, cAire + " De aire: " + valAire, paintTexto, paintLineas);
         y += 20;
-        dibujarCeldaTabla(canvas, MARGIN, y, 257, 20, cComb + " De combustible: " + filtros.getOrDefault("Filtro de combustible", "----"), paintTexto, paintLineas);
-        dibujarCeldaTabla(canvas, MARGIN + 257, y, 258, 20, cSep + " Separador: " + filtros.getOrDefault("Filtro separador de agua", "----"), paintTexto, paintLineas);
+        dibujarCeldaTabla(canvas, MARGIN, y, 257, 20, cComb + " De combustible: " + valComb, paintTexto, paintLineas);
+        dibujarCeldaTabla(canvas, MARGIN + 257, y, 258, 20, cSep + " Separador: " + valSep, paintTexto, paintLineas);
 
         // Detalles
         y += 30;
