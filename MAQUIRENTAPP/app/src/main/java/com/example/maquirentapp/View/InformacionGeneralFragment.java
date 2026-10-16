@@ -107,6 +107,12 @@ public class InformacionGeneralFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (idGrupo == null && getArguments() != null) {
+            idGrupo = getArguments().getString("idGrupo");
+            codigoGrupo = getArguments().getString("codigo");
+            if (codigoGrupo == null) codigoGrupo = "General";
+        }
+
         recyclerFiltros = view.findViewById(R.id.recyclerFiltros);
         btnAddCategoriaFiltro = view.findViewById(R.id.btnAddCategoriaFiltro);
 
@@ -330,6 +336,13 @@ public class InformacionGeneralFragment extends Fragment {
 
     private void actualizarUIPlaca() {
         if (infoPlacaActual == null) return;
+        if (infoPlacaActual.getImagenesUrls() == null) {
+            infoPlacaActual.setImagenesUrls(new ArrayList<>());
+        }
+        if (infoPlacaActual.getEspecificaciones() == null) {
+            infoPlacaActual.setEspecificaciones(new ArrayList<>());
+        }
+
         inputPotenciaSB.setText(infoPlacaActual.getPotenciaStandBy());
         inputPotenciaC.setText(infoPlacaActual.getPotenciaContinua());
 
@@ -345,72 +358,65 @@ public class InformacionGeneralFragment extends Fragment {
         inputModeloGen.setText(infoPlacaActual.getModeloGenerador());
         inputSerieGen.setText(infoPlacaActual.getSerieGenerador());
 
-        if (fotosAdapter == null) {
-            fotosAdapter = new FotosSimpleAdapter(infoPlacaActual.getImagenesUrls(), new FotosSimpleAdapter.OnFotoActionListener() {
-                @Override
-                public void onVerFoto(String url) {
-                    mostrarFotoGrande(url);
-                }
+        fotosAdapter = new FotosSimpleAdapter(infoPlacaActual.getImagenesUrls(), new FotosSimpleAdapter.OnFotoActionListener() {
+            @Override
+            public void onVerFoto(String url) {
+                mostrarFotoGrande(url);
+            }
 
-                @Override
-                public void onEliminarFoto(String url) {
-                    new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
-                            .setTitle("Eliminar foto")
-                            .setMessage("¿Estás seguro?")
-                            .setPositiveButton("Sí", (d, w) -> {
-                                generadorRepository.eliminarArchivoStorage(url, new Callback<Void>() {
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        if (getContext() == null) return;
-                                        infoPlacaActual.getImagenesUrls().remove(url);
-                                        fotosAdapter.notifyDataSetChanged();
-                                        guardarPlacaSinRecargar();
-                                        Toast.makeText(getContext(), "Foto eliminada", Toast.LENGTH_SHORT).show();
-                                    }
+            @Override
+            public void onEliminarFoto(String url) {
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Eliminar foto")
+                        .setMessage("¿Estás seguro?")
+                        .setPositiveButton("Sí", (d, w) -> {
+                            generadorRepository.eliminarArchivoStorage(url, new Callback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    if (getContext() == null) return;
+                                    infoPlacaActual.getImagenesUrls().remove(url);
+                                    fotosAdapter.notifyDataSetChanged();
+                                    guardarPlacaSinRecargar();
+                                    Toast.makeText(getContext(), "Foto eliminada", Toast.LENGTH_SHORT).show();
+                                }
 
-                                    @Override
-                                    public void onError(Exception e) {
-                                        if (getContext() == null) return;
-                                        infoPlacaActual.getImagenesUrls().remove(url);
-                                        fotosAdapter.notifyDataSetChanged();
-                                        guardarPlacaSinRecargar();
-                                    }
-                                });
-                            }).setNegativeButton("No", null).show();
-                }
+                                @Override
+                                public void onError(Exception e) {
+                                    if (getContext() == null) return;
+                                    infoPlacaActual.getImagenesUrls().remove(url);
+                                    fotosAdapter.notifyDataSetChanged();
+                                    guardarPlacaSinRecargar();
+                                }
+                            });
+                        }).setNegativeButton("No", null).show();
+            }
 
-                @Override
-                public void onAgregarFoto() {
-                    galleryLauncher.launch("image/*");
-                }
-            });
-            recyclerFotosPlaca.setAdapter(fotosAdapter);
-        } else {
-            fotosAdapter.notifyDataSetChanged();
-        }
-        if (specsAdapter == null) {
-            specsAdapter = new SpecsPlacaAdapter(infoPlacaActual.getEspecificaciones(), new SpecsPlacaAdapter.OnSpecActionListener() {
-                @Override
-                public void onEliminarSpec(Map<String, String> spec) {
-                    new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
-                            .setTitle("Eliminar dato")
-                            .setMessage("¿Eliminar '" + spec.get("clave") + "'?")
-                            .setPositiveButton("Sí", (d, w) -> {
-                                infoPlacaActual.getEspecificaciones().remove(spec);
-                                specsAdapter.notifyDataSetChanged();
-                                guardarPlacaSinRecargar();
-                            }).show();
-                }
+            @Override
+            public void onAgregarFoto() {
+                galleryLauncher.launch("image/*");
+            }
+        });
+        recyclerFotosPlaca.setAdapter(fotosAdapter);
 
-                @Override
-                public void onEditarSpec(Map<String, String> spec, int position) {
-                    mostrarDialogoSpec(spec, position);
-                }
-            });
-            recyclerSpecsPlaca.setAdapter(specsAdapter);
-        } else {
-            specsAdapter.notifyDataSetChanged();
-        }
+        specsAdapter = new SpecsPlacaAdapter(infoPlacaActual.getEspecificaciones(), new SpecsPlacaAdapter.OnSpecActionListener() {
+            @Override
+            public void onEliminarSpec(Map<String, String> spec) {
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Eliminar dato")
+                        .setMessage("¿Eliminar '" + spec.get("clave") + "'?")
+                        .setPositiveButton("Sí", (d, w) -> {
+                            infoPlacaActual.getEspecificaciones().remove(spec);
+                            specsAdapter.notifyDataSetChanged();
+                            guardarPlacaSinRecargar();
+                        }).show();
+            }
+
+            @Override
+            public void onEditarSpec(Map<String, String> spec, int position) {
+                mostrarDialogoSpec(spec, position);
+            }
+        });
+        recyclerSpecsPlaca.setAdapter(specsAdapter);
     }
     private void subirFotoPlaca(Uri uri) {
         Toast.makeText(getContext(), "Procesando imagen...", Toast.LENGTH_SHORT).show();

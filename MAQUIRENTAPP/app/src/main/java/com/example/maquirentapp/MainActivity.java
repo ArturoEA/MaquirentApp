@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
                     updateNavigationUI(0);
                     restoreScrollPosition(HOME_FRAGMENT_KEY);
                 } else if (dest.getId() == R.id.cgeFragment) {
-                    setHeaderTitle("Control de grupos electrógenos");
+                    setHeaderTitle("Control de maquinaria");
                     setHeaderIcon(R.drawable.icon_generador);
                     updateNavigationUI(1);
                     restoreScrollPosition(CGE_FRAGMENT_KEY);

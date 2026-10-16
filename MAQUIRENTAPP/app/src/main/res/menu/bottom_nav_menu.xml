@@ -11,7 +11,7 @@
     <item
         android:id="@+id/nav_cge"
         android:icon="@drawable/icon_generador"
-        android:title="C.G.E." />
+        android:title="C.M." />
     <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/icon_perfil_blanco"
