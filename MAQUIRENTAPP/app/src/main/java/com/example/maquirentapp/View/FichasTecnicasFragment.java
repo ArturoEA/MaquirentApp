@@ -11,7 +11,6 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +44,7 @@ public class FichasTecnicasFragment extends Fragment {
     private FichasTecnicasAdapter adapter;
     private RecyclerView recyclerView;
     private TextView tvEmptyState;
-    private ProgressBar progressBar;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerFichas;
     private ActivityResultLauncher<Intent> pdfPickerLauncher;
     private ActivityResultLauncher<String> requestPermissionLauncher;
 
@@ -89,7 +88,7 @@ public class FichasTecnicasFragment extends Fragment {
         // Inicializar vistas
         recyclerView = view.findViewById(R.id.recycler_fichas_tecnicas);
         tvEmptyState = view.findViewById(R.id.tv_empty_state);
-        progressBar = view.findViewById(R.id.progress_bar);
+        shimmerFichas = view.findViewById(R.id.shimmerFichas);
 
         // Configurar RecyclerView
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
@@ -175,7 +174,14 @@ public class FichasTecnicasFragment extends Fragment {
         // Observar estado de carga
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading != null) {
-                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+                if (isLoading) {
+                    shimmerFichas.setVisibility(View.VISIBLE);
+                    shimmerFichas.startShimmer();
+                    recyclerView.setVisibility(View.GONE);
+                } else {
+                    shimmerFichas.stopShimmer();
+                    shimmerFichas.setVisibility(View.GONE);
+                }
             }
         });
     }

@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.maquirentapp.adapters.MantenimientoConfiguracionAdapter;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -40,6 +41,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
     private static final String TAG = "MantenimientosConfiguracion";
     private RecyclerView recyclerView;
     private LinearLayout emptyState;
+    private ShimmerFrameLayout shimmerConfiguracion;
     private MantenimientoConfiguracionAdapter adapter;
     private FirebaseFirestore db;
     private FirebaseStorage storage;
@@ -124,6 +126,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewMantenimientosConfiguracion);
         emptyState = view.findViewById(R.id.emptyState);
+        shimmerConfiguracion = view.findViewById(R.id.shimmerConfiguracion);
     }
 
     private void setupRecyclerView() {
@@ -145,10 +148,20 @@ public class MantenimientosConfiguracionFragment extends Fragment {
 
     private void cargarMantenimientosConfiguracion() {
         Log.d(TAG, "Cargando mantenimientos configuracion...");
+        if (shimmerConfiguracion != null) {
+            shimmerConfiguracion.setVisibility(View.VISIBLE);
+            shimmerConfiguracion.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
 
         db.collection("mantenimientos_configuracion")
                 .get()
                 .addOnCompleteListener(task -> {
+                    if (shimmerConfiguracion != null) {
+                        shimmerConfiguracion.stopShimmer();
+                        shimmerConfiguracion.setVisibility(View.GONE);
+                    }
                     if (task.isSuccessful()) {
                         mantenimientosConfiguracionList.clear();
 
@@ -161,6 +174,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
                         Log.d(TAG, "Mantenimientos configuracion cargados: " + mantenimientosConfiguracionList.size());
                         actualizarUI();
                     } else {
+                        recyclerView.setVisibility(View.VISIBLE);
                         Log.e(TAG, "Error cargando mantenimientos configuracion", task.getException());
                         mostrarError("Error al cargar mantenimientos configuracion");
                     }

@@ -51,6 +51,7 @@ public class HistorialCotizacionesFragment extends Fragment {
     private TextView tvAnio;
     private int anioSeleccionado;
     private LinearLayout emptyState;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerCotizaciones;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,6 +82,7 @@ public class HistorialCotizacionesFragment extends Fragment {
         ImageButton btnSiguiente = view.findViewById(R.id.btnSiguiente);
         emptyState = view.findViewById(R.id.emptyStateCotizaciones);
         recyclerView = view.findViewById(R.id.recyclerCotizaciones);
+        shimmerCotizaciones = view.findViewById(R.id.shimmerCotizaciones);
 
         actualizarTextoAnio();
 
@@ -133,15 +135,30 @@ public class HistorialCotizacionesFragment extends Fragment {
     }
 
     private void cargarCotizaciones() {
+        if (shimmerCotizaciones != null) {
+            shimmerCotizaciones.setVisibility(View.VISIBLE);
+            shimmerCotizaciones.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
+
         repository.getCotizaciones(new Callback<List<Cotizacion>>() {
             @Override
             public void onSuccess(List<Cotizacion> result) {
+                if (shimmerCotizaciones != null) {
+                    shimmerCotizaciones.stopShimmer();
+                    shimmerCotizaciones.setVisibility(View.GONE);
+                }
                 listaCompleta = result;
                 filtrarPorAnio();
             }
 
             @Override
             public void onError(Exception e) {
+                if (shimmerCotizaciones != null) {
+                    shimmerCotizaciones.stopShimmer();
+                    shimmerCotizaciones.setVisibility(View.GONE);
+                }
                 Toast.makeText(getContext(), "Error cargando historial", Toast.LENGTH_SHORT).show();
             }
         });

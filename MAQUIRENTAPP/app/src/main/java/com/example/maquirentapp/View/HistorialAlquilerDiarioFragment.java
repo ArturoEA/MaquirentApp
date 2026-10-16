@@ -50,6 +50,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
     private int mesSeleccionado;
     private int anioActual;
     private String[] nombresMeses;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerHistorial;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,6 +78,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         btnAnterior = view.findViewById(R.id.btnAnterior);
         btnSiguiente = view.findViewById(R.id.btnSiguiente);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
+        shimmerHistorial = view.findViewById(R.id.shimmerHistorial);
 
         setupRecyclerView();
         setupFiltros();
@@ -229,9 +231,23 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             Toast.makeText(getContext(), "Error: ID de Grupo no encontrado", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (shimmerHistorial != null) {
+            shimmerHistorial.setVisibility(View.VISIBLE);
+            shimmerHistorial.startShimmer();
+        }
+        if (recyclerView != null) {
+            recyclerView.setVisibility(View.GONE);
+        }
+        if (tvEmptyState != null) {
+            tvEmptyState.setVisibility(View.GONE);
+        }
         alquilerRepository.getAlquileresDiariosPorGrupo(idGrupo, mesSeleccionado, anioActual, new Callback<List<AlquilerDia>>() {
             @Override
             public void onSuccess(List<AlquilerDia> alquileres) {
+                if (shimmerHistorial != null) {
+                    shimmerHistorial.stopShimmer();
+                    shimmerHistorial.setVisibility(View.GONE);
+                }
                 adapter.setItems(alquileres);
                 if (alquileres.isEmpty()) {
                     recyclerView.setVisibility(View.GONE);
@@ -243,6 +259,10 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             }
             @Override
             public void onError(Exception e) {
+                if (shimmerHistorial != null) {
+                    shimmerHistorial.stopShimmer();
+                    shimmerHistorial.setVisibility(View.GONE);
+                }
                 if (getContext() == null) return;
                 Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }

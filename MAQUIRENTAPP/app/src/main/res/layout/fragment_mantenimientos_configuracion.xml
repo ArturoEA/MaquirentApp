@@ -9,6 +9,13 @@
     android:clipToPadding="true"
     android:theme="@style/Theme.TextMain">
 
+    <include
+        android:id="@+id/shimmerConfiguracion"
+        layout="@layout/skeleton_list_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewMantenimientosConfiguracion"
         android:layout_width="match_parent"

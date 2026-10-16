@@ -49,6 +49,8 @@ public class HomeFragment extends Fragment {
 
     private NavController navController;
     private TextView emptyStatePagosPendientes, emptyStateAlquileresDiarios;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerAlquileresDiarios;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerPagosPendientes;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -81,6 +83,8 @@ public class HomeFragment extends Fragment {
         CardView cardCertificados = view.findViewById(R.id.cardCertificadosOperatividad);
         emptyStatePagosPendientes = view.findViewById(R.id.emptyStatePagosPendientes);
         emptyStateAlquileresDiarios = view.findViewById(R.id.emptyStateAlquileresDiarios);
+        shimmerAlquileresDiarios = view.findViewById(R.id.shimmerAlquileresDiarios);
+        shimmerPagosPendientes = view.findViewById(R.id.shimmerPagosPendientes);
 
         navController = Navigation.findNavController(view);
 
@@ -129,6 +133,13 @@ public class HomeFragment extends Fragment {
         recyclerAlquileresDiarios.setAdapter(alquilerDiarioAdapter);
     }
     private void cargarAccesoriosYAlquileresDiarios() {
+        if (shimmerAlquileresDiarios != null) {
+            shimmerAlquileresDiarios.setVisibility(View.VISIBLE);
+            shimmerAlquileresDiarios.startShimmer();
+        }
+        if (recyclerAlquileresDiarios != null) {
+            recyclerAlquileresDiarios.setVisibility(View.GONE);
+        }
         // 1. Cargar accesorios primero para llenar el mapa de íconos
         alquilerRepository.getAccesorios("diario", new Callback<List<Accesorio>>() {
             @Override
@@ -154,6 +165,10 @@ public class HomeFragment extends Fragment {
         alquilerRepository.getAlquileresDiariosActivos(new Callback<List<AlquilerDia>>() {
             @Override
             public void onSuccess(List<AlquilerDia> alquileres) {
+                if (shimmerAlquileresDiarios != null) {
+                    shimmerAlquileresDiarios.stopShimmer();
+                    shimmerAlquileresDiarios.setVisibility(View.GONE);
+                }
                 alquilerDiarioAdapter.setItems(alquileres);
 
                 if (alquileres.isEmpty()) {
@@ -167,6 +182,10 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerAlquileresDiarios != null) {
+                    shimmerAlquileresDiarios.stopShimmer();
+                    shimmerAlquileresDiarios.setVisibility(View.GONE);
+                }
                 Log.e("HomeFragment", "Error cargando alquileres diarios", e);
                 Toast.makeText(getContext(), "Error al cargar alquileres diarios", Toast.LENGTH_SHORT).show();
             }
@@ -195,6 +214,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void cargarPagosPendientes() {
+        if (shimmerPagosPendientes != null) {
+            shimmerPagosPendientes.setVisibility(View.VISIBLE);
+            shimmerPagosPendientes.startShimmer();
+        }
+        if (recyclerPagosPendientes != null) {
+            recyclerPagosPendientes.setVisibility(View.GONE);
+        }
         pagosPendientesList.clear();
         gruposMap.clear();
         generadorRepository.getGruposElectrogenos(false, new Callback<List<GrupoElectrogeno>>() {
@@ -301,6 +327,10 @@ public class HomeFragment extends Fragment {
     private void actualizarAdaptadorPagos() {
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
+                if (shimmerPagosPendientes != null) {
+                    shimmerPagosPendientes.stopShimmer();
+                    shimmerPagosPendientes.setVisibility(View.GONE);
+                }
                 pagoPendienteAdapter.setItems(pagosPendientesList);
                 if (pagosPendientesList.isEmpty()) {
                     recyclerPagosPendientes.setVisibility(View.GONE);

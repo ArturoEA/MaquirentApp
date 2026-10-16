@@ -34,6 +34,7 @@ import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -48,6 +49,7 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
     private static final String TAG = "ListaGrupos";
     private RecyclerView recyclerView;
     private LinearLayout emptyState;
+    private ShimmerFrameLayout shimmerGrupos;
     private GruposElectrogenosConfiguracionAdapter adapter;
     private GeneradorRepository generadorRepository;
     private UsuarioRepository usuarioRepository;
@@ -147,6 +149,7 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewGrupos);
         emptyState = view.findViewById(R.id.emptyState);
+        shimmerGrupos = view.findViewById(R.id.shimmerGrupos);
     }
 
     private void setupRecyclerView() {
@@ -256,10 +259,20 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
 
     private void cargarGrupos() {
         Log.d(TAG, "Iniciando carga de grupos...");
+        if (shimmerGrupos != null) {
+            shimmerGrupos.setVisibility(View.VISIBLE);
+            shimmerGrupos.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
 
         generadorRepository.getGruposElectrogenos(false, new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
+                if (shimmerGrupos != null) {
+                    shimmerGrupos.stopShimmer();
+                    shimmerGrupos.setVisibility(View.GONE);
+                }
                 List<GrupoElectrogeno> filtrados = new ArrayList<>();
 
                 if (grupos != null) {
@@ -275,6 +288,11 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
 
             @Override
             public void onError(Exception e) {
+                if (shimmerGrupos != null) {
+                    shimmerGrupos.stopShimmer();
+                    shimmerGrupos.setVisibility(View.GONE);
+                }
+                recyclerView.setVisibility(View.VISIBLE);
                 Log.e(TAG, "Error cargando grupos", e);
                 mostrarError("Error al cargar grupos: " + e.getMessage());
             }

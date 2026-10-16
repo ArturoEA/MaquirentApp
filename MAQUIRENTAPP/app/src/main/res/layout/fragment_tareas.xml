@@ -6,6 +6,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".View.TareasFragment">
 
+    <include
+        android:id="@+id/shimmerTareas"
+        layout="@layout/skeleton_list_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerTareas"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"

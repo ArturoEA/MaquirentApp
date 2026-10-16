@@ -53,6 +53,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     private TextView tvAnio;
     private ImageButton btnAnterior, btnSiguiente;
     private LinearLayout emptyState;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerAlquileres;
 
     private Calendar calendarioActual;
     private List<AlquilerMensual> todosLosAlquileres = new ArrayList<>();
@@ -92,6 +93,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         btnSiguiente = view.findViewById(R.id.btnSiguiente);
         emptyState = view.findViewById(R.id.emptyStateHistorialAlquilerMensual);
         recyclerView = view.findViewById(R.id.recyclerAlquileres);
+        shimmerAlquileres = view.findViewById(R.id.shimmerAlquileres);
 
         // Configurar año actual
         actualizarTextoAnio();
@@ -210,6 +212,16 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void fetchAlquileresMensuales() {
+        if (shimmerAlquileres != null) {
+            shimmerAlquileres.setVisibility(View.VISIBLE);
+            shimmerAlquileres.startShimmer();
+        }
+        if (recyclerView != null) {
+            recyclerView.setVisibility(View.GONE);
+        }
+        if (emptyState != null) {
+            emptyState.setVisibility(View.GONE);
+        }
         alquilerRepository.getAlquileresMensuales(new Callback<List<AlquilerMensual>>() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
@@ -234,6 +246,10 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerAlquileres != null) {
+                    shimmerAlquileres.stopShimmer();
+                    shimmerAlquileres.setVisibility(View.GONE);
+                }
                 Log.e("FetchAlquileres", "Error: " + e.getMessage());
                 Toast.makeText(getContext(),
                         "Error al cargar alquileres: " + e.getMessage(),
@@ -260,6 +276,10 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void actualizarUI(List<AlquilerMensual> alquileres) {
+        if (shimmerAlquileres != null) {
+            shimmerAlquileres.stopShimmer();
+            shimmerAlquileres.setVisibility(View.GONE);
+        }
         adapter.setItems(alquileres);
 
         if (alquileres.isEmpty()) {

@@ -31,14 +31,11 @@
         android:textColor="@android:color/darker_gray"
         android:visibility="gone" />
 
-    <!-- ProgressBar para carga -->
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminateTint="@color/black"
-        android:elevation="50dp"
-        android:visibility="gone" />
+    <include
+        android:id="@+id/shimmerFichas"
+        layout="@layout/skeleton_grid_fichas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 
 </FrameLayout>

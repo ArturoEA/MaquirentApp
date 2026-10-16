@@ -38,6 +38,7 @@ import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.MantenimientosAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -76,6 +77,7 @@ public class MantenimientosFragment extends Fragment {
     private View layoutBuscador;
     private TextInputEditText etBuscador;
     private ProgressBar progressBarBusqueda;
+    private ShimmerFrameLayout shimmerMantenimientos;
     private boolean isSearchMode = false;
 
     public MantenimientosFragment() {
@@ -131,6 +133,7 @@ public class MantenimientosFragment extends Fragment {
         btnAbrirBuscador = view.findViewById(R.id.btnAbrirBuscador);
         btnCerrarBuscador = view.findViewById(R.id.btnCerrarBuscador);
         progressBarBusqueda = view.findViewById(R.id.progressBarBusqueda);
+        shimmerMantenimientos = view.findViewById(R.id.shimmerMantenimientos);
 
         calendarioActual = Calendar.getInstance();
         actualizarTextoMes();
@@ -294,8 +297,12 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void cargarTodoElHistorial() {
-        progressBarBusqueda.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.INVISIBLE);
+        if (shimmerMantenimientos != null) {
+            shimmerMantenimientos.setVisibility(View.VISIBLE);
+            shimmerMantenimientos.startShimmer();
+        }
+        progressBarBusqueda.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
         emptyState.setVisibility(View.GONE);
 
         db.collection("mantenimientos")
@@ -303,6 +310,10 @@ public class MantenimientosFragment extends Fragment {
                 .orderBy("fechaCreacion", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (shimmerMantenimientos != null) {
+                        shimmerMantenimientos.stopShimmer();
+                        shimmerMantenimientos.setVisibility(View.GONE);
+                    }
                     mantenimientosList.clear();
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         Mantenimiento m = doc.toObject(Mantenimiento.class);
@@ -310,13 +321,15 @@ public class MantenimientosFragment extends Fragment {
                         mantenimientosList.add(m);
                     }
 
-                    progressBarBusqueda.setVisibility(View.GONE);
                     actualizarUI();
 
                     Toast.makeText(getContext(), "Historial completo cargado para búsqueda", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    progressBarBusqueda.setVisibility(View.GONE);
+                    if (shimmerMantenimientos != null) {
+                        shimmerMantenimientos.stopShimmer();
+                        shimmerMantenimientos.setVisibility(View.GONE);
+                    }
                     Log.e(TAG, "Error cargando historial completo", e);
                     Toast.makeText(getContext(), "Error al cargar historial", Toast.LENGTH_SHORT).show();
                     desactivarModoBusqueda();
@@ -373,6 +386,13 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void cargarMantenimientosDelMes(int añoSeleccionado, int mesSeleccionado) {
+        if (shimmerMantenimientos != null) {
+            shimmerMantenimientos.setVisibility(View.VISIBLE);
+            shimmerMantenimientos.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        emptyState.setVisibility(View.GONE);
+
         Calendar inicioMes = Calendar.getInstance();
         inicioMes.set(añoSeleccionado, mesSeleccionado, 1, 0, 0, 0);
         inicioMes.set(Calendar.MILLISECOND, 0);
@@ -389,6 +409,10 @@ public class MantenimientosFragment extends Fragment {
                 .whereLessThanOrEqualTo("fechaCreacion", fin)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    if (shimmerMantenimientos != null) {
+                        shimmerMantenimientos.stopShimmer();
+                        shimmerMantenimientos.setVisibility(View.GONE);
+                    }
                     mantenimientosList.clear();
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         Mantenimiento m = doc.toObject(Mantenimiento.class);
@@ -397,7 +421,13 @@ public class MantenimientosFragment extends Fragment {
                     }
                     actualizarUI();
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "Error cargando mantenimientos del mes", e));
+                .addOnFailureListener(e -> {
+                    if (shimmerMantenimientos != null) {
+                        shimmerMantenimientos.stopShimmer();
+                        shimmerMantenimientos.setVisibility(View.GONE);
+                    }
+                    Log.e(TAG, "Error cargando mantenimientos del mes", e);
+                });
     }
 
     private void cargarItemsConfiguracion() {

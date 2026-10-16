@@ -6,6 +6,13 @@
     android:orientation="vertical"
     android:background="@color/background_light">
 
+    <include
+        android:id="@+id/shimmerUsuarios"
+        layout="@layout/skeleton_list_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <!-- RecyclerView para la lista de usuarios -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewUsuarios"

@@ -92,6 +92,13 @@
         android:textColor="@color/text_primary"
         android:textSize="18sp" />
 
+    <include
+        android:id="@+id/shimmerAlquileresDiarios"
+        layout="@layout/skeleton_list_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerAlquileresDiarios"
         android:layout_width="match_parent"
@@ -99,6 +106,7 @@
         android:layout_marginBottom="10dp"
         android:clipToPadding="false"
         android:orientation="horizontal"
+        android:visibility="gone"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_alquiler_diario" />
 
@@ -272,6 +280,13 @@
         android:textColor="@color/text_primary"
         android:textSize="18sp" />
 
+    <include
+        android:id="@+id/shimmerPagosPendientes"
+        layout="@layout/skeleton_list_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerPagosPendientes"
         android:layout_width="match_parent"
@@ -279,6 +294,7 @@
         android:layout_marginBottom="20dp"
         android:clipToPadding="false"
         android:orientation="horizontal"
+        android:visibility="gone"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_pago_pendiente"
         tools:orientation="horizontal" />

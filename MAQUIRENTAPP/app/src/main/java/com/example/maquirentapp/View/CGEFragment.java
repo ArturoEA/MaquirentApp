@@ -21,9 +21,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
+
 
 import com.example.maquirentapp.adapters.GrupoElectrogenoAdapter;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
@@ -44,7 +43,7 @@ public class CGEFragment extends Fragment {
     private List<GrupoElectrogeno> grupoList;
     private GeneradorRepository generadorRepository;
     private NavController navController;
-    private ProgressBar progressBar;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerGrupos;
     private SwitchMaterial switchEliminados;
     public CGEFragment() {
         // Required empty public constructor
@@ -69,7 +68,7 @@ public class CGEFragment extends Fragment {
 
         generadorRepository = new GeneradorRepository();
 
-        progressBar = view.findViewById(R.id.progressBar);
+        shimmerGrupos = view.findViewById(R.id.shimmerGrupos);
         switchEliminados = view.findViewById(R.id.switchEliminados);
         recyclerView = view.findViewById(R.id.recycler_grupos_electrogenos);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -95,7 +94,13 @@ public class CGEFragment extends Fragment {
         cargarGrupos();
     }
     private void cargarGrupos() {
-        progressBar.setVisibility(View.VISIBLE);
+        if (shimmerGrupos != null) {
+            shimmerGrupos.setVisibility(View.VISIBLE);
+            shimmerGrupos.startShimmer();
+        }
+        if (recyclerView != null) {
+            recyclerView.setVisibility(View.GONE);
+        }
         boolean incluirEliminados = switchEliminados.isChecked();
 
         generadorRepository.getGruposElectrogenos(incluirEliminados, new Callback<List<GrupoElectrogeno>>() {
@@ -105,14 +110,26 @@ public class CGEFragment extends Fragment {
                 grupoList.addAll(grupos);
                 adapter.setItems(grupoList);
 
-                progressBar.setVisibility(View.GONE);
+                if (shimmerGrupos != null) {
+                    shimmerGrupos.stopShimmer();
+                    shimmerGrupos.setVisibility(View.GONE);
+                }
+                if (recyclerView != null) {
+                    recyclerView.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onError(Exception e) {
                 Log.e("CGEFragment", "Error al cargar grupos", e);
                 Toast.makeText(getContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
-                progressBar.setVisibility(View.GONE);
+                if (shimmerGrupos != null) {
+                    shimmerGrupos.stopShimmer();
+                    shimmerGrupos.setVisibility(View.GONE);
+                }
+                if (recyclerView != null) {
+                    recyclerView.setVisibility(View.VISIBLE);
+                }
             }
         });
     }

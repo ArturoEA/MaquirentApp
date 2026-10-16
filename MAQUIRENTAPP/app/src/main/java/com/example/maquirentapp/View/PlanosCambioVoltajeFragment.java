@@ -39,6 +39,7 @@ import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.adapters.PlanoAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -52,6 +53,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
     private RecyclerView recyclerPlanos;
     private ProgressBar progressBar;
+    private ShimmerFrameLayout shimmerPlanos;
     private PlanoAdapter adapter;
     private GeneradorRepository generadorRepository;
     private List<Plano> listaPlanos = new ArrayList<>();
@@ -83,6 +85,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
         recyclerPlanos = view.findViewById(R.id.recyclerPlanos);
         progressBar = view.findViewById(R.id.progressBar);
+        shimmerPlanos = view.findViewById(R.id.shimmerPlanos);
 
         recyclerPlanos.setLayoutManager(new GridLayoutManager(getContext(), 2));
         adapter = new PlanoAdapter(listaPlanos, this::mostrarDialogoPlano);
@@ -144,10 +147,20 @@ public class PlanosCambioVoltajeFragment extends Fragment {
     }
 
     private void cargarPlanos() {
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        if (shimmerPlanos != null) {
+            shimmerPlanos.setVisibility(View.VISIBLE);
+            shimmerPlanos.startShimmer();
+        }
+        recyclerPlanos.setVisibility(View.GONE);
+
         generadorRepository.getPlanosVoltaje(new Callback<List<Plano>>() {
             @Override
             public void onSuccess(List<Plano> planos) {
+                if (shimmerPlanos != null) {
+                    shimmerPlanos.stopShimmer();
+                    shimmerPlanos.setVisibility(View.GONE);
+                }
+                recyclerPlanos.setVisibility(View.VISIBLE);
                 listaPlanos = planos;
                 adapter.setItems(planos);
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
@@ -155,6 +168,11 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerPlanos != null) {
+                    shimmerPlanos.stopShimmer();
+                    shimmerPlanos.setVisibility(View.GONE);
+                }
+                recyclerPlanos.setVisibility(View.VISIBLE);
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 Toast.makeText(getContext(), "Error al cargar planos", Toast.LENGTH_SHORT).show();
             }

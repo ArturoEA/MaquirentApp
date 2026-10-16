@@ -7,12 +7,11 @@
     android:theme="@style/Theme.TextMain"
     tools:context=".View.CGEFragment">
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
+    <include
+        android:id="@+id/shimmerGrupos"
+        layout="@layout/skeleton_list_generators"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminateTint="@color/black"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView

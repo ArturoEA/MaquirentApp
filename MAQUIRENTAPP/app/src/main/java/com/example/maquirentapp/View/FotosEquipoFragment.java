@@ -36,6 +36,7 @@ import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.FotosEquipoAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -49,6 +50,7 @@ public class FotosEquipoFragment extends Fragment {
 
     private RecyclerView recyclerFotos;
     private ProgressBar progressBar;
+    private ShimmerFrameLayout shimmerFotos;
     private FotosEquipoAdapter adapter;
     private GeneradorRepository generadorRepository;
     private List<FotoEquipo> listaFotos = new ArrayList<>();
@@ -84,6 +86,7 @@ public class FotosEquipoFragment extends Fragment {
 
         recyclerFotos = view.findViewById(R.id.recyclerFotos);
         progressBar = view.findViewById(R.id.progressBar);
+        shimmerFotos = view.findViewById(R.id.shimmerFotos);
 
         recyclerFotos.setLayoutManager(new GridLayoutManager(getContext(), 2));
         adapter = new FotosEquipoAdapter(listaFotos, this::mostrarDialogoFoto);
@@ -147,10 +150,20 @@ public class FotosEquipoFragment extends Fragment {
     private void cargarFotos() {
         if (idGrupo == null) return;
 
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        if (shimmerFotos != null) {
+            shimmerFotos.setVisibility(View.VISIBLE);
+            shimmerFotos.startShimmer();
+        }
+        recyclerFotos.setVisibility(View.GONE);
+
         generadorRepository.getFotosEquipo(idGrupo, new Callback<List<FotoEquipo>>() {
             @Override
             public void onSuccess(List<FotoEquipo> fotos) {
+                if (shimmerFotos != null) {
+                    shimmerFotos.stopShimmer();
+                    shimmerFotos.setVisibility(View.GONE);
+                }
+                recyclerFotos.setVisibility(View.VISIBLE);
                 listaFotos = fotos;
                 adapter.setItems(fotos);
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
@@ -158,6 +171,11 @@ public class FotosEquipoFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerFotos != null) {
+                    shimmerFotos.stopShimmer();
+                    shimmerFotos.setVisibility(View.GONE);
+                }
+                recyclerFotos.setVisibility(View.VISIBLE);
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
             }
         });

@@ -78,6 +78,8 @@ public class InformacionGeneralFragment extends Fragment {
     private TextInputEditText inputMarcaM, inputModeloM, inputSerieM;
     private TextInputEditText inputMarcaGen, inputModeloGen, inputSerieGen;
     private Button btnGuardarTecnicos;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerInfoGeneral;
+    private LinearLayout llContenidoCards;
 
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -135,6 +137,8 @@ public class InformacionGeneralFragment extends Fragment {
         inputSerieGen = view.findViewById(R.id.inputSerieGen);
 
         btnGuardarTecnicos = view.findViewById(R.id.btnGuardarDatosTecnicos);
+        shimmerInfoGeneral = view.findViewById(R.id.shimmerInfoGeneral);
+        llContenidoCards = view.findViewById(R.id.llContenidoCards);
 
         btnGuardarTecnicos.setOnClickListener(v -> guardarDatosTecnicos());
 
@@ -316,6 +320,13 @@ public class InformacionGeneralFragment extends Fragment {
     }
 
     private void cargarInfoPlaca() {
+        if (shimmerInfoGeneral != null) {
+            shimmerInfoGeneral.setVisibility(View.VISIBLE);
+            shimmerInfoGeneral.startShimmer();
+        }
+        if (llContenidoCards != null) {
+            llContenidoCards.setVisibility(View.GONE);
+        }
         generadorRepository.getInfoPlaca(idGrupo, new Callback<InfoPlaca>() {
             @Override
             public void onSuccess(InfoPlaca info) {
@@ -330,11 +341,25 @@ public class InformacionGeneralFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerInfoGeneral != null) {
+                    shimmerInfoGeneral.stopShimmer();
+                    shimmerInfoGeneral.setVisibility(View.GONE);
+                }
+                if (llContenidoCards != null) {
+                    llContenidoCards.setVisibility(View.VISIBLE);
+                }
             }
         });
     }
 
     private void actualizarUIPlaca() {
+        if (shimmerInfoGeneral != null) {
+            shimmerInfoGeneral.stopShimmer();
+            shimmerInfoGeneral.setVisibility(View.GONE);
+        }
+        if (llContenidoCards != null) {
+            llContenidoCards.setVisibility(View.VISIBLE);
+        }
         if (infoPlacaActual == null) return;
         if (infoPlacaActual.getImagenesUrls() == null) {
             infoPlacaActual.setImagenesUrls(new ArrayList<>());

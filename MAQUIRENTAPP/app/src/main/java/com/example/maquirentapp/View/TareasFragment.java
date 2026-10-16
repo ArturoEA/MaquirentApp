@@ -28,6 +28,7 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.TareaRepository;
 import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -42,6 +43,7 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 public class TareasFragment extends Fragment {
 
     private RecyclerView recyclerTareas;
+    private ShimmerFrameLayout shimmerTareas;
     private TareasAdapter adapter;
     private TareaRepository tareaRepository;
     private UsuarioRepository usuarioRepository;
@@ -67,6 +69,7 @@ public class TareasFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerTareas = view.findViewById(R.id.recyclerTareas);
+        shimmerTareas = view.findViewById(R.id.shimmerTareas);
         recyclerTareas.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new TareasAdapter(this::mostrarDialogoCompletar);
@@ -165,6 +168,12 @@ public class TareasFragment extends Fragment {
     }
 
     private void cargarUsuariosYTareas() {
+        if (shimmerTareas != null) {
+            shimmerTareas.setVisibility(View.VISIBLE);
+            shimmerTareas.startShimmer();
+        }
+        recyclerTareas.setVisibility(View.GONE);
+
         usuarioRepository.getUsuariosActivos(new Callback<List<Usuario>>() {
             @Override
             public void onSuccess(List<Usuario> usuarios) {
@@ -193,6 +202,11 @@ public class TareasFragment extends Fragment {
         tareaRepository.getTareas(new Callback<List<Tarea>>() {
             @Override
             public void onSuccess(List<Tarea> tareas) {
+                if (shimmerTareas != null) {
+                    shimmerTareas.stopShimmer();
+                    shimmerTareas.setVisibility(View.GONE);
+                }
+                recyclerTareas.setVisibility(View.VISIBLE);
                 List<Tarea> nuevaLista = new ArrayList<>(tareas);
                 adapter.submitList(nuevaLista);
                 Log.d("DEBUG", "Tareas cargadas: " + tareas.size());
@@ -200,6 +214,11 @@ public class TareasFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerTareas != null) {
+                    shimmerTareas.stopShimmer();
+                    shimmerTareas.setVisibility(View.GONE);
+                }
+                recyclerTareas.setVisibility(View.VISIBLE);
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Error al cargar tareas", Toast.LENGTH_SHORT).show();
                 }

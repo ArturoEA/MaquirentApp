@@ -25,6 +25,7 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.ClientesValorizacionAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -37,6 +38,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
     private ClientesValorizacionAdapter adapter;
     private ValorizacionesRepository repository;
     private int anioSeleccionado;
+    private ShimmerFrameLayout shimmerClientes;
 
     // Vistas filtro
     private TextView tvAnio;
@@ -65,6 +67,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
         btnAnterior = view.findViewById(R.id.btnAnterior);
         btnSiguiente = view.findViewById(R.id.btnSiguiente);
         recyclerView = view.findViewById(R.id.recyclerClientesValorizaciones);
+        shimmerClientes = view.findViewById(R.id.shimmerClientes);
         // emptyState = view.findViewById(R.id.emptyState); // Si lo agregas al XML
 
         setupRecyclerView();
@@ -86,26 +89,30 @@ public class ListaClientesValorizacionFragment extends Fragment {
     }
 
     private void cargarClientes() {
-        // Mostrar un pequeño loader si quieres, o solo cargar
+        if (shimmerClientes != null) {
+            shimmerClientes.setVisibility(View.VISIBLE);
+            shimmerClientes.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+
         repository.getClientesPorAnio(anioSeleccionado, new Callback<List<ClienteValorizacion>>() {
             @Override
             public void onSuccess(List<ClienteValorizacion> result) {
-                adapter.submitList(result);
-
-                // Manejo de Empty State (si decides agregarlo al XML)
-                /*
-                if (result.isEmpty()) {
-                    recyclerView.setVisibility(View.GONE);
-                    if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
-                } else {
-                    recyclerView.setVisibility(View.VISIBLE);
-                    if (emptyState != null) emptyState.setVisibility(View.GONE);
+                if (shimmerClientes != null) {
+                    shimmerClientes.stopShimmer();
+                    shimmerClientes.setVisibility(View.GONE);
                 }
-                */
+                recyclerView.setVisibility(View.VISIBLE);
+                adapter.submitList(result);
             }
 
             @Override
             public void onError(Exception e) {
+                if (shimmerClientes != null) {
+                    shimmerClientes.stopShimmer();
+                    shimmerClientes.setVisibility(View.GONE);
+                }
+                recyclerView.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), "Error cargando clientes", Toast.LENGTH_SHORT).show();
             }
         });

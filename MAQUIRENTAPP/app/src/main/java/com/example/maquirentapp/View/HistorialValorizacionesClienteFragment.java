@@ -24,6 +24,7 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.ValorizacionesAdapter;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
@@ -40,6 +41,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
     private ValorizacionesRepository repository;
     private TextView tvTituloCliente;
     private LinearLayout emptyState;
+    private ShimmerFrameLayout shimmerValorizaciones;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,6 +67,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
         tvTituloCliente = view.findViewById(R.id.tvTituloCliente);
         recyclerView = view.findViewById(R.id.recyclerValorizaciones);
         emptyState = view.findViewById(R.id.emptyStateVal);
+        shimmerValorizaciones = view.findViewById(R.id.shimmerValorizaciones);
 
         if (clienteActual != null) {
             tvTituloCliente.setText(clienteActual.getNombreEmpresa() + " (" + clienteActual.getAnio() + ")");
@@ -98,9 +101,20 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
     private void cargarHistorial() {
         if (clienteActual == null) return;
 
+        if (shimmerValorizaciones != null) {
+            shimmerValorizaciones.setVisibility(View.VISIBLE);
+            shimmerValorizaciones.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
+
         repository.getValorizacionesPorCliente(clienteActual.getId(), new Callback<List<Valorizacion>>() {
             @Override
             public void onSuccess(List<Valorizacion> result) {
+                if (shimmerValorizaciones != null) {
+                    shimmerValorizaciones.stopShimmer();
+                    shimmerValorizaciones.setVisibility(View.GONE);
+                }
                 adapter.submitList(result);
                 if (result.isEmpty()) {
                     recyclerView.setVisibility(View.GONE);
@@ -112,6 +126,11 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
             }
             @Override
             public void onError(Exception e) {
+                if (shimmerValorizaciones != null) {
+                    shimmerValorizaciones.stopShimmer();
+                    shimmerValorizaciones.setVisibility(View.GONE);
+                }
+                recyclerView.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), "Error cargando historial", Toast.LENGTH_SHORT).show();
             }
         });

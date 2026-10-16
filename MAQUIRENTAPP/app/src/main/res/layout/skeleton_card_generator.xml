@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardBackgroundColor="@color/skeleton_card"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Image placeholder (16:9 ratio) -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="@color/skeleton_element" />
+
+        <!-- Bottom info bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <View
+                android:layout_width="130dp"
+                android:layout_height="18dp"
+                android:background="@drawable/skeleton_rect_rounded" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <View
+                android:layout_width="60dp"
+                android:layout_height="18dp"
+                android:background="@drawable/skeleton_rect_rounded" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

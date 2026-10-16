@@ -18,6 +18,7 @@ import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.UsuarioRepository;
+import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
 public class GestionarUsuariosFragment extends Fragment {
     private RecyclerView recyclerView;
     private LinearLayout emptyState;
+    private ShimmerFrameLayout shimmerUsuarios;
     private UsuariosAdapter adapter;
     private UsuarioRepository usuarioRepository;
     private List<Usuario> usuariosList = new ArrayList<>();
@@ -53,6 +55,7 @@ public class GestionarUsuariosFragment extends Fragment {
     private void initViews(View view) {
         recyclerView = view.findViewById(R.id.recyclerViewUsuarios);
         emptyState = view.findViewById(R.id.emptyState);
+        shimmerUsuarios = view.findViewById(R.id.shimmerUsuarios);
     }
 
     private void setupRecyclerView() {
@@ -64,9 +67,20 @@ public class GestionarUsuariosFragment extends Fragment {
     }
 
     private void cargarUsuarios() {
+        if (shimmerUsuarios != null) {
+            shimmerUsuarios.setVisibility(View.VISIBLE);
+            shimmerUsuarios.startShimmer();
+        }
+        recyclerView.setVisibility(View.GONE);
+        emptyState.setVisibility(View.GONE);
+
         usuarioRepository.getTodosLosUsuarios(new Callback<List<Usuario>>() {
             @Override
             public void onSuccess(List<Usuario> usuarios) {
+                if (shimmerUsuarios != null) {
+                    shimmerUsuarios.stopShimmer();
+                    shimmerUsuarios.setVisibility(View.GONE);
+                }
                 usuariosList.clear();
                 usuariosList.addAll(usuarios);
                 mostrarUsuarios();
@@ -74,6 +88,11 @@ public class GestionarUsuariosFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                if (shimmerUsuarios != null) {
+                    shimmerUsuarios.stopShimmer();
+                    shimmerUsuarios.setVisibility(View.GONE);
+                }
+                recyclerView.setVisibility(View.VISIBLE);
                 if (getContext() != null) {
                     Toast.makeText(getContext(),
                             "Error al cargar usuarios",
