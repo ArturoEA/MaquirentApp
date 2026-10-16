@@ -17,7 +17,7 @@ import com.example.maquirentapp.R;
 public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.PdfViewHolder> {
 
     private final PdfRenderer pdfRenderer;
-    private final float scaleFactor = 2.5f;
+    private final float scaleFactor = 3.0f;
 
     public PdfPageAdapter(PdfRenderer pdfRenderer) {
         this.pdfRenderer = pdfRenderer;
@@ -45,7 +45,7 @@ public class PdfPageAdapter extends RecyclerView.Adapter<PdfPageAdapter.PdfViewH
             Matrix matrix = new Matrix();
             matrix.postScale(scaleFactor, scaleFactor);
 
-            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
 
             // 2. Mostramos la imagen
             holder.ivPage.setImageBitmap(bitmap);

@@ -7,7 +7,10 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
 import android.graphics.pdf.PdfRenderer;
@@ -323,14 +326,38 @@ public class PdfGenerator {
                 int width = page.getWidth();
                 int height = page.getHeight();
 
+                // Factor de escala HD (~300 DPI) para evitar que el texto quede pixelado o borroso
+                // Un documento A4 estándar tiene 595x842 puntos (72 DPI).
+                // Con escala 3.5f se genera un bitmap de ~2082x2947 px (calidad ultra nítida).
+                float scale = 3.5f;
+                if (width > 600) {
+                    scale = Math.max(1.0f, 2100f / (float) width);
+                    if (scale > 3.5f) scale = 3.5f;
+                }
+
+                int renderWidth = Math.round(width * scale);
+                int renderHeight = Math.round(height * scale);
+
                 PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height, pageIndex++).create();
                 PdfDocument.Page docPage = document.startPage(pageInfo);
 
-                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                Bitmap bitmap = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888);
                 bitmap.eraseColor(Color.WHITE);
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
-                docPage.getCanvas().drawBitmap(bitmap, 0, 0, null);
+                Matrix matrix = new Matrix();
+                matrix.setScale(scale, scale);
+
+                page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
+
+                Paint paint = new Paint();
+                paint.setAntiAlias(true);
+                paint.setFilterBitmap(true);
+                paint.setDither(true);
+
+                Rect src = new Rect(0, 0, renderWidth, renderHeight);
+                RectF dst = new RectF(0, 0, width, height);
+
+                docPage.getCanvas().drawBitmap(bitmap, src, dst, paint);
                 document.finishPage(docPage);
 
                 bitmap.recycle();
