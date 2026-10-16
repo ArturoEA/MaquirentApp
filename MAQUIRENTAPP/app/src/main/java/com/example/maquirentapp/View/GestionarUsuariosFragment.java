@@ -13,11 +13,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.UsuariosAdapter;
+import com.example.maquirentapp.adapters.UsuariosAdapter;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class GestionarUsuariosFragment extends Fragment {
     private RecyclerView recyclerView;
     private LinearLayout emptyState;
     private UsuariosAdapter adapter;
-    private FirebaseFirestore db;
+    private UsuarioRepository usuarioRepository;
     private List<Usuario> usuariosList = new ArrayList<>();
 
     public GestionarUsuariosFragment() {
@@ -43,7 +43,7 @@ public class GestionarUsuariosFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
+        usuarioRepository = new UsuarioRepository();
 
         initViews(view);
         setupRecyclerView();
@@ -64,31 +64,23 @@ public class GestionarUsuariosFragment extends Fragment {
     }
 
     private void cargarUsuarios() {
-        db.collection("usuarios")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        usuariosList.clear();
+        usuarioRepository.getTodosLosUsuarios(new Callback<List<Usuario>>() {
+            @Override
+            public void onSuccess(List<Usuario> usuarios) {
+                usuariosList.clear();
+                usuariosList.addAll(usuarios);
+                mostrarUsuarios();
+            }
 
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            Usuario usuario = new Usuario();
-                            usuario.setUid(document.getId());
-                            usuario.setNombre(document.getString("nombre"));
-                            usuario.setEmail(document.getString("email"));
-                            usuario.setRol(document.getString("rol"));
-                            usuario.setEstado(document.getString("estado"));
-
-                            usuariosList.add(usuario);
-                        }
-
-                        mostrarUsuarios();
-
-                    } else {
-                        Toast.makeText(getContext(),
-                                "Error al cargar usuarios",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+            @Override
+            public void onError(Exception e) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(),
+                            "Error al cargar usuarios",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void mostrarUsuarios() {

@@ -17,15 +17,17 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.AlquilerDiarioAdapter; // Importar Adapter
-import com.example.maquirentapp.Access.PagoPendienteAdapter;
+import com.example.maquirentapp.adapters.AlquilerDiarioAdapter; // Importar Adapter
+import com.example.maquirentapp.adapters.PagoPendienteAdapter;
 import com.example.maquirentapp.Model.Accesorio; // Importar Modelo
 import com.example.maquirentapp.Model.AlquilerDia; // Importar Modelo
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.PagoPendiente;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
@@ -38,7 +40,8 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerPagosPendientes, recyclerAlquileresDiarios;
     private PagoPendienteAdapter pagoPendienteAdapter;
     private AlquilerDiarioAdapter alquilerDiarioAdapter;
-    private FirebaseServicio firebaseServicio;
+    private AlquilerRepository alquilerRepository;
+    private GeneradorRepository generadorRepository;
 
     private List<PagoPendiente> pagosPendientesList = new ArrayList<>();
     private Map<String, GrupoElectrogeno> gruposMap = new HashMap<>();
@@ -54,7 +57,8 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        alquilerRepository = new AlquilerRepository();
+        generadorRepository = new GeneradorRepository();
     }
 
     @Override
@@ -126,7 +130,7 @@ public class HomeFragment extends Fragment {
     }
     private void cargarAccesoriosYAlquileresDiarios() {
         // 1. Cargar accesorios primero para llenar el mapa de íconos
-        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
+        alquilerRepository.getAccesorios("diario", new Callback<List<Accesorio>>() {
             @Override
             public void onSuccess(List<Accesorio> accesorios) {
                 accesoriosMap.clear();
@@ -147,7 +151,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void cargarAlquileresDiariosActivos() {
-        firebaseServicio.getAlquileresDiariosActivos(new FirebaseServicio.OnAlquileresDiariosLoadedListener() {
+        alquilerRepository.getAlquileresDiariosActivos(new Callback<List<AlquilerDia>>() {
             @Override
             public void onSuccess(List<AlquilerDia> alquileres) {
                 alquilerDiarioAdapter.setItems(alquileres);
@@ -193,7 +197,7 @@ public class HomeFragment extends Fragment {
     private void cargarPagosPendientes() {
         pagosPendientesList.clear();
         gruposMap.clear();
-        firebaseServicio.getGruposElectrogenos(false, new FirebaseServicio.OnGruposLoadedListener() {
+        generadorRepository.getGruposElectrogenos(false, new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 Map<String, String> mapaCodigos = new HashMap<>();
@@ -218,7 +222,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void cargarAlquileresActivos() {
-        firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
+        alquilerRepository.getAlquileresMensuales(new Callback<List<AlquilerMensual>>() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
                 List<AlquilerMensual> alquileresActivos = new ArrayList<>();
@@ -235,7 +239,7 @@ public class HomeFragment extends Fragment {
 
                 AtomicInteger counter = new AtomicInteger(alquileresActivos.size());
                 for (AlquilerMensual alquiler : alquileresActivos) {
-                    firebaseServicio.getDetallesMesPorAlquiler(alquiler.getId(), new FirebaseServicio.OnDetallesMesLoadedListener() {
+                    alquilerRepository.getDetallesMesPorAlquiler(alquiler.getId(), new Callback<List<DetalleMes>>() {
                         @Override
                         public void onSuccess(List<DetalleMes> detalles) {
                             procesarDetallesDeAlquiler(alquiler, detalles);

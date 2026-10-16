@@ -22,9 +22,10 @@ import com.example.maquirentapp.Model.ClienteValorizacion;
 import com.example.maquirentapp.Model.Valorizacion;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.ValorizacionesAdapter;
+import com.example.maquirentapp.adapters.ValorizacionesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,9 +77,18 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ValorizacionesAdapter(valorizacion -> {
-            // AQUÍ GENERAREMOS EL EXCEL (Próximo paso)
-            // ExcelGenerator.generar...(valorizacion)
-            Toast.makeText(getContext(), "Abrir Excel: " + valorizacion.getNumeroValorizacion(), Toast.LENGTH_SHORT).show();
+            try {
+                com.example.maquirentapp.Utils.PdfGenerator generator = new com.example.maquirentapp.Utils.PdfGenerator();
+                File pdf = generator.generarValorizacionPdf(requireContext(), valorizacion);
+                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        requireContext(), requireContext().getPackageName() + ".provider", pdf);
+                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                intent.setDataAndType(uri, "application/pdf");
+                intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Error abriendo PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
         recyclerView.setAdapter(adapter);
         setupSwipeToDelete();

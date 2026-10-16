@@ -67,3 +67,14 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Android builds & binaries
+*.apk
+*.aab
+**/release/
+
+# IDE / Android Studio
+.idea/
+*.iml
+.gradle/
+build/

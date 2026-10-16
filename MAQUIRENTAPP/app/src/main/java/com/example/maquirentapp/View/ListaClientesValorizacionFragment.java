@@ -23,7 +23,7 @@ import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.ClienteValorizacion;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.ClientesValorizacionAdapter;
+import com.example.maquirentapp.adapters.ClientesValorizacionAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 

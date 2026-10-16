@@ -838,3 +838,109 @@ async function borrarFotoPorUrl(storage, url, logTipo) {
     logger.warn(`No se pudo borrar foto (${logTipo}) de Storage: ${url}. Error: ${err.message}`);
   }
 }
+
+/**
+ * ============================================================
+ * FUNCIÓN PROGRAMADA: Procesar facturación / nuevos meses de alquiler
+ * Ejecución diaria a las 00:05 AM (Hora de Lima)
+ * Reemplaza AlquilerMensualCheckWorker de Android
+ * ============================================================
+ */
+exports.procesarFacturacionMensual = onSchedule({
+  schedule: "5 0 * * *",
+  timeZone: "America/Lima",
+  region: "us-central1",
+}, async (event) => {
+  logger.info("Iniciando revisión diaria de alquileres mensuales...");
+  const db = admin.firestore();
+
+  try {
+    const alquileresSnapshot = await db
+      .collection("alquileresMensuales")
+      .where("finalizado", "==", false)
+      .get();
+
+    if (alquileresSnapshot.empty) {
+      logger.info("No hay alquileres mensuales activos para procesar.");
+      return null;
+    }
+
+    const mesesNombres = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    const ahora = new Date();
+    let mesesCreados = 0;
+
+    for (const alquilerDoc of alquileresSnapshot.docs) {
+      const alquilerId = alquilerDoc.id;
+      const alquilerData = alquilerDoc.data();
+
+      const detallesSnapshot = await db
+        .collection("detallesMes")
+        .where("idAlquilerMensual", "==", alquilerId)
+        .orderBy("numeroMes", "desc")
+        .limit(1)
+        .get();
+
+      if (detallesSnapshot.empty) {
+        logger.warn(`Alquiler ${alquilerId} sin meses iniciales registrados.`);
+        continue;
+      }
+
+      const ultimoDetalle = detallesSnapshot.docs[0].data();
+      const fechaFinStr = ultimoDetalle.fechaFin;
+
+      if (!fechaFinStr) continue;
+
+      const [dia, mes, anio] = fechaFinStr.split("/").map(Number);
+      const fechaFinUltimo = new Date(anio, mes - 1, dia, 23, 59, 59);
+
+      if (ahora > fechaFinUltimo) {
+        const nuevaFechaInicio = new Date(fechaFinUltimo);
+        nuevaFechaInicio.setDate(nuevaFechaInicio.getDate() + 1);
+        nuevaFechaInicio.setHours(0, 0, 0, 0);
+
+        const nuevaFechaFin = new Date(nuevaFechaInicio);
+        nuevaFechaFin.setDate(nuevaFechaFin.getDate() + 29);
+
+        const pad = (n) => String(n).padStart(2, "0");
+        const strInicio = `${pad(nuevaFechaInicio.getDate())}/${pad(nuevaFechaInicio.getMonth() + 1)}/${nuevaFechaInicio.getFullYear()}`;
+        const strFin = `${pad(nuevaFechaFin.getDate())}/${pad(nuevaFechaFin.getMonth() + 1)}/${nuevaFechaFin.getFullYear()}`;
+
+        const nombreMesInicio = mesesNombres[nuevaFechaInicio.getMonth()];
+        const nombreMesFin = mesesNombres[nuevaFechaFin.getMonth()];
+        const tituloPeriodo = `${nombreMesInicio} - ${nombreMesFin}`;
+
+        const nuevoNumeroMes = (ultimoDetalle.numeroMes || 1) + 1;
+
+        const nuevoDetalle = {
+          idAlquilerMensual: alquilerId,
+          numeroMes: nuevoNumeroMes,
+          fechaInicio: strInicio,
+          fechaFin: strFin,
+          tituloPeriodo: tituloPeriodo,
+          horometro: 0,
+          horasExtras: 0,
+          precioHorasExtras: alquilerData.precioHorasExtras || 0,
+          montoMes: alquilerData.precioMes || 0,
+          pagoMesConfirmado: false,
+          pagoHEConfirmado: false,
+          expandido: false,
+          creadoEn: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection("detallesMes").add(nuevoDetalle);
+        mesesCreados++;
+        logger.info(`Nuevo mes ${nuevoNumeroMes} generado para alquiler ${alquilerId}: ${tituloPeriodo}`);
+      }
+    }
+
+    logger.info(`Facturación mensual procesada con éxito. Meses creados: ${mesesCreados}`);
+    return { success: true, mesesCreados };
+  } catch (error) {
+    logger.error("Error al procesar facturación mensual:", error);
+    return { success: false, error: error.message };
+  }
+});

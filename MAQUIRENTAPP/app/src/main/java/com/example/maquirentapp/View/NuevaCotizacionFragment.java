@@ -23,10 +23,9 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
-import com.example.maquirentapp.Access.CotizacionItemsAdapter;
+import com.example.maquirentapp.adapters.CotizacionItemsAdapter;
 import com.example.maquirentapp.Utils.HtmlGenerator;
 import com.example.maquirentapp.Utils.PdfGenerator;
-import com.example.maquirentapp.Utils.WordGenerator;
 import com.example.maquirentapp.databinding.FragmentNuevaCotizacionBinding;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -39,8 +38,6 @@ import java.util.Locale;
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.tom_roush.pdfbox.multipdf.PDFMergerUtility;
-import com.tom_roush.pdfbox.io.MemoryUsageSetting;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -65,11 +62,6 @@ public class NuevaCotizacionFragment extends Fragment {
         super.onCreate(savedInstanceState);
         repository = new CotizacionesRepository();
         cotizacionActual = new Cotizacion();
-        new Thread(() -> {
-            if (getContext() != null) {
-                WordGenerator.limpiarCacheAntiguo(requireContext());
-            }
-        }).start();
     }
 
     @Override
@@ -430,27 +422,8 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.btnGenerarPdf.setEnabled(true);
     }
     private void generarDocumentoWord() {
-        binding.btnGenerarCotizacion.setText("Generando Word...");
-
-        new Thread(() -> {
-            try {
-                WordGenerator generator = new WordGenerator();
-                File archivoWord = generator.generarCotizacionWord(requireContext(), cotizacionActual);
-
-                requireActivity().runOnUiThread(() -> {
-                    binding.btnGenerarCotizacion.setText(esEdicion ? "Word" : "Word");
-                    habilitarBotones();
-                    abrirOCompartirDocumento(archivoWord);
-                });
-            } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(), "Error generando Word: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    binding.btnGenerarCotizacion.setText("Word");
-                    habilitarBotones();
-                    e.printStackTrace();
-                });
-            }
-        }).start();
+        // Redirigido a formato nativo PDF por arquitectura limpia
+        generarDocumentoPdf();
     }
 
     private void generarDocumentoPdf() {
@@ -594,16 +567,9 @@ public class NuevaCotizacionFragment extends Fragment {
                 output.close();
                 input.close();
 
-                // 2. Fusionar los PDFs con PDFBox
+                // 2. Fusionar los PDFs con APIs nativas de Android (PdfRenderer + PdfDocument)
                 File mergedPdf = new File(requireContext().getCacheDir(), "Cotizacion_" + cotizacionActual.getNumeroCotizacion() + ".pdf");
-
-                PDFMergerUtility merger = new PDFMergerUtility();
-                merger.addSource(pdfCotizacion);
-                merger.addSource(tempFicha);
-                merger.setDestinationFileName(mergedPdf.getAbsolutePath());
-
-                // Ejecutar la unión
-                merger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+                PdfGenerator.unirPdfs(pdfCotizacion, tempFicha, mergedPdf);
 
                 // 3. Abrir el PDF final consolidado
                 requireActivity().runOnUiThread(() -> {

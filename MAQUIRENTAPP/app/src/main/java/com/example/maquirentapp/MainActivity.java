@@ -28,18 +28,14 @@ import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.maquirentapp.Model.Usuario;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.appcheck.FirebaseAppCheck;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 
 import android.graphics.drawable.Drawable;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView headerIcon;
     private NestedScrollView contentScrollView;
     private ScrollStateViewModel scrollViewModel;
-    private FirebaseServicio firebaseServicio;
+    private UsuarioRepository usuarioRepository;
 
     private NavController navController;
     // Datos del usuario
@@ -82,24 +78,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
-        initializeAppCheck();
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        firebaseServicio = new FirebaseServicio();
+        usuarioRepository = new UsuarioRepository();
         scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         // Configurar window insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        testFirestoreConnection();
 
         // Inicializar vistas
         initViews();
@@ -167,99 +158,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeAppCheck() {
-        try {
-            FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
-
-            // Detectar si es debug o release
-            if (isDebugBuild()) {
-                // Modo debug: usar DebugAppCheckProviderFactory
-                Log.d("AppCheck", "Usando Debug AppCheckProvider");
-                firebaseAppCheck.installAppCheckProviderFactory(
-                        DebugAppCheckProviderFactory.getInstance());
-            } else {
-                // Modo release: usar PlayIntegrityAppCheckProviderFactory
-                Log.d("AppCheck", "Usando Play Integrity AppCheckProvider");
-                firebaseAppCheck.installAppCheckProviderFactory(
-                        PlayIntegrityAppCheckProviderFactory.getInstance());
-            }
-        } catch (Exception e) {
-            Log.e("AppCheck", "Error inicializando App Check", e);
-        }
-    }
-
-    private boolean isDebugBuild() {
-        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-    }
-
-    private void testFirestoreConnection() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("gruposElectrogenos")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Log.d("Firebase", "Conexión exitosa! Documentos: " + task.getResult().size());
-                    } else {
-                        Log.e("Firebase", "Error de conexión", task.getException());
-                    }
-                });
-    }
 
     private void verificarAutenticacion() {
-        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+        String uid = usuarioRepository.getCurrentUserUid();
+        if (uid == null) {
             mostrarAuthFragment();
             return;
         }
 
-        firebaseServicio.verificarEstadoUsuario(new FirebaseServicio.OnAuthListener() {
+        usuarioRepository.getUsuarioPorUid(uid, new Callback<Usuario>() {
             @Override
-            public void onLoginExitoso(Usuario usuario) {
-                userRole = usuario.getRol();
-                userUid = usuario.getUid();
-                userName = usuario.getNombre();
-
-                Log.d("MainActivity", "Usuario autenticado: " + userName + " - Rol: " + userRole);
-                configurarUISegunRol();
-                navegarSegunRol();
-                if ("admin".equals(userRole)) {
-                    FirebaseMessaging.getInstance().getToken()
-                            .addOnCompleteListener(task -> {
-                                if (!task.isSuccessful()) {
-                                    Log.w("MainActivity.verificarAutenticacion", "Fetching FCM registration token failed", task.getException());
-                                    return;
-                                }
-                                // Obtener nuevo token
-                                String token = task.getResult();
-                                Log.d("MainActivity.verificarAutenticacion", "FCM Token: " + token);
-                                // Guardar token en Firestore
-                                firebaseServicio.guardarFCMToken(token);
-                            });
+            public void onSuccess(Usuario usuario) {
+                if (usuario == null) {
+                    usuarioRepository.cerrarSesion();
+                    mostrarAuthFragment();
+                    return;
                 }
-            }
 
-            @Override
-            public void onRegistroExitoso(Usuario usuario) {
-                // No se usa aquí, se usa en FirebaseServicio
-            }
+                String estado = usuario.getEstado();
+                if ("activo".equalsIgnoreCase(estado)) {
+                    userRole = usuario.getRol();
+                    userUid = usuario.getUid();
+                    userName = usuario.getNombre();
 
-            @Override
-            public void onUsuarioPendiente() {
-                Log.w("MainActivity", "Usuario pendiente de aprobación");
-                FirebaseAuth.getInstance().signOut();
-                mostrarAuthFragment();
-            }
-
-            @Override
-            public void onUsuarioInactivo() {
-                Log.w("MainActivity", "Usuario inactivo");
-                FirebaseAuth.getInstance().signOut();
-                mostrarAuthFragment();
+                    Log.d("MainActivity", "Usuario autenticado: " + userName + " - Rol: " + userRole);
+                    configurarUISegunRol();
+                    navegarSegunRol();
+                    if ("admin".equals(userRole)) {
+                        FirebaseMessaging.getInstance().getToken()
+                                .addOnCompleteListener(task -> {
+                                    if (!task.isSuccessful()) {
+                                        Log.w("MainActivity.verificarAutenticacion", "Fetching FCM registration token failed", task.getException());
+                                        return;
+                                    }
+                                    String token = task.getResult();
+                                    Log.d("MainActivity.verificarAutenticacion", "FCM Token: " + token);
+                                    usuarioRepository.guardarFCMToken(token);
+                                });
+                    }
+                } else if ("pendiente".equalsIgnoreCase(estado)) {
+                    Log.w("MainActivity", "Usuario pendiente de aprobación");
+                    usuarioRepository.cerrarSesion();
+                    mostrarAuthFragment();
+                } else {
+                    Log.w("MainActivity", "Usuario inactivo");
+                    usuarioRepository.cerrarSesion();
+                    mostrarAuthFragment();
+                }
             }
 
             @Override
             public void onError(Exception e) {
                 Log.e("MainActivity", "Error al verificar usuario", e);
-                FirebaseAuth.getInstance().signOut();
+                usuarioRepository.cerrarSesion();
                 mostrarAuthFragment();
             }
         });

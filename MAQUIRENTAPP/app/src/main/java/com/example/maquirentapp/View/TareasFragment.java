@@ -19,12 +19,14 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.TareasAdapter;
-import com.example.maquirentapp.Access.UsuariosSeleccionAdapter;
+import com.example.maquirentapp.adapters.TareasAdapter;
+import com.example.maquirentapp.adapters.UsuariosSeleccionAdapter;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Tarea;
 import com.example.maquirentapp.Model.Usuario;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.TareaRepository;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -41,7 +43,8 @@ public class TareasFragment extends Fragment {
 
     private RecyclerView recyclerTareas;
     private TareasAdapter adapter;
-    private FirebaseServicio firebaseServicio;
+    private TareaRepository tareaRepository;
+    private UsuarioRepository usuarioRepository;
     private List<Usuario> listaUsuarios = new ArrayList<>();
     private Map<String, Usuario> mapaUsuarios = new HashMap<>();
     private boolean isAdmin = false;
@@ -49,7 +52,8 @@ public class TareasFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        tareaRepository = new TareaRepository();
+        usuarioRepository = new UsuarioRepository();
     }
 
     @Nullable
@@ -70,8 +74,16 @@ public class TareasFragment extends Fragment {
 
         configurarFab();
 
-        firebaseServicio.verificarSiEsAdmin(esAdmin -> {
-            this.isAdmin = esAdmin;
+        usuarioRepository.verificarSiEsAdmin(new Callback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean esAdmin) {
+                isAdmin = Boolean.TRUE.equals(esAdmin);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                isAdmin = false;
+            }
         });
 
         cargarUsuariosYTareas();
@@ -103,9 +115,9 @@ public class TareasFragment extends Fragment {
                         .setTitle("Eliminar Tarea")
                         .setMessage("¿Estás seguro de eliminar '" + tarea.getTitulo() + "'?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
-                            firebaseServicio.eliminarTarea(tarea.getId(), new FirebaseServicio.OnSimpleCallback() {
+                            tareaRepository.eliminarTarea(tarea.getId(), new Callback<Void>() {
                                 @Override
-                                public void onSuccess() {
+                                public void onSuccess(Void result) {
                                     if (getContext() == null) return;
                                     Toast.makeText(getContext(), "Tarea eliminada", Toast.LENGTH_SHORT).show();
 
@@ -153,7 +165,7 @@ public class TareasFragment extends Fragment {
     }
 
     private void cargarUsuariosYTareas() {
-        firebaseServicio.getUsuariosActivos(new FirebaseServicio.OnUsuariosListener() {
+        usuarioRepository.getUsuariosActivos(new Callback<List<Usuario>>() {
             @Override
             public void onSuccess(List<Usuario> usuarios) {
                 listaUsuarios = usuarios;
@@ -169,14 +181,16 @@ public class TareasFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar usuarios", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar usuarios", Toast.LENGTH_SHORT).show();
+                }
                 cargarTareas();
             }
         });
     }
 
     private void cargarTareas() {
-        firebaseServicio.getTareas(new FirebaseServicio.OnTareasLoadedListener() {
+        tareaRepository.getTareas(new Callback<List<Tarea>>() {
             @Override
             public void onSuccess(List<Tarea> tareas) {
                 List<Tarea> nuevaLista = new ArrayList<>(tareas);
@@ -186,7 +200,9 @@ public class TareasFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar tareas", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar tareas", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -216,12 +232,13 @@ public class TareasFragment extends Fragment {
         btnGuardar.setOnClickListener(v -> {
             String titulo = input.getText().toString().trim();
             if (!titulo.isEmpty()) {
-                firebaseServicio.crearTarea(titulo, new FirebaseServicio.OnSimpleCallback() {
+                tareaRepository.crearTarea(titulo, new Callback<Void>() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(Void result) {
                         if (getContext() == null) return;
                         Toast.makeText(getContext(), "Tarea creada", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
+                        cargarTareas();
                     }
 
                     @Override
@@ -255,16 +272,19 @@ public class TareasFragment extends Fragment {
         btnCompletar.setOnClickListener(v -> {
             List<String> seleccionados = userAdapter.getSeleccionados();
             if (seleccionados.isEmpty()) {
-                Toast.makeText(getContext(), "Selecciona al menos un participante", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Selecciona al menos un participante", Toast.LENGTH_SHORT).show();
+                }
                 return;
             }
 
-            firebaseServicio.completarTarea(tarea.getId(), seleccionados, new FirebaseServicio.OnSimpleCallback() {
+            tareaRepository.completarTarea(tarea.getId(), seleccionados, new Callback<Void>() {
                 @Override
-                public void onSuccess() {
+                public void onSuccess(Void result) {
                     if (getContext() == null) return;
                     Toast.makeText(getContext(), "Tarea completada", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
+                    cargarTareas();
                 }
 
                 @Override

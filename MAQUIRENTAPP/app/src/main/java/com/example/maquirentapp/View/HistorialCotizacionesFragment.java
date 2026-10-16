@@ -29,8 +29,7 @@ import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Utils.WordGenerator;
-import com.example.maquirentapp.Access.CotizacionesAdapter;
+import com.example.maquirentapp.adapters.CotizacionesAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;

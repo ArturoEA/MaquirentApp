@@ -25,12 +25,10 @@ public class CotizacionesRepository {
     private static final String FIELD_ULTIMA_COT = "ultima_cotizacion";
     private static final String COL_GRUPOS = "gruposElectrogenos";
 
+    public interface Callback<T> extends com.example.maquirentapp.Repository.Callback<T> {}
+
     public CotizacionesRepository() {
         this.db = FirebaseFirestore.getInstance();
-    }
-    public interface Callback<T> {
-        void onSuccess(T result);
-        void onError(Exception e);
     }
     public void crearCotizacion(Cotizacion cotizacion, Callback<String> callback) {
         final DocumentReference secuenciaRef = db.collection(COL_CONFIG).document(DOC_SECUENCIAS);

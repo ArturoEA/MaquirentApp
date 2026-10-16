@@ -24,14 +24,12 @@ public class CertificadosRepository {
     private static final String COL_INFO_PLACA = "infoPlacaGrupo";
     private static final String COL_GRUPOS = "gruposElectrogenos";
 
+    public interface Callback<T> extends com.example.maquirentapp.Repository.Callback<T> {}
+
     public CertificadosRepository() {
         this.db = FirebaseFirestore.getInstance();
     }
 
-    public interface Callback<T> {
-        void onSuccess(T result);
-        void onError(Exception e);
-    }
     public void getGruposActivos(Callback<List<GrupoElectrogeno>> callback) {
         db.collection(COL_GRUPOS)
                 .whereEqualTo("eliminado", false)

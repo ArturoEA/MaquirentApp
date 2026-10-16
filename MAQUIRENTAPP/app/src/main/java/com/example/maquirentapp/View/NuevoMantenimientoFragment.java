@@ -51,7 +51,7 @@ import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.ItemsMantenimientoSeleccionablesAdapter;
+import com.example.maquirentapp.adapters.ItemsMantenimientoSeleccionablesAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.Utils.InformePdfVectorialGenerator;
 import com.google.android.material.button.MaterialButton;

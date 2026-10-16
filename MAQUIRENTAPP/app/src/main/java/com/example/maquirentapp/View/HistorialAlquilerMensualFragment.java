@@ -24,9 +24,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.AlquilerMensual;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.adaptadores.AlquilerMensualAdapter;
+import com.example.maquirentapp.adapters.AlquilerMensualAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
@@ -46,7 +47,7 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 public class HistorialAlquilerMensualFragment extends Fragment {
     private RecyclerView recyclerView;
     private AlquilerMensualAdapter adapter;
-    private FirebaseServicio firebaseServicio;
+    private AlquilerRepository alquilerRepository;
     private String codigo, idGrupo;
     private AlquilerMensual alquilerSeleccionado;
     private TextView tvAnio;
@@ -78,7 +79,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        alquilerRepository = new AlquilerRepository();
 
         // Inicializar vistas
         initViews(view);
@@ -209,7 +210,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private void fetchAlquileresMensuales() {
-        firebaseServicio.getAlquileresMensuales(new FirebaseServicio.OnAlquileresLoadedListener() {
+        alquilerRepository.getAlquileresMensuales(new Callback<List<AlquilerMensual>>() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
                 List<AlquilerMensual> filtradosPorGrupo = new ArrayList<>();
@@ -292,10 +293,10 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                         .setMessage("¿Estás seguro de que deseas eliminar este alquiler?")
                         .setCancelable(false)
                         .setPositiveButton("Eliminar", (dialog, which) -> {
-                            firebaseServicio.eliminarAlquilerMensual(alquilerAEliminar.getId(),
-                                    new FirebaseServicio.OnAlquilerDeletedListener() {
+                            alquilerRepository.eliminarAlquilerMensual(alquilerAEliminar.getId(),
+                                    new Callback<Void>() {
                                         @Override
-                                        public void onSuccess() {
+                                        public void onSuccess(Void result) {
                                             if (getContext() == null) return;
                                             Toast.makeText(getContext(),
                                                     "Alquiler eliminado correctamente",

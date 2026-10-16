@@ -39,7 +39,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(@NonNull String token) {
         Log.d(TAG, "Refreshed token: " + token);
-        new FirebaseServicio().guardarFCMToken(token);
+        new com.example.maquirentapp.Repository.UsuarioRepository().guardarFCMToken(token);
     }
 
     private void sendNotification(String messageTitle, String messageBody) {

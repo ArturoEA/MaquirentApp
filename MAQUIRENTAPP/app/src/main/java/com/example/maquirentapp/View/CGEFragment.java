@@ -25,11 +25,10 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.example.maquirentapp.Access.GrupoElectrogenoAdapter;
+import com.example.maquirentapp.adapters.GrupoElectrogenoAdapter;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
-import com.example.maquirentapp.Network.ApiServicio;
-import com.example.maquirentapp.Network.FirebaseServicio;
-import com.example.maquirentapp.Network.RetrofitCliente;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -39,16 +38,11 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-
 public class CGEFragment extends Fragment {
     private RecyclerView recyclerView;
     private GrupoElectrogenoAdapter adapter;
     private List<GrupoElectrogeno> grupoList;
-    private FirebaseServicio firebaseServicio;
+    private GeneradorRepository generadorRepository;
     private NavController navController;
     private ProgressBar progressBar;
     private SwitchMaterial switchEliminados;
@@ -73,7 +67,7 @@ public class CGEFragment extends Fragment {
 
         navController = Navigation.findNavController(view);
 
-        firebaseServicio = new FirebaseServicio();
+        generadorRepository = new GeneradorRepository();
 
         progressBar = view.findViewById(R.id.progressBar);
         switchEliminados = view.findViewById(R.id.switchEliminados);
@@ -104,7 +98,7 @@ public class CGEFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
         boolean incluirEliminados = switchEliminados.isChecked();
 
-        firebaseServicio.getGruposElectrogenos(incluirEliminados, new FirebaseServicio.OnGruposLoadedListener() {
+        generadorRepository.getGruposElectrogenos(incluirEliminados, new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 grupoList.clear();
@@ -123,3 +117,4 @@ public class CGEFragment extends Fragment {
         });
     }
 }
+

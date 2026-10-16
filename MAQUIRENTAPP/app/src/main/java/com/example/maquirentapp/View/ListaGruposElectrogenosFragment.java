@@ -27,40 +27,30 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.maquirentapp.Access.GruposElectrogenosConfiguracionAdapter;
+import com.example.maquirentapp.adapters.GruposElectrogenosConfiguracionAdapter;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 public class ListaGruposElectrogenosFragment extends Fragment implements GruposElectrogenosConfiguracionAdapter.OnStartDragListener{
     private static final String TAG = "ListaGrupos";
-    private static final long CODIGO_EXPIRACION_MS = 15 * 60 * 1000L;
     private RecyclerView recyclerView;
     private LinearLayout emptyState;
     private GruposElectrogenosConfiguracionAdapter adapter;
-    private FirebaseServicio firebaseServicio;
-    private FirebaseAuth auth;
-    private FirebaseFunctions functions;
-    private FirebaseFirestore db;
+    private GeneradorRepository generadorRepository;
+    private UsuarioRepository usuarioRepository;
 
     private List<GrupoElectrogeno> gruposList = new ArrayList<>();
 
@@ -119,10 +109,8 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
     }
 
     private void initializeFirebase() {
-        firebaseServicio = new FirebaseServicio();
-        auth = FirebaseAuth.getInstance();
-        functions = FirebaseFunctions.getInstance();
-        db = FirebaseFirestore.getInstance();
+        generadorRepository = new GeneradorRepository();
+        usuarioRepository = new UsuarioRepository();
     }
 
     @Override
@@ -230,10 +218,10 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
 
         if (listaOrdenada == null || listaOrdenada.isEmpty()) return;
 
-        firebaseServicio.actualizarOrdenGrupos(listaOrdenada, new FirebaseServicio.OnSimpleCallback() {
+        generadorRepository.actualizarOrdenGrupos(listaOrdenada, new Callback<Void>() {
             @Override
-            public void onSuccess() {
-                Log.d(TAG, "Orden actualizado correctamente en Firebase");
+            public void onSuccess(Void result) {
+                Log.d(TAG, "Orden actualizado correctamente en el repositorio");
             }
 
             @Override
@@ -269,7 +257,7 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
     private void cargarGrupos() {
         Log.d(TAG, "Iniciando carga de grupos...");
 
-        firebaseServicio.getGruposElectrogenos(false, new FirebaseServicio.OnGruposLoadedListener() {
+        generadorRepository.getGruposElectrogenos(false, new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 List<GrupoElectrogeno> filtrados = new ArrayList<>();
@@ -392,8 +380,8 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
                 if (getActivity() != null) {
                     requireActivity().runOnUiThread(() -> {
                         if (dataImagen != null) {
-                            firebaseServicio.crearGrupoConImagenBytes(codigo, dataImagen,
-                                    new FirebaseServicio.OnGrupoCreatedListener() {
+                            generadorRepository.crearGrupoConImagenBytes(codigo, dataImagen,
+                                    new Callback<GrupoElectrogeno>() {
                                         @Override
                                         public void onSuccess(GrupoElectrogeno grupo) {
                                             if (getContext() == null) return;
@@ -417,8 +405,8 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
                 }
             }).start();
         } else {
-            firebaseServicio.crearGrupoConImagen(codigo, null,
-                    new FirebaseServicio.OnGrupoCreatedListener() {
+            generadorRepository.crearGrupoConImagen(codigo, null,
+                    new Callback<GrupoElectrogeno>() {
                         @Override
                         public void onSuccess(GrupoElectrogeno grupo) {
                             mostrarExito("Grupo creado (sin foto)");
@@ -457,31 +445,22 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
             if (getActivity() != null) {
                 requireActivity().runOnUiThread(() -> {
                     if (dataImagen != null) {
-                        String fileName = "grupos/" + nuevoCodigo + "_" + System.currentTimeMillis() + ".jpg";
-                        StorageReference storageRef = FirebaseStorage.getInstance()
-                                .getReference().child(fileName);
+                        generadorRepository.actualizarGrupoConImagenBytes(grupo.getId(), nuevoCodigo, dataImagen,
+                                new Callback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        if (getContext() == null) return;
+                                        mostrarExito("Grupo actualizado");
+                                        cerrarDialogo(dialog);
+                                        cargarGrupos();
+                                    }
 
-                        storageRef.putBytes(dataImagen)
-                                .addOnSuccessListener(taskSnapshot ->
-                                        storageRef.getDownloadUrl()
-                                                .addOnSuccessListener(downloadUri -> {
-                                                    if (getContext() == null) return;
-                                                    Map<String, Object> updates = new HashMap<>();
-                                                    updates.put("codigo", nuevoCodigo);
-                                                    updates.put("foto", downloadUri.toString());
-
-                                                    actualizarEnFirestore(grupo.getId(), updates, dialog, btnGuardar);
-                                                })
-                                                .addOnFailureListener(e -> {
-                                                    if (getContext() == null) return;
-                                                    mostrarError("Error obteniendo URL: " + e.getMessage());
-                                                    habilitarBoton(btnGuardar, "Guardar");
-                                                })
-                                )
-                                .addOnFailureListener(e -> {
-                                    if (getContext() == null) return;
-                                    mostrarError("Error subiendo imagen: " + e.getMessage());
-                                    habilitarBoton(btnGuardar, "Guardar");
+                                    @Override
+                                    public void onError(Exception e) {
+                                        if (getContext() == null) return;
+                                        mostrarError("Error actualizando: " + e.getMessage());
+                                        habilitarBoton(btnGuardar, "Guardar");
+                                    }
                                 });
                     } else {
                         if (getContext() == null) return;
@@ -496,10 +475,10 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
 
     private void actualizarSoloCodigo(GrupoElectrogeno grupo, String nuevoCodigo,
                                       Dialog dialog, MaterialButton btnGuardar) {
-        firebaseServicio.actualizarCodigoGrupo(grupo.getId(), nuevoCodigo,
-                new FirebaseServicio.OnSimpleCallback() {
+        generadorRepository.actualizarCodigoGrupo(grupo.getId(), nuevoCodigo,
+                new Callback<Void>() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(Void result) {
                         if (getContext() == null) return;
                         mostrarExito("Grupo actualizado");
                         cerrarDialogo(dialog);
@@ -515,80 +494,27 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
                 });
     }
 
-    private void actualizarEnFirestore(String grupoId, Map<String, Object> updates,
-                                       Dialog dialog, MaterialButton btnGuardar) {
-        db.collection("gruposElectrogenos").document(grupoId)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    mostrarExito("Grupo actualizado");
-                    cerrarDialogo(dialog);
-                    cargarGrupos();
-                })
-                .addOnFailureListener(e -> {
-                    mostrarError("Error actualizando: " + e.getMessage());
-                    habilitarBoton(btnGuardar, "Guardar");
-                });
-    }
-
     private void solicitarEliminacionGrupo(GrupoElectrogeno grupo) {
-        String codigo = generarCodigoVerificacion();
-        long timestamp = System.currentTimeMillis();
+        String userEmail = usuarioRepository.getCurrentUserEmail();
+        if (userEmail == null) {
+            mostrarError("Debes iniciar sesión antes de eliminar un grupo.");
+            return;
+        }
 
-        // Guardar código en Firestore
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("codigoVerificacion", codigo);
-        updates.put("codigoGeneradoEn", timestamp);
+        generadorRepository.solicitarEliminacionGrupo(grupo, userEmail, new Callback<String>() {
+            @Override
+            public void onSuccess(String codigo) {
+                if (getContext() == null) return;
+                mostrarExito("Código enviado a " + userEmail);
+                mostrarDialogoCodigoVerificacion(grupo);
+            }
 
-        db.collection("gruposElectrogenos").document(grupo.getId())
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    FirebaseUser currentUser = auth.getCurrentUser();
-                    if (currentUser == null) {
-                        if (getContext() == null) return;
-                        mostrarError("Debes iniciar sesión antes de eliminar un grupo.");
-                        return;
-                    }
-                    // Enviar email mediante Cloud Function
-                    enviarEmailVerificacion(codigo, grupo);
-                    mostrarDialogoCodigoVerificacion(grupo);
-                })
-                .addOnFailureListener(e -> {
-                            if (getContext() == null) return;
-                            mostrarError("Error generando código: " + e.getMessage());
-                        }
-                );
-    }
-
-    private String generarCodigoVerificacion() {
-        return String.valueOf(100000 + new Random().nextInt(900000));
-    }
-
-    private void enviarEmailVerificacion(String codigo, GrupoElectrogeno grupo) {
-        String userEmail = auth.getCurrentUser() != null ?
-                auth.getCurrentUser().getEmail() : "";
-
-        // Datos para la Cloud Function
-        Map<String, Object> data = new HashMap<>();
-        data.put("email", userEmail);
-        data.put("codigo", codigo);
-        data.put("grupoNombre", grupo.getCodigo());
-
-        // Llamar a la Cloud Function
-        functions.getHttpsCallable("enviarCodigoEliminacion")
-                .call(data)
-                .addOnSuccessListener(result -> {
-                    if (getContext() == null) return;
-                    Log.d(TAG, "Email enviado exitosamente");
-                    mostrarExito("Código enviado a " + userEmail);
-                })
-                .addOnFailureListener(e -> {
-                    if (getContext() == null) return;
-                    Log.e(TAG, "Error enviando email", e);
-                    // Mostrar código como fallback
-                    Toast.makeText(getContext(),
-                            "Email no disponible. Código: " + codigo,
-                            Toast.LENGTH_LONG).show();
-                });
+            @Override
+            public void onError(Exception e) {
+                if (getContext() == null) return;
+                mostrarError("Error generando código: " + e.getMessage());
+            }
+        });
     }
 
     private void mostrarDialogoCodigoVerificacion(GrupoElectrogeno grupo) {
@@ -616,73 +542,21 @@ public class ListaGruposElectrogenosFragment extends Fragment implements GruposE
             return;
         }
 
-        db.collection("gruposElectrogenos").document(grupo.getId())
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (!documentSnapshot.exists()) {
-                        if (getContext() == null) return;
-                        mostrarError("Documento no encontrado");
-                        return;
-                    }
+        String userUid = usuarioRepository.getCurrentUserUid();
+        generadorRepository.verificarCodigoEliminacion(grupo.getId(), codigoIngresado, userUid, new Callback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (getContext() == null) return;
+                mostrarExito("Grupo eliminado de las vistas");
+                cargarGrupos();
+            }
 
-                    String codigoGuardado = documentSnapshot.getString("codigoVerificacion");
-                    Long tsGenerado = documentSnapshot.getLong("codigoGeneradoEn");
-
-                    if (codigoGuardado == null || tsGenerado == null) {
-                        if (getContext() == null) return;
-                        mostrarError("Código no encontrado. Solicita nuevamente.");
-                        return;
-                    }
-
-                    // Verificar expiración
-                    long ahora = System.currentTimeMillis();
-                    boolean expirado = (ahora - tsGenerado) > CODIGO_EXPIRACION_MS;
-
-                    if (expirado) {
-                        if (getContext() == null) return;
-                        mostrarError("El código ha expirado. Solicita nuevamente.");
-                        limpiarCodigoVerificacion(grupo.getId());
-                    } else if (codigoGuardado.equals(codigoIngresado)) {
-                        eliminarGrupoSuave(grupo);
-                        limpiarCodigoVerificacion(grupo.getId());
-                    } else {
-                        if (getContext() == null) return;
-                        mostrarError("Código incorrecto");
-                    }
-                })
-                .addOnFailureListener(e ->
-                        mostrarError("Error verificando código: " + e.getMessage())
-                );
-    }
-
-    private void limpiarCodigoVerificacion(String grupoId) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("codigoVerificacion", null);
-        updates.put("codigoGeneradoEn", null);
-
-        db.collection("gruposElectrogenos").document(grupoId).update(updates);
-    }
-
-    private void eliminarGrupoSuave(GrupoElectrogeno grupo) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("eliminado", true);
-        updates.put("fechaEliminacion", System.currentTimeMillis());
-        updates.put("eliminadoPor", auth.getCurrentUser().getUid());
-
-        firebaseServicio.eliminarGrupoSuave(grupo.getId(), updates,
-                new FirebaseServicio.OnSimpleCallback() {
-                    @Override
-                    public void onSuccess() {
-                        if (getContext() == null) return;
-                        mostrarExito("Grupo eliminado de las vistas");
-                        cargarGrupos();
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        mostrarError("Error al eliminar grupo");
-                    }
-                });
+            @Override
+            public void onError(Exception e) {
+                if (getContext() == null) return;
+                mostrarError("Error verificando código: " + e.getMessage());
+            }
+        });
     }
 
     private void deshabilitarBoton(MaterialButton btn, String texto) {

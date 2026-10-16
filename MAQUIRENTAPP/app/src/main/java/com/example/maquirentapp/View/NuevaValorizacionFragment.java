@@ -23,11 +23,12 @@ import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.Model.ItemValorizacion;
 import com.example.maquirentapp.Model.Valorizacion;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.SeleccionValorizacionAdapter;
-import com.example.maquirentapp.Utils.ExcelGenerator;
+import com.example.maquirentapp.adapters.SeleccionValorizacionAdapter;
+import com.example.maquirentapp.Utils.PdfGenerator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class NuevaValorizacionFragment extends Fragment {
 
     private ClienteValorizacion clienteActual;
     private ValorizacionesRepository repository;
-    private FirebaseServicio firebaseServicio;
+    private GeneradorRepository generadorRepository;
 
     private RecyclerView recyclerItems;
     private SeleccionValorizacionAdapter adapter;
@@ -52,7 +53,7 @@ public class NuevaValorizacionFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         repository = new ValorizacionesRepository();
-        firebaseServicio = new FirebaseServicio();
+        generadorRepository = new GeneradorRepository();
         if (getArguments() != null) {
             clienteActual = (ClienteValorizacion) getArguments().getSerializable("cliente");
         }
@@ -144,7 +145,7 @@ public class NuevaValorizacionFragment extends Fragment {
                         final double hInicioFinal = horometroInicio;
 
                         // 2. Buscamos datos del grupo (Solo código)
-                        firebaseServicio.getGrupoPorId(alquiler.getIdGrupo(), new FirebaseServicio.OnGrupoLoadedListener() {
+                        generadorRepository.getGrupoPorId(alquiler.getIdGrupo(), new Callback<GrupoElectrogeno>() {
                             @Override
                             public void onSuccess(GrupoElectrogeno grupo) {
                                 crearItemYAgregar(alquiler, detalleActual, grupo, hInicioFinal);
@@ -259,51 +260,57 @@ public class NuevaValorizacionFragment extends Fragment {
         repository.crearValorizacion(val, new ValorizacionesRepository.Callback<String>() {
             @Override
             public void onSuccess(String numeroVal) {
+                btnGenerar.setEnabled(true);
+                btnGenerar.setText("Generar Valorización");
                 val.setNumeroValorizacion(numeroVal);
-                generarExcelEnSegundoPlano(val);
-//                if (getActivity() != null) getActivity().onBackPressed();
+                generarPdfEnSegundoPlano(val);
             }
 
             @Override
             public void onError(Exception e) {
                 btnGenerar.setEnabled(true);
+                btnGenerar.setText("Generar Valorización");
                 Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
-    private void generarExcelEnSegundoPlano(Valorizacion valorizacion) {
+
+    private void generarPdfEnSegundoPlano(Valorizacion valorizacion) {
         new Thread(() -> {
             try {
-                ExcelGenerator generator = new ExcelGenerator();
-                File archivo = generator.generarValorizacionExcel(requireContext(), valorizacion);
+                PdfGenerator generator = new PdfGenerator();
+                File archivo = generator.generarValorizacionPdf(requireContext(), valorizacion);
 
                 requireActivity().runOnUiThread(() -> {
                     if (getContext() == null) return;
-                    // Habilitar botón y mostrar opciones
-                    abrirOCompartirExcel(archivo);
+                    abrirOCompartirPdf(archivo);
                 });
             } catch (Exception e) {
-                // Manejar error
+                requireActivity().runOnUiThread(() -> {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error generando PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }).start();
     }
-    private void abrirOCompartirExcel(File archivo) {
-        // Igual que el PDF, pero con MIME Type de Excel
+
+    private void abrirOCompartirPdf(File archivo) {
         try {
             android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
                     requireContext(), requireContext().getPackageName() + ".provider", archivo);
 
             android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_SEND);
-            // MIME TYPE CLAVE PARA EXCEL .xlsx
-            intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            intent.setType("application/pdf");
             intent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
             intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-            startActivity(android.content.Intent.createChooser(intent, "Compartir Valorización"));
+            startActivity(android.content.Intent.createChooser(intent, "Compartir Valorización en PDF"));
         } catch (Exception e) {
-            // Toast error
+            Toast.makeText(getContext(), "Error al compartir archivo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
     @Override
     public void onResume() {
         super.onResume();

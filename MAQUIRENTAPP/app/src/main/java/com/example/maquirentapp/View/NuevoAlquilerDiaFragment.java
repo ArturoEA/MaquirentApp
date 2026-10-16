@@ -25,17 +25,19 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
+import com.example.maquirentapp.adapters.AccesorioSeleccionAdapter;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -64,16 +66,18 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     private boolean accesoriosExpanded = true;
 
     private AccesorioSeleccionAdapter adapterAccesorios;
-    private FirebaseServicio firebaseServicio;
-    private FirebaseAuth firebaseAuth;
+    private AlquilerRepository alquilerRepository;
+    private GeneradorRepository generadorRepository;
+    private UsuarioRepository usuarioRepository;
     private AlquilerDia alquilerActual;
     private List<GrupoElectrogeno> listaGrupos = new ArrayList<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
-        firebaseAuth = FirebaseAuth.getInstance();
+        alquilerRepository = new AlquilerRepository();
+        generadorRepository = new GeneradorRepository();
+        usuarioRepository = new UsuarioRepository();
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
             alquilerId = getArguments().getString("alquilerId");
@@ -217,7 +221,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     }
 
     private void cargarSpinnerGrupos() {
-        firebaseServicio.getGruposParaSpinner(new FirebaseServicio.OnGruposLoadedListener() {
+        generadorRepository.getGruposParaSpinner(new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 listaGrupos = grupos;
@@ -227,20 +231,24 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                     nombresGrupos.add(g.getCodigo());
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item_white, nombresGrupos);
-                adapter.setDropDownViewResource(R.layout.spinner_item_white);
-                spinnerGrupo.setAdapter(adapter);
+                if (getContext() != null) {
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item_white, nombresGrupos);
+                    adapter.setDropDownViewResource(R.layout.spinner_item_white);
+                    spinnerGrupo.setAdapter(adapter);
+                }
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar grupos", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void cargarAccesoriosDiarios() {
-        firebaseServicio.getAccesorios("diario", new FirebaseServicio.OnAccesoriosLoadedListener() {
+        alquilerRepository.getAccesorios("diario", new Callback<List<Accesorio>>() {
             @Override
             public void onSuccess(List<Accesorio> accesorios) {
                 adapterAccesorios.setItems(accesorios);
@@ -251,13 +259,15 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void cargarDatosAlquiler() {
-        firebaseServicio.getAlquilerDiaPorId(alquilerId, new FirebaseServicio.OnAlquilerDiaLoadedListener() {
+        alquilerRepository.getAlquilerDiaPorId(alquilerId, new Callback<AlquilerDia>() {
             @Override
             public void onSuccess(AlquilerDia alquiler) {
                 alquilerActual = alquiler;
@@ -289,7 +299,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -348,14 +360,16 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         alquilerActual.setComentarios(inputComentarios.getText().toString().trim());
 
         if (!modoEdicion) {
-            alquilerActual.setAdminUid(firebaseAuth.getUid());
+            alquilerActual.setAdminUid(usuarioRepository.getCurrentUserUid());
         }
 
         if (modoEdicion) {
-            firebaseServicio.actualizarAlquilerDia(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
+            alquilerRepository.actualizarAlquilerDia(alquilerActual, new Callback<Void>() {
                 @Override
-                public void onSuccess() {
-                    Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
+                public void onSuccess(Void result) {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
+                    }
                     if (!finalizar) {
                         editandoActualmente = false;
                         deshabilitarCampos();
@@ -365,22 +379,28 @@ public class NuevoAlquilerDiaFragment extends Fragment {
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
+                    }
                     if (finalizar) btnFinalizar.setEnabled(true);
                 }
             });
         } else {
-            firebaseServicio.crearAlquilerDia(alquilerActual, new FirebaseServicio.OnAlquilerDiaCreadoListener() {
+            alquilerRepository.crearAlquilerDia(alquilerActual, new Callback<AlquilerDia>() {
                 @Override
                 public void onSuccess(AlquilerDia alquiler) {
-                    Toast.makeText(getContext(), "Alquiler creado", Toast.LENGTH_SHORT).show();
-                    if (!finalizar) Navigation.findNavController(getView()).popBackStack();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Alquiler creado", Toast.LENGTH_SHORT).show();
+                    }
+                    if (!finalizar && getView() != null) Navigation.findNavController(getView()).popBackStack();
                     else alquilerActual = alquiler;
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(getContext(), "Error al crear", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al crear", Toast.LENGTH_SHORT).show();
+                    }
                     if (finalizar) btnFinalizar.setEnabled(true);
                 }
             });
@@ -425,18 +445,24 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                             return;
                         }
 
-                        firebaseServicio.finalizarAlquilerDiario(alquilerActual, new FirebaseServicio.OnSimpleCallback() {
+                        alquilerRepository.finalizarAlquilerDiario(alquilerActual, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
-                                Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
+                            public void onSuccess(Void result) {
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
+                                }
                                 deshabilitarCampos();
                                 hideGlobalFab();
-                                Navigation.findNavController(getView()).popBackStack();
+                                if (getView() != null) {
+                                    Navigation.findNavController(getView()).popBackStack();
+                                }
                             }
 
                             @Override
                             public void onError(Exception e) {
-                                Toast.makeText(getContext(), "Error al finalizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Error al finalizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                }
                                 btnFinalizar.setText("Finalizar Alquiler");
                                 btnFinalizar.setEnabled(true);
                             }

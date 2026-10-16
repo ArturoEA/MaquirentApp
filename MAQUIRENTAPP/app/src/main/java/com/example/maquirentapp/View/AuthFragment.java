@@ -16,21 +16,21 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.example.maquirentapp.MainActivity;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class AuthFragment extends Fragment {
     private TextInputEditText inputEmail, inputPassword, inputConfirmPassword, inputNombre;
     private TextInputLayout layoutEmail, layoutPassword, layoutConfirmPassword, layoutNombre;
     private MaterialButton btnLogin, btnToggleMode;
     private TextView tvForgotPassword, tvModoActual, tvInfoNote;
-    private FirebaseServicio firebaseServicio;
+    private UsuarioRepository usuarioRepository;
     private boolean isLoginMode = true;
 
     @Override
@@ -42,7 +42,7 @@ public class AuthFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        firebaseServicio = new FirebaseServicio();
+        usuarioRepository = new UsuarioRepository();
         initViews(view);
         setupListeners();
     }
@@ -138,41 +138,32 @@ public class AuthFragment extends Fragment {
         btnLogin.setEnabled(false);
         btnLogin.setText("Iniciando...");
 
-        firebaseServicio.iniciarSesion(email, password, new FirebaseServicio.OnAuthListener() {
+        usuarioRepository.iniciarSesion(email, password, new Callback<Usuario>() {
             @Override
-            public void onLoginExitoso(Usuario usuario) {
+            public void onSuccess(Usuario usuario) {
                 if (getContext() == null) return;
-                Toast.makeText(getContext(), "Bienvenido " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
-                reiniciarMainActivity();
-            }
-
-            @Override
-            public void onRegistroExitoso(Usuario usuario) {
-                // No se usa en login
-            }
-
-            @Override
-            public void onUsuarioPendiente() {
-                if (getContext() == null) return;
-                Toast.makeText(getContext(),
-                        "Tu cuenta está pendiente de aprobación por un administrador",
-                        Toast.LENGTH_LONG).show();
-                resetButton();
-            }
-
-            @Override
-            public void onUsuarioInactivo() {
-                if (getContext() == null) return;
-                Toast.makeText(getContext(),
-                        "Tu cuenta ha sido desactivada. Contacta al administrador",
-                        Toast.LENGTH_LONG).show();
-                resetButton();
+                if (usuario != null && "activo".equalsIgnoreCase(usuario.getEstado())) {
+                    Toast.makeText(getContext(), "Bienvenido " + usuario.getNombre(), Toast.LENGTH_SHORT).show();
+                    reiniciarMainActivity();
+                } else if (usuario != null && "pendiente".equalsIgnoreCase(usuario.getEstado())) {
+                    Toast.makeText(getContext(),
+                            "Tu cuenta está pendiente de aprobación por un administrador",
+                            Toast.LENGTH_LONG).show();
+                    resetButton();
+                } else if (usuario != null && "inactivo".equalsIgnoreCase(usuario.getEstado())) {
+                    Toast.makeText(getContext(),
+                            "Tu cuenta ha sido desactivada. Contacta al administrador",
+                            Toast.LENGTH_LONG).show();
+                    resetButton();
+                } else {
+                    Toast.makeText(getContext(), "Perfil no disponible", Toast.LENGTH_SHORT).show();
+                    resetButton();
+                }
             }
 
             @Override
             public void onError(Exception e) {
                 if (getContext() == null) return;
-                // Mensaje genérico para no revelar información
                 Toast.makeText(getContext(),
                         "Credenciales incorrectas. Verifica tu correo y contraseña",
                         Toast.LENGTH_LONG).show();
@@ -195,25 +186,10 @@ public class AuthFragment extends Fragment {
         btnLogin.setEnabled(false);
         btnLogin.setText("Registrando...");
 
-        firebaseServicio.registrarUsuario(email, password, nombre, new FirebaseServicio.OnAuthListener() {
+        usuarioRepository.registrarUsuario(email, password, nombre, new Callback<Usuario>() {
             @Override
-            public void onLoginExitoso(Usuario usuario) {
-                // No se usa en registro
-            }
-
-            @Override
-            public void onRegistroExitoso(Usuario usuario) {
+            public void onSuccess(Usuario usuario) {
                 mostrarDialogoRegistroExitoso();
-            }
-
-            @Override
-            public void onUsuarioPendiente() {
-                // No se usa en registro
-            }
-
-            @Override
-            public void onUsuarioInactivo() {
-                // No se usa en registro
             }
 
             @Override
@@ -229,7 +205,9 @@ public class AuthFragment extends Fragment {
                     }
                 }
 
-                Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show();
+                }
                 resetButton();
             }
         });
@@ -352,21 +330,24 @@ public class AuthFragment extends Fragment {
     }
 
     private void enviarEmailRecuperacion(String email) {
-        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        mostrarDialogoExito(
-                                "Correo enviado",
-                                "Se han enviado las instrucciones de recuperación de contraeña a " + email +
-                                        ". El enlace será válido por 15 minutos. No olvides revisar correos spam."
-                        );
-                    } else {
-                        mostrarDialogoExito(
-                                "Solicitud recibida",
-                                "Si el correo está registrado, recibirás un enlace de recuperación."
-                        );
-                    }
-                });
+        usuarioRepository.enviarCorreoRecuperacion(email, new Callback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                mostrarDialogoExito(
+                        "Correo enviado",
+                        "Se han enviado las instrucciones de recuperación de contraeña a " + email +
+                                ". El enlace será válido por 15 minutos. No olvides revisar correos spam."
+                );
+            }
+
+            @Override
+            public void onError(Exception e) {
+                mostrarDialogoExito(
+                        "Solicitud recibida",
+                        "Si el correo está registrado, recibirás un enlace de recuperación."
+                );
+            }
+        });
     }
 
     private void mostrarDialogoRegistroExitoso() {

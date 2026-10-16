@@ -28,15 +28,12 @@ public class ValorizacionesRepository {
     private static final String DOC_SECUENCIAS = "secuencias";
     private static final String FIELD_ULTIMA_VAL = "ultima_valorizacion";
 
+    public interface Callback<T> extends com.example.maquirentapp.Repository.Callback<T> {}
+
     public ValorizacionesRepository() {
         this.db = FirebaseFirestore.getInstance();
     }
 
-    public interface Callback<T> {
-        void onSuccess(T result);
-
-        void onError(Exception e);
-    }
 
     // 1. Obtener lista de clientes con alquileres activos
     public void getClientesConAlquileresActivos(Callback<List<String>> callback) {

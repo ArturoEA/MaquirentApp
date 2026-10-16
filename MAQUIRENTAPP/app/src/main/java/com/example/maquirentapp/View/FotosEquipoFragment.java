@@ -31,9 +31,10 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.FotoEquipo;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.FotosEquipoAdapter;
+import com.example.maquirentapp.adapters.FotosEquipoAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -49,7 +50,7 @@ public class FotosEquipoFragment extends Fragment {
     private RecyclerView recyclerFotos;
     private ProgressBar progressBar;
     private FotosEquipoAdapter adapter;
-    private FirebaseServicio firebaseServicio;
+    private GeneradorRepository generadorRepository;
     private List<FotoEquipo> listaFotos = new ArrayList<>();
     private String idGrupo;
 
@@ -65,7 +66,7 @@ public class FotosEquipoFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        generadorRepository = new GeneradorRepository();
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
         }
@@ -119,9 +120,9 @@ public class FotosEquipoFragment extends Fragment {
             if(getActivity() != null){
                 getActivity().runOnUiThread(() -> {
                     if (dataImagen != null) {
-                        firebaseServicio.subirFotoEquipoBytes(idGrupo, dataImagen, new FirebaseServicio.OnSimpleCallback() {
+                        generadorRepository.subirFotoEquipoBytes(idGrupo, dataImagen, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
+                            public void onSuccess(Void result) {
                                 Toast.makeText(getContext(), "Foto subida correctamente", Toast.LENGTH_SHORT).show();
                                 cargarFotos();
                                 if (progressBar != null) progressBar.setVisibility(View.GONE);
@@ -147,7 +148,7 @@ public class FotosEquipoFragment extends Fragment {
         if (idGrupo == null) return;
 
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-        firebaseServicio.getFotosEquipo(idGrupo, new FirebaseServicio.OnFotosEquipoLoadedListener() {
+        generadorRepository.getFotosEquipo(idGrupo, new Callback<List<FotoEquipo>>() {
             @Override
             public void onSuccess(List<FotoEquipo> fotos) {
                 listaFotos = fotos;
@@ -191,9 +192,9 @@ public class FotosEquipoFragment extends Fragment {
                     .setMessage("¿Estás seguro?")
                     .setPositiveButton("Eliminar", (d, w) -> {
                         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-                        firebaseServicio.eliminarFotoEquipo(foto, new FirebaseServicio.OnSimpleCallback() {
+                        generadorRepository.eliminarFotoEquipo(foto, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
+                            public void onSuccess(Void result) {
                                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                                 Toast.makeText(getContext(), "Eliminado", Toast.LENGTH_SHORT).show();
                                 cargarFotos();

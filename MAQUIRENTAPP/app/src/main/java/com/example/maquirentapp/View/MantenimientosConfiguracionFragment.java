@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.maquirentapp.Access.MantenimientoConfiguracionAdapter;
+import com.example.maquirentapp.adapters.MantenimientoConfiguracionAdapter;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
 import com.google.android.material.button.MaterialButton;

@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.PdfPageAdapter;
+import com.example.maquirentapp.adapters.PdfPageAdapter;
 import com.example.maquirentapp.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 

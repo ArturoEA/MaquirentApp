@@ -34,10 +34,11 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Plano;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.ImageUtils;
-import com.example.maquirentapp.adaptadores.PlanoAdapter;
+import com.example.maquirentapp.adapters.PlanoAdapter;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -52,7 +53,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
     private RecyclerView recyclerPlanos;
     private ProgressBar progressBar;
     private PlanoAdapter adapter;
-    private FirebaseServicio firebaseServicio;
+    private GeneradorRepository generadorRepository;
     private List<Plano> listaPlanos = new ArrayList<>();
 
     private final ActivityResultLauncher<String> galleryLauncher = registerForActivityResult(
@@ -67,7 +68,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        generadorRepository = new GeneradorRepository();
     }
 
     @Nullable
@@ -115,9 +116,9 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                     if (getContext() == null) return;
 
                     if (dataComprimida != null) {
-                        firebaseServicio.subirPlanoBytes(dataComprimida, new FirebaseServicio.OnSimpleCallback() {
+                        generadorRepository.subirPlanoBytes(dataComprimida, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
+                            public void onSuccess(Void result) {
                                 if (getContext() == null) return;
 
                                 Toast.makeText(getContext(), "Plano subido correctamente", Toast.LENGTH_SHORT).show();
@@ -144,7 +145,7 @@ public class PlanosCambioVoltajeFragment extends Fragment {
 
     private void cargarPlanos() {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-        firebaseServicio.getPlanosVoltaje(new FirebaseServicio.OnPlanosLoadedListener() {
+        generadorRepository.getPlanosVoltaje(new Callback<List<Plano>>() {
             @Override
             public void onSuccess(List<Plano> planos) {
                 listaPlanos = planos;
@@ -199,11 +200,13 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                     .setPositiveButton("Eliminar", (d, w) -> {
                         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
 
-                        firebaseServicio.eliminarPlano(plano, new FirebaseServicio.OnSimpleCallback() {
+                        generadorRepository.eliminarPlano(plano, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
+                            public void onSuccess(Void result) {
                                 if (progressBar != null) progressBar.setVisibility(View.GONE);
-                                Toast.makeText(getContext(), "Plano eliminado", Toast.LENGTH_SHORT).show();
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Plano eliminado", Toast.LENGTH_SHORT).show();
+                                }
                                 cargarPlanos();
                                 dialog.dismiss();
                             }
@@ -211,7 +214,9 @@ public class PlanosCambioVoltajeFragment extends Fragment {
                             @Override
                             public void onError(Exception e) {
                                 if (progressBar != null) progressBar.setVisibility(View.GONE);
-                                Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(), "Error al eliminar", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         });
                     })

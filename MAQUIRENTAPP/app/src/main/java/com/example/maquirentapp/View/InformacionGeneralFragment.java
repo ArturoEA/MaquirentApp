@@ -37,11 +37,12 @@ import com.bumptech.glide.request.transition.Transition;
 import com.example.maquirentapp.Model.FiltroCategoria;
 import com.example.maquirentapp.Model.FiltroItem;
 import com.example.maquirentapp.Model.InfoPlaca;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.FiltroCategoriasAdapter;
-import com.example.maquirentapp.Access.FotosSimpleAdapter;
-import com.example.maquirentapp.Access.SpecsPlacaAdapter;
+import com.example.maquirentapp.adapters.FiltroCategoriasAdapter;
+import com.example.maquirentapp.adapters.FotosSimpleAdapter;
+import com.example.maquirentapp.adapters.SpecsPlacaAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -58,7 +59,7 @@ public class InformacionGeneralFragment extends Fragment {
 
     private String idGrupo;
     private String codigoGrupo;
-    private FirebaseServicio firebaseServicio;
+    private GeneradorRepository generadorRepository;
 
     // Vistas Filtros
     private RecyclerView recyclerFiltros;
@@ -88,7 +89,7 @@ public class InformacionGeneralFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firebaseServicio = new FirebaseServicio();
+        generadorRepository = new GeneradorRepository();
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
             codigoGrupo = getArguments().getString("codigo");
@@ -166,9 +167,9 @@ public class InformacionGeneralFragment extends Fragment {
                         .setMessage("¿Estás seguro de eliminar este item?")
                         .setPositiveButton("Eliminar", (d, w) -> {
                             categoria.getItems().remove(item);
-                            firebaseServicio.actualizarCategoriaFiltro(categoria, new FirebaseServicio.OnSimpleCallback() {
+                            generadorRepository.actualizarCategoriaFiltro(categoria, new Callback<Void>() {
                                 @Override
-                                public void onSuccess() {
+                                public void onSuccess(Void result) {
                                     filtrosAdapter.notifyDataSetChanged();
                                 }
 
@@ -188,9 +189,9 @@ public class InformacionGeneralFragment extends Fragment {
                         .setTitle("Eliminar " + categoria.getNombreCategoria())
                         .setMessage("¿Borrar esta categoría y sus items?")
                         .setPositiveButton("Sí", (d, w) -> {
-                            firebaseServicio.eliminarCategoriaFiltro(categoria.getId(), new FirebaseServicio.OnSimpleCallback() {
+                            generadorRepository.eliminarCategoriaFiltro(categoria.getId(), new Callback<Void>() {
                                 @Override
-                                public void onSuccess() {
+                                public void onSuccess(Void result) {
                                     cargarFiltros();
                                 }
 
@@ -215,7 +216,7 @@ public class InformacionGeneralFragment extends Fragment {
     }
 
     private void cargarFiltros() {
-        firebaseServicio.getFiltrosPorGrupo(idGrupo, new FirebaseServicio.OnFiltrosLoadedListener() {
+        generadorRepository.getFiltrosPorGrupo(idGrupo, new Callback<List<FiltroCategoria>>() {
             @Override
             public void onSuccess(List<FiltroCategoria> categorias) {
                 listaFiltros.clear();
@@ -238,9 +239,9 @@ public class InformacionGeneralFragment extends Fragment {
                     String nombre = input.getText().toString().trim();
                     if (!nombre.isEmpty()) {
                         FiltroCategoria cat = new FiltroCategoria(null, idGrupo, nombre);
-                        firebaseServicio.crearCategoriaFiltro(cat, new FirebaseServicio.OnSimpleCallback() {
+                        generadorRepository.crearCategoriaFiltro(cat, new Callback<Void>() {
                             @Override
-                            public void onSuccess() {
+                            public void onSuccess(Void result) {
                                 cargarFiltros();
                             }
 
@@ -282,9 +283,9 @@ public class InformacionGeneralFragment extends Fragment {
                     categoria.getItems().add(new FiltroItem(marca, codigo));
                 }
 
-                firebaseServicio.actualizarCategoriaFiltro(categoria, new FirebaseServicio.OnSimpleCallback() {
+                generadorRepository.actualizarCategoriaFiltro(categoria, new Callback<Void>() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(Void result) {
                         filtrosAdapter.notifyDataSetChanged();
                         dialog.dismiss();
                     }
@@ -309,7 +310,7 @@ public class InformacionGeneralFragment extends Fragment {
     }
 
     private void cargarInfoPlaca() {
-        firebaseServicio.getInfoPlaca(idGrupo, new FirebaseServicio.OnInfoPlacaLoadedListener() {
+        generadorRepository.getInfoPlaca(idGrupo, new Callback<InfoPlaca>() {
             @Override
             public void onSuccess(InfoPlaca info) {
                 if (info == null) {
@@ -357,9 +358,9 @@ public class InformacionGeneralFragment extends Fragment {
                             .setTitle("Eliminar foto")
                             .setMessage("¿Estás seguro?")
                             .setPositiveButton("Sí", (d, w) -> {
-                                firebaseServicio.eliminarArchivoStorage(url, new FirebaseServicio.OnSimpleCallback() {
+                                generadorRepository.eliminarArchivoStorage(url, new Callback<Void>() {
                                     @Override
-                                    public void onSuccess() {
+                                    public void onSuccess(Void result) {
                                         if (getContext() == null) return;
                                         infoPlacaActual.getImagenesUrls().remove(url);
                                         fotosAdapter.notifyDataSetChanged();
@@ -422,7 +423,7 @@ public class InformacionGeneralFragment extends Fragment {
             if (getActivity() != null){
                 requireActivity().runOnUiThread(() -> {
                     if (dataImagen != null) {
-                        firebaseServicio.subirFotoPlacaBytes(codigoGrupo, dataImagen, new FirebaseServicio.OnUrlUploadedListener() {
+                        generadorRepository.subirFotoPlacaBytes(codigoGrupo, dataImagen, new Callback<String>() {
                             @Override
                             public void onSuccess(String url) {
                                 if (getContext() == null) return;
@@ -504,9 +505,9 @@ public class InformacionGeneralFragment extends Fragment {
     }
 
     private void guardarPlacaSinRecargar() {
-        firebaseServicio.guardarInfoPlaca(infoPlacaActual, new FirebaseServicio.OnSimpleCallback() {
+        generadorRepository.guardarInfoPlaca(infoPlacaActual, new Callback<Void>() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Void result) {
             }
 
             @Override

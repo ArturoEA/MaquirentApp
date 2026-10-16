@@ -22,11 +22,12 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.AlquilerDiarioAdapter;
+import com.example.maquirentapp.adapters.AlquilerDiarioAdapter;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerDia;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -40,7 +41,7 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 public class HistorialAlquilerDiarioFragment extends Fragment {
 
     private String idGrupo;
-    private FirebaseServicio firebaseServicio;
+    private AlquilerRepository alquilerRepository;
     private NavController navController;
     private RecyclerView recyclerView;
     private AlquilerDiarioAdapter adapter;
@@ -56,7 +57,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
         }
-        firebaseServicio = new FirebaseServicio();
+        alquilerRepository = new AlquilerRepository();
         nombresMeses = getResources().getStringArray(R.array.months_array);
     }
 
@@ -119,9 +120,9 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
                         .setTitle("Eliminar Alquiler")
                         .setMessage("¿Estás seguro de eliminar este alquiler?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
-                            firebaseServicio.eliminarAlquilerDia(alquiler.getId(), new FirebaseServicio.OnSimpleCallback() {
+                            alquilerRepository.eliminarAlquilerDia(alquiler.getId(), new Callback<Void>() {
                                 @Override
-                                public void onSuccess() {
+                                public void onSuccess(Void result) {
                                     if (getContext() == null) return;
                                     adapter.removeItem(position);
                                     Toast.makeText(getContext(), "Alquiler eliminado", Toast.LENGTH_SHORT).show();
@@ -228,7 +229,7 @@ public class HistorialAlquilerDiarioFragment extends Fragment {
             Toast.makeText(getContext(), "Error: ID de Grupo no encontrado", Toast.LENGTH_SHORT).show();
             return;
         }
-        firebaseServicio.getAlquileresDiariosPorGrupo(idGrupo, mesSeleccionado, anioActual, new FirebaseServicio.OnAlquileresDiariosLoadedListener() {
+        alquilerRepository.getAlquileresDiariosPorGrupo(idGrupo, mesSeleccionado, anioActual, new Callback<List<AlquilerDia>>() {
             @Override
             public void onSuccess(List<AlquilerDia> alquileres) {
                 adapter.setItems(alquileres);

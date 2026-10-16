@@ -29,7 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.ViewModel.FichaTecnicaViewModel;
-import com.example.maquirentapp.adaptadores.FichasTecnicasAdapter;
+import com.example.maquirentapp.adapters.FichasTecnicasAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;

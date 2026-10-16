@@ -37,7 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
-import com.example.maquirentapp.Access.MantenimientosAdapter;
+import com.example.maquirentapp.adapters.MantenimientosAdapter;
 import com.google.android.material.datepicker.CalendarConstraints;
 import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;

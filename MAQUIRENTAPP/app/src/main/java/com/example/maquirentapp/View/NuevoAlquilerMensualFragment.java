@@ -28,20 +28,21 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.Access.AccesorioSeleccionAdapter;
-import com.example.maquirentapp.Access.DetalleMesAdapter;
+import com.example.maquirentapp.adapters.AccesorioSeleccionAdapter;
+import com.example.maquirentapp.adapters.DetalleMesAdapter;
 import com.example.maquirentapp.MainActivity; // Importar MainActivity
 import com.example.maquirentapp.Model.Accesorio;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,7 +69,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private AccesorioSeleccionAdapter adapterAccesorios;
     private DetalleMesAdapter adapterDetallesMes;
-    private FirebaseServicio firebaseServicio;
+    private AlquilerRepository alquilerRepository;
+    private UsuarioRepository usuarioRepository;
 
     private View llAccesoriosHeader;
     private ImageView ivAccChevron;
@@ -77,7 +79,6 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private String monedaSeleccionada = "SOL";
     private AlquilerMensual alquilerActual;
-    private FirebaseAuth firebaseAuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,8 +100,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        firebaseServicio = new FirebaseServicio();
-        firebaseAuth = FirebaseAuth.getInstance();
+        alquilerRepository = new AlquilerRepository();
+        usuarioRepository = new UsuarioRepository();
 
         inicializarVistas(view);
         configurarSpinnerMoneda();
@@ -356,7 +357,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     }
 
     private void enviarIngresoAFirebase(Ingreso ingreso) {
-        firebaseServicio.registrarIngreso(ingreso, new FirebaseServicio.OnIngresoRegistradoListener() {
+        alquilerRepository.registrarIngreso(ingreso, new Callback<String>() {
             @Override
             public void onSuccess(String id) {
                 Log.i("NuevoAlquiler", "Ingreso registrado: " + id);
@@ -470,7 +471,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     }
 
     private void cargarAccesoriosMensuales() {
-        firebaseServicio.getAccesorios("mensual", new FirebaseServicio.OnAccesoriosLoadedListener() {
+        alquilerRepository.getAccesorios("mensual", new Callback<List<Accesorio>>() {
             @Override
             public void onSuccess(List<Accesorio> accesorios) {
                 adapterAccesorios.setItems(accesorios);
@@ -478,13 +479,15 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar accesorios: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void cargarDatosAlquiler() {
-        firebaseServicio.getAlquilerMensualPorId(alquilerId, new FirebaseServicio.OnAlquilerMensualLoadedListener() {
+        alquilerRepository.getAlquilerMensualPorId(alquilerId, new Callback<AlquilerMensual>() {
             @Override
             public void onSuccess(AlquilerMensual alquiler) {
                 alquilerActual = alquiler;
@@ -520,14 +523,16 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar alquiler", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
     private void cargarDetallesMes() {
         if (alquilerId == null) return;
-        firebaseServicio.getDetallesMesPorAlquiler(alquilerId, new FirebaseServicio.OnDetallesMesLoadedListener() {
+        alquilerRepository.getDetallesMesPorAlquiler(alquilerId, new Callback<List<DetalleMes>>() {
             @Override
             public void onSuccess(List<DetalleMes> detalles) {
                 adapterDetallesMes.setItems(detalles);
@@ -536,7 +541,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al cargar detalles", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al cargar detalles", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -675,35 +682,48 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquiler.setIdGrupo(idGrupo);
         alquiler.setAccesoriosIds(adapterAccesorios.getAccesoriosSeleccionados());
 
-        if (firebaseAuth.getCurrentUser() != null) {
-            alquiler.setAdminUid(firebaseAuth.getCurrentUser().getUid());
+        String uid = usuarioRepository.getCurrentUserUid();
+        if (uid != null) {
+            alquiler.setAdminUid(uid);
         }
 
         if (modoEdicion) {
-            firebaseServicio.actualizarAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerUpdatedListener() {
+            alquilerRepository.actualizarAlquilerMensual(alquiler, new Callback<Void>() {
                 @Override
-                public void onSuccess() {
-                    Toast.makeText(getContext(), "Alquiler actualizado correctamente", Toast.LENGTH_SHORT).show();
-                    requireActivity().onBackPressed();
+                public void onSuccess(Void result) {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Alquiler actualizado correctamente", Toast.LENGTH_SHORT).show();
+                    }
+                    if (getActivity() != null) {
+                        requireActivity().onBackPressed();
+                    }
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         } else {
-            firebaseServicio.crearAlquilerMensual(alquiler, new FirebaseServicio.OnAlquilerCreatedListener() {
+            alquilerRepository.crearAlquilerMensual(alquiler, new Callback<AlquilerMensual>() {
                 @Override
                 public void onSuccess(AlquilerMensual alquilerCreado) {
                     generarPrimerDetalleMes(alquilerCreado);
-                    Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
-                    requireActivity().onBackPressed();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
+                    }
+                    if (getActivity() != null) {
+                        requireActivity().onBackPressed();
+                    }
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(getContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         }
@@ -735,7 +755,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             primerMes.setMontoMes(alquiler.getPrecioAlquiler());
             primerMes.setTituloPeriodo("Mes 1: " + strFechaInicio + " - " + strFechaFin);
 
-            firebaseServicio.crearDetalleMes(primerMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
+            alquilerRepository.crearDetalleMes(primerMes, new Callback<DetalleMes>() {
                 @Override
                 public void onSuccess(DetalleMes detalle) {
                     Log.i("NuevoAlquiler", "Primer detalle de mes creado.");
@@ -743,24 +763,30 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                 @Override
                 public void onError(Exception e) {
-                    Toast.makeText(getContext(), "Error al crear detalle de mes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al crear detalle de mes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
         } catch (ParseException e) {
-            Toast.makeText(getContext(), "Error al procesar fechas", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error al procesar fechas", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     private void actualizarDetalleMes(DetalleMes detalle) {
-        firebaseServicio.actualizarDetalleMes(detalle, new FirebaseServicio.OnDetalleMesUpdatedListener() {
+        alquilerRepository.actualizarDetalleMes(detalle, new Callback<Void>() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(Void result) {
             }
 
             @Override
             public void onError(Exception e) {
-                Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -775,13 +801,15 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     btnFinalizarAlquiler.setEnabled(false);
                     btnFinalizarAlquiler.setText("Enviando...");
 
-                    firebaseServicio.solicitarCodigoFinalizacion(
+                    alquilerRepository.solicitarCodigoFinalizacion(
                             alquilerActual.getId(),
                             alquilerActual.getNombreCliente(),
-                            new FirebaseServicio.OnSimpleCallback() {
+                            new Callback<Void>() {
                                 @Override
-                                public void onSuccess() {
-                                    Toast.makeText(getContext(), "Código enviado a tu correo", Toast.LENGTH_SHORT).show();
+                                public void onSuccess(Void result) {
+                                    if (getContext() != null) {
+                                        Toast.makeText(getContext(), "Código enviado a tu correo", Toast.LENGTH_SHORT).show();
+                                    }
                                     btnFinalizarAlquiler.setEnabled(true);
                                     btnFinalizarAlquiler.setText("Finalizar alquiler");
                                     mostrarDialogoIngresarCodigo();
@@ -789,7 +817,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                                 @Override
                                 public void onError(Exception e) {
-                                    Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    if (getContext() != null) {
+                                        Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    }
                                     btnFinalizarAlquiler.setEnabled(true);
                                     btnFinalizarAlquiler.setText("Finalizar alquiler");
                                 }
@@ -822,7 +852,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     if (codigo.length() == 6) {
                         confirmarFinalizacion(codigo);
                     } else {
-                        Toast.makeText(getContext(), "El código debe tener 6 dígitos", Toast.LENGTH_SHORT).show();
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "El código debe tener 6 dígitos", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .setNegativeButton("Cancelar", null)
@@ -834,7 +866,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         String horometroFinalManualStr = inputHorometroFinal.getText().toString().trim();
 
         if (fechaFinalManual.isEmpty() || horometroFinalManualStr.isEmpty()) {
-            Toast.makeText(getContext(), "Fecha Final y Horómetro Final son obligatorios.", Toast.LENGTH_LONG).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Fecha Final y Horómetro Final son obligatorios.", Toast.LENGTH_LONG).show();
+            }
             return;
         }
 
@@ -848,27 +882,33 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         try {
             horometroFinal = Double.parseDouble(horometroFinalManualStr);
         } catch (NumberFormatException e) {
-            Toast.makeText(getContext(), "Horómetro final manual inválido", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Horómetro final manual inválido", Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
         if (alquilerActual == null) {
-            Toast.makeText(getContext(), "Error: No se pudo encontrar el alquiler", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error: No se pudo encontrar el alquiler", Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
         alquilerActual.setHorometroFinal(horometroFinal);
         alquilerActual.setFechaFinal(fechaFinal);
 
-        firebaseServicio.confirmarFinalizacion(
+        alquilerRepository.confirmarFinalizacion(
                 alquilerActual.getId(),
                 codigo,
                 horometroFinal,
                 fechaFinal,
-                new FirebaseServicio.OnSimpleCallback() {
+                new Callback<Void>() {
                     @Override
-                    public void onSuccess() {
-                        Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
+                    public void onSuccess(Void result) {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
+                        }
                         alquilerActual.setFinalizado(true);
                         deshabilitarCampos();
                         hideGlobalFab();
@@ -876,7 +916,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                     @Override
                     public void onError(Exception e) {
-                        Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
         );
@@ -896,7 +938,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         }
         long diasDuracion = calcularDiasEntreFechas(detallePagado.getFechaInicio(), detallePagado.getFechaFin());
         if (diasDuracion < 30) {
-            Toast.makeText(getContext(), "Último período generado", Toast.LENGTH_LONG).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Último período generado", Toast.LENGTH_LONG).show();
+            }
             return;
         }
 
@@ -929,13 +973,17 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     " (" + strFechaInicio + " - " + strFechaFin + ")";
             nuevoMes.setTituloPeriodo(titulo);
 
-            Toast.makeText(getContext(), "Generando siguiente mes...", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Generando siguiente mes...", Toast.LENGTH_SHORT).show();
+            }
 
-            firebaseServicio.crearDetalleMes(nuevoMes, new FirebaseServicio.OnDetalleMesCreatedListener() {
+            alquilerRepository.crearDetalleMes(nuevoMes, new Callback<DetalleMes>() {
                 @Override
                 public void onSuccess(DetalleMes detalleCreado) {
                     cargarDetallesMes();
-                    Toast.makeText(getContext(), "Siguiente mes generado", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Siguiente mes generado", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
                 @Override

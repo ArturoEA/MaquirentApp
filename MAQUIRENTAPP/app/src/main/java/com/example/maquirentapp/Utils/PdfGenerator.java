@@ -8,12 +8,15 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
+import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
@@ -27,12 +30,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.maquirentapp.Model.CertificadoOperatividad;
+import com.example.maquirentapp.Model.ItemValorizacion;
+import com.example.maquirentapp.Model.Valorizacion;
 import com.example.maquirentapp.R;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.Locale;
 
 public class PdfGenerator {
     private static final int A4_WIDTH_PTS = 595;
@@ -295,4 +302,218 @@ public class PdfGenerator {
             document.close();
         }
     }
-}
+
+    /**
+     * Fusiona dos archivos PDF existentes en uno solo utilizando exclusivamente
+     * APIs nativas de Android (PdfRenderer + PdfDocument), sin librerías externas.
+     */
+    public static void unirPdfs(File pdf1, File pdf2, File destino) throws IOException {
+        PdfDocument document = new PdfDocument();
+        int pageIndex = 1;
+        File[] sources = new File[]{pdf1, pdf2};
+
+        for (File source : sources) {
+            if (source == null || !source.exists() || source.length() == 0) continue;
+
+            ParcelFileDescriptor pfd = ParcelFileDescriptor.open(source, ParcelFileDescriptor.MODE_READ_ONLY);
+            PdfRenderer renderer = new PdfRenderer(pfd);
+
+            for (int i = 0; i < renderer.getPageCount(); i++) {
+                PdfRenderer.Page page = renderer.openPage(i);
+                int width = page.getWidth();
+                int height = page.getHeight();
+
+                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(width, height, pageIndex++).create();
+                PdfDocument.Page docPage = document.startPage(pageInfo);
+
+                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                bitmap.eraseColor(Color.WHITE);
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+
+                docPage.getCanvas().drawBitmap(bitmap, 0, 0, null);
+                document.finishPage(docPage);
+
+                bitmap.recycle();
+                page.close();
+            }
+            renderer.close();
+            pfd.close();
+        }
+
+        if (destino.getParentFile() != null && !destino.getParentFile().exists()) {
+            destino.getParentFile().mkdirs();
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(destino)) {
+            document.writeTo(fos);
+        } finally {
+            document.close();
+        }
+    }
+
+    /**
+     * Genera un reporte de Valorización nativo en formato PDF (A4) usando PdfDocument y Canvas.
+     * Reemplaza el uso de Apache POI (Excel) por un documento PDF profesional y ligero.
+     */
+    public File generarValorizacionPdf(Context context, Valorizacion val) throws IOException {
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(A4_WIDTH_PTS, A4_HEIGHT_PTS, 1).create();
+        PdfDocument.Page page = document.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+
+        // Fondo blanco
+        Paint bgPaint = new Paint();
+        bgPaint.setColor(Color.WHITE);
+        canvas.drawRect(0, 0, A4_WIDTH_PTS, A4_HEIGHT_PTS, bgPaint);
+
+        // Paints para textos y bordes
+        Paint titlePaint = new Paint();
+        titlePaint.setColor(Color.parseColor("#1A365D"));
+        titlePaint.setTextSize(16);
+        titlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint subtitlePaint = new Paint();
+        subtitlePaint.setColor(Color.parseColor("#4A5568"));
+        subtitlePaint.setTextSize(9);
+
+        Paint boldPaint = new Paint();
+        boldPaint.setColor(Color.BLACK);
+        boldPaint.setTextSize(9);
+        boldPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        Paint textPaint = new Paint();
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(9);
+
+        Paint linePaint = new Paint();
+        linePaint.setColor(Color.parseColor("#CBD5E0"));
+        linePaint.setStrokeWidth(1);
+
+        Paint headerBoxPaint = new Paint();
+        headerBoxPaint.setColor(Color.parseColor("#2B6CB0"));
+
+        Paint headerTextPaint = new Paint();
+        headerTextPaint.setColor(Color.WHITE);
+        headerTextPaint.setTextSize(9);
+        headerTextPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+        int xStart = 40;
+        int xEnd = A4_WIDTH_PTS - 40;
+        int y = 50;
+
+        // 1. Cabecera de la empresa
+        canvas.drawText("MAQUIRENT SERVICIOS GENERALES", xStart, y, titlePaint);
+        y += 14;
+        canvas.drawText("RUC: 10266739414 | Hugo Alberto Esquivel Pando", xStart, y, subtitlePaint);
+        y += 12;
+        canvas.drawText("Alquiler de Grupos Electrógenos y Maquinaria | Cajamarca - Perú", xStart, y, subtitlePaint);
+        y += 15;
+        canvas.drawLine(xStart, y, xEnd, y, linePaint);
+        y += 25;
+
+        // 2. Título del Documento
+        String numVal = val.getNumeroValorizacion() != null ? val.getNumeroValorizacion() : "-";
+        canvas.drawText("VALORIZACIÓN DE EQUIPOS N° " + numVal, xStart, y, titlePaint);
+        y += 20;
+
+        // 3. Datos del Cliente
+        canvas.drawText("Cliente:", xStart, y, boldPaint);
+        canvas.drawText(val.getNombreCliente() != null ? val.getNombreCliente() : "-", xStart + 50, y, textPaint);
+        canvas.drawText("Fecha Emisión:", 380, y, boldPaint);
+        canvas.drawText(val.getFechaEmision() != null ? val.getFechaEmision() : "-", 455, y, textPaint);
+        y += 15;
+
+        canvas.drawText("RUC:", xStart, y, boldPaint);
+        canvas.drawText(val.getClienteRuc() != null ? val.getClienteRuc() : "-", xStart + 50, y, textPaint);
+        canvas.drawText("Moneda:", 380, y, boldPaint);
+        canvas.drawText(val.getMoneda() != null ? val.getMoneda() : "USD", 455, y, textPaint);
+        y += 15;
+
+        canvas.drawText("Ubicación:", xStart, y, boldPaint);
+        canvas.drawText(val.getUbicacionTrabajo() != null ? val.getUbicacionTrabajo() : "-", xStart + 50, y, textPaint);
+        y += 25;
+
+        // 4. Tabla de Items - Cabecera
+        int rowHeight = 22;
+        canvas.drawRect(xStart, y, xEnd, y + rowHeight, headerBoxPaint);
+
+        canvas.drawText("EQUIPO", xStart + 8, y + 15, headerTextPaint);
+        canvas.drawText("PERÍODO", xStart + 170, y + 15, headerTextPaint);
+        canvas.drawText("HORAS", xStart + 290, y + 15, headerTextPaint);
+        canvas.drawText("TARIFA", xStart + 360, y + 15, headerTextPaint);
+        canvas.drawText("TOTAL", xStart + 430, y + 15, headerTextPaint);
+        y += rowHeight;
+
+        // Filas de Items
+        List<ItemValorizacion> items = val.getItems();
+        if (items != null) {
+            Paint altRowPaint = new Paint();
+            altRowPaint.setColor(Color.parseColor("#F7FAFC"));
+            int rowIndex = 0;
+
+            for (ItemValorizacion item : items) {
+                if (rowIndex % 2 == 1) {
+                    canvas.drawRect(xStart, y, xEnd, y + rowHeight, altRowPaint);
+                }
+
+                String equipo = item.getDescripcionEquipo() != null ? item.getDescripcionEquipo() : "-";
+                if (equipo.length() > 25) equipo = equipo.substring(0, 22) + "...";
+                String periodo = (item.getFechaInicio() != null ? item.getFechaInicio() : "") + " - " +
+                                 (item.getFechaFin() != null ? item.getFechaFin() : "");
+                String horas = String.format(Locale.US, "%.1f hrs", item.getHorasTrabajadas());
+                String tarifa = String.format(Locale.US, "%.2f", item.getPrecioMes());
+                String totalItem = String.format(Locale.US, "%.2f", item.getTotalItem());
+
+                canvas.drawText(equipo, xStart + 8, y + 15, textPaint);
+                canvas.drawText(periodo, xStart + 170, y + 15, textPaint);
+                canvas.drawText(horas, xStart + 290, y + 15, textPaint);
+                canvas.drawText(tarifa, xStart + 360, y + 15, textPaint);
+                canvas.drawText(totalItem, xStart + 430, y + 15, boldPaint);
+
+                canvas.drawLine(xStart, y + rowHeight, xEnd, y + rowHeight, linePaint);
+                y += rowHeight;
+                rowIndex++;
+            }
+        }
+
+        y += 20;
+
+        // 5. Cuadro de Totales (Alineado a la derecha)
+        int totalBoxX = 350;
+        canvas.drawText("SUBTOTAL:", totalBoxX, y, boldPaint);
+        canvas.drawText(String.format(Locale.US, "%.2f", val.getSubtotal()), totalBoxX + 90, y, textPaint);
+        y += 16;
+
+        canvas.drawText("I.G.V. (18%):", totalBoxX, y, boldPaint);
+        canvas.drawText(String.format(Locale.US, "%.2f", val.getIgv()), totalBoxX + 90, y, textPaint);
+        y += 16;
+
+        canvas.drawLine(totalBoxX, y - 4, xEnd, y - 4, linePaint);
+        canvas.drawText("TOTAL:", totalBoxX, y + 8, titlePaint);
+        canvas.drawText(String.format(Locale.US, "%.2f", val.getTotal()), totalBoxX + 90, y + 8, titlePaint);
+
+        // 6. Firma
+        y = A4_HEIGHT_PTS - 80;
+        canvas.drawLine(xStart + 150, y, xEnd - 150, y, linePaint);
+        y += 15;
+        Paint centerPaint = new Paint(boldPaint);
+        centerPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("MAQUIRENT SERVICIOS GENERALES", (float) A4_WIDTH_PTS / 2, y, centerPaint);
+
+        document.finishPage(page);
+
+        // Guardar archivo
+        String nombreArchivo = "Valorizacion_" + (val.getNumeroValorizacion() != null ? val.getNumeroValorizacion() : "temp") + ".pdf";
+        File dir = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Valorizaciones");
+        if (!dir.exists()) dir.mkdirs();
+        File archivoFinal = new File(dir, nombreArchivo);
+
+        try (FileOutputStream fos = new FileOutputStream(archivoFinal)) {
+            document.writeTo(fos);
+        } finally {
+            document.close();
+        }
+
+        return archivoFinal;
+    }
+}

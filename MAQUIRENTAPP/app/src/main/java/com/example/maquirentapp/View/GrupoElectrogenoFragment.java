@@ -19,7 +19,8 @@ import androidx.navigation.Navigation;
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.Model.Ingreso;
-import com.example.maquirentapp.Network.FirebaseServicio;
+import com.example.maquirentapp.Repository.AlquilerRepository;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.R;
 
 import java.text.ParseException;
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GrupoElectrogenoFragment extends Fragment {
     private String codigo;
     private String idGrupo;
-    private FirebaseServicio firebaseServicio;
+    private AlquilerRepository alquilerRepository;
 
     private Spinner spinnerMeses;
     private TextView tvTotalSOL, tvTotalUSD;
@@ -51,7 +52,7 @@ public class GrupoElectrogenoFragment extends Fragment {
             codigo = getArguments().getString("codigo");
             idGrupo = getArguments().getString("idGrupo");
         }
-        firebaseServicio = new FirebaseServicio();
+        alquilerRepository = new AlquilerRepository();
     }
 
     @Override
@@ -176,8 +177,8 @@ public class GrupoElectrogenoFragment extends Fragment {
         actualizarTotal(tvTotalSOL, 0, "SOL");
         actualizarTotal(tvTotalUSD, 0, "USD");
 
-        firebaseServicio.getIngresosPorGrupoYMes(idGrupo, mes, anioActual,
-                new FirebaseServicio.OnIngresosLoadedListener() {
+        alquilerRepository.getIngresosPorGrupoYMes(idGrupo, mes, anioActual,
+                new Callback<List<Ingreso>>() {
                     @Override
                     public void onSuccess(List<Ingreso> ingresos) {
                         if (idDeEstaCarga != idCargaActual) {
