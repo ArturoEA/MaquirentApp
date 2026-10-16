@@ -25,7 +25,7 @@ public class UpdateManager {
     private final Activity activity;
     private final FirebaseFirestore db;
     private final FirebaseStorage storage;
-    private final String APK_NAME = "update_maquirent.apk";
+    private final String APK_NAME = "update_app.apk";
 
     public interface UpdateCheckListener {
         void onNoUpdateNeeded();
@@ -64,7 +64,7 @@ public class UpdateManager {
 
         new MaterialAlertDialogBuilder(activity, R.style.DialogoConFuenteAnta)
                 .setTitle("Actualización disponible")
-                .setMessage("Existe una nueva versión de MaquirentApp. Es necesario actualizar para continuar.")
+                .setMessage("Existe una nueva versión de " + activity.getString(R.string.app_name) + ". Es necesario actualizar para continuar.")
                 .setCancelable(false)
                 .setPositiveButton("Actualizar ahora", (dialog, which) -> {
                     if (tienePermisoInstalar()) {
@@ -85,7 +85,7 @@ public class UpdateManager {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             new MaterialAlertDialogBuilder(activity, R.style.DialogoConFuenteAnta)
                     .setTitle("Permiso necesario")
-                    .setMessage("Para poder actualizar la app, necesitas activar el permiso de 'Instalar aplicaciones desconocidas' para MaquirentApp.")
+                    .setMessage("Para poder actualizar la app, necesitas activar el permiso de 'Instalar aplicaciones desconocidas' para " + activity.getString(R.string.app_name) + ".")
                     .setPositiveButton("Ir a configuración", (dialog, which) -> {
                         Uri packageUri = Uri.parse("package:" + activity.getPackageName());
                         Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageUri);

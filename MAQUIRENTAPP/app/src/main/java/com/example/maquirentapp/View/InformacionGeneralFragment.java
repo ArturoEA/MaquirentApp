@@ -636,7 +636,7 @@ public class InformacionGeneralFragment extends Fragment {
             stream.close();
 
             Uri contentUri = FileProvider.getUriForFile(requireContext(),
-                    "com.example.maquirentapp.provider", newFile);
+                    requireContext().getPackageName() + ".provider", newFile);
 
             if (contentUri != null) {
                 Intent shareIntent = new Intent();

@@ -180,11 +180,7 @@ public class NuevaCotizacionFragment extends Fragment {
 
         if (cotizacionActual != null && cotizacionActual.getItems() != null) {
             for (ItemCotizacion item : cotizacionActual.getItems()) {
-                double precioMensual = item.getPrecioMensual();
-
-                double nuevoPrecioHE = (precioMensual / 200) * 0.75;
-
-                nuevoPrecioHE = Math.round(nuevoPrecioHE * 100.0) / 100.0;
+                double nuevoPrecioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularPrecioHoraExtra(item.getPrecioMensual(), horasMinimas);
 
                 if (Math.abs(item.getPrecioHoraExtra() - nuevoPrecioHE) > 0.01) {
                     item.setPrecioHoraExtra(nuevoPrecioHE);
@@ -309,8 +305,7 @@ public class NuevaCotizacionFragment extends Fragment {
             int horas = getHorasMinimasActuales();
 
             if (horas > 0) {
-                // Fórmula: (Precio / Horas) * 0.75
-                double precioHE = (precioMensual / 200) * 0.75;
+                double precioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularPrecioHoraExtra(precioMensual, horas);
 
                 inputHE.setText(String.format(Locale.US, "%.2f", precioHE));
             }
@@ -430,8 +425,7 @@ public class NuevaCotizacionFragment extends Fragment {
     private void generarDocumentoPdf() {
         binding.btnGenerarPdf.setText("Generando PDF...");
 
-        HtmlGenerator htmlGen = new HtmlGenerator();
-        String html = htmlGen.generarHtmlCotizacion(requireContext(), cotizacionActual);
+        String html = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarHtmlCotizacion(requireContext(), cotizacionActual);
 
         PdfGenerator pdfGen = new PdfGenerator();
         String nombreArchivo = "Cotizacion_" + cotizacionActual.getNumeroCotizacion();

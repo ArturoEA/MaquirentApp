@@ -32,8 +32,8 @@ public class Cotizacion implements Serializable {
         for (ItemCotizacion item : items) {
             this.subtotalGlobal += item.getPrecioMensual();
         }
-        this.igvGlobal = this.subtotalGlobal * 0.18;
-        this.totalGlobal = this.subtotalGlobal + this.igvGlobal;
+        this.igvGlobal = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularImpuesto(this.subtotalGlobal);
+        this.totalGlobal = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularTotalConImpuesto(this.subtotalGlobal);
     }
 
     public String getId() {

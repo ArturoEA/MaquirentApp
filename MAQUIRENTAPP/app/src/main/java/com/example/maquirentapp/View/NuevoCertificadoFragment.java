@@ -290,10 +290,8 @@ public class NuevoCertificadoFragment extends Fragment {
         // Generar PDF en hilo secundario
         new Thread(() -> {
             try {
-                PdfGenerator generator = new PdfGenerator();
-
                 // Generar PDF
-                File archivo = generator.generarCertificadoPdf(
+                File archivo = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarCertificadoPdf(
                         requireContext(),
                         cert,
                         codigoGrupoSeleccionado

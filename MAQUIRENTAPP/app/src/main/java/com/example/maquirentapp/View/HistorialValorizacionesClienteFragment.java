@@ -82,8 +82,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ValorizacionesAdapter(valorizacion -> {
             try {
-                com.example.maquirentapp.Utils.PdfGenerator generator = new com.example.maquirentapp.Utils.PdfGenerator();
-                File pdf = generator.generarValorizacionPdf(requireContext(), valorizacion);
+                File pdf = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarValorizacionPdf(requireContext(), valorizacion);
                 android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
                         requireContext(), requireContext().getPackageName() + ".provider", pdf);
                 android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);

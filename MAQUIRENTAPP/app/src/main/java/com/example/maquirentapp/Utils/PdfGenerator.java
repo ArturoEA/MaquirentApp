@@ -32,6 +32,7 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.maquirentapp.BuildConfig;
 import com.example.maquirentapp.Model.CertificadoOperatividad;
 import com.example.maquirentapp.Model.ItemValorizacion;
 import com.example.maquirentapp.Model.Valorizacion;
@@ -120,7 +121,7 @@ public class PdfGenerator {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, nombreArchivo);
             values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/MaquirentCertificados");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/Certificados");
 
             Uri uri = context.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
             if (uri != null) {
@@ -137,7 +138,7 @@ public class PdfGenerator {
             }
         }
         else {
-            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "MaquirentCertificados");
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Certificados");
             if (!directory.exists()) directory.mkdirs();
             archivoSalida = new File(directory, nombreArchivo);
             fos = new FileOutputStream(archivoSalida);
@@ -429,11 +430,11 @@ public class PdfGenerator {
         int y = 50;
 
         // 1. Cabecera de la empresa
-        canvas.drawText("MAQUIRENT SERVICIOS GENERALES", xStart, y, titlePaint);
+        canvas.drawText(BuildConfig.COMPANY_NAME, xStart, y, titlePaint);
         y += 14;
-        canvas.drawText("RUC: 10266739414 | Hugo Alberto Esquivel Pando", xStart, y, subtitlePaint);
+        canvas.drawText("RUC: " + BuildConfig.COMPANY_RUC + " | " + BuildConfig.COMPANY_OWNER, xStart, y, subtitlePaint);
         y += 12;
-        canvas.drawText("Alquiler de Grupos Electrógenos y Maquinaria | Cajamarca - Perú", xStart, y, subtitlePaint);
+        canvas.drawText(BuildConfig.COMPANY_BUSINESS_LINE, xStart, y, subtitlePaint);
         y += 15;
         canvas.drawLine(xStart, y, xEnd, y, linePaint);
         y += 25;
@@ -511,7 +512,7 @@ public class PdfGenerator {
         canvas.drawText(String.format(Locale.US, "%.2f", val.getSubtotal()), totalBoxX + 90, y, textPaint);
         y += 16;
 
-        canvas.drawText("I.G.V. (18%):", totalBoxX, y, boldPaint);
+        canvas.drawText(BuildConfig.TAX_LABEL + ":", totalBoxX, y, boldPaint);
         canvas.drawText(String.format(Locale.US, "%.2f", val.getIgv()), totalBoxX + 90, y, textPaint);
         y += 16;
 
@@ -525,7 +526,7 @@ public class PdfGenerator {
         y += 15;
         Paint centerPaint = new Paint(boldPaint);
         centerPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("MAQUIRENT SERVICIOS GENERALES", (float) A4_WIDTH_PTS / 2, y, centerPaint);
+        canvas.drawText(BuildConfig.COMPANY_NAME, (float) A4_WIDTH_PTS / 2, y, centerPaint);
 
         document.finishPage(page);
 

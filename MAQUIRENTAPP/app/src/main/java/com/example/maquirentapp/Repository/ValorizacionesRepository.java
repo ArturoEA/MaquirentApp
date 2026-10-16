@@ -142,7 +142,7 @@ public class ValorizacionesRepository {
                         }
                     }
 
-                    String codigoGenerado = String.format("VAL-%06d", nuevoNumero);
+                    String codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(nuevoNumero);
                     valorizacion.setNumeroValorizacion(codigoGenerado);
                     valorizacion.setId(nuevaValRef.getId());
 

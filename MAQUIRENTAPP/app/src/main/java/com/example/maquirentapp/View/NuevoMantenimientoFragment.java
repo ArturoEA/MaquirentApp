@@ -1100,8 +1100,8 @@ public class NuevoMantenimientoFragment extends Fragment {
                 if (!pdfDir.exists()) pdfDir.mkdirs();
                 File archivoFinal = new File(pdfDir, nombreArchivo);
 
-                // Llamamos a la clase generadora pasándole el Mapa limpio
-                InformePdfVectorialGenerator.generarPdf(
+                // Llamamos a la clase generadora pasándole el Mapa limpio a través de la estrategia
+                com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarInformeMantenimientoPdf(
                         requireContext(), archivoFinal, mantenimientoActual, infoPlacaActual, codigoGrupo, mapDatos
                 );
 

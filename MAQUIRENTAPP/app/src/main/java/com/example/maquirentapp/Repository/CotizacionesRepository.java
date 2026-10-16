@@ -45,7 +45,7 @@ public class CotizacionesRepository {
                         }
                     }
 
-                    String codigoGenerado = String.format("COT-%06d", nuevoNumero);
+                    String codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy().generarCodigoCotizacion(nuevoNumero);
                     cotizacion.setNumeroCotizacion(codigoGenerado);
                     cotizacion.setId(nuevaCotizacionRef.getId());
 

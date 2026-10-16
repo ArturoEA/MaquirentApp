@@ -297,7 +297,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 double horas = Double.parseDouble(horasStr);
 
                 if (horas > 0) {
-                    double precioHoraExtra = (precio / 200) * 0.75;
+                    double precioHoraExtra = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularPrecioHoraExtra(precio, (int) horas);
                     inputPrecioHoraExtra.setText(String.format(Locale.US, "%.2f", precioHoraExtra));
                 }
             } catch (NumberFormatException e) {
@@ -388,25 +388,13 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 return;
             }
 
-            double horasTrabajadas = horometroActual - horometroAnterior;
-
-            double horasPermitidasDelPeriodo;
-
-            long diasPeriodo = calcularDiasEntreFechas(detalle.getFechaInicio(), detalle.getFechaFin());
-
-            if (diasPeriodo >= 30) {
-                horasPermitidasDelPeriodo = alquilerActual.getHorasMinimas();
-            } else {
-                horasPermitidasDelPeriodo = (alquilerActual.getHorasMinimas() / 30.0) * diasPeriodo;
-            }
-
-            double horasExtras = Math.max(0, horasTrabajadas - horasPermitidasDelPeriodo);
+            com.example.maquirentapp.strategy.ResultadoHorasExtras resultado = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularHorasExtras(
+                    horometroActual, horometroAnterior, alquilerActual.getHorasMinimas(), detalle.getFechaInicio(), detalle.getFechaFin(), alquilerActual.getPrecioHoraExtra()
+            );
 
             detalle.setHorometro(horometroActual);
-            detalle.setHorasExtras(horasExtras);
-
-            double precioHE = horasExtras * alquilerActual.getPrecioHoraExtra();
-            detalle.setPrecioHorasExtras(precioHE);
+            detalle.setHorasExtras(resultado.getHorasExtras());
+            detalle.setPrecioHorasExtras(resultado.getPrecioTotalHorasExtras());
 
         } catch (Exception e) {
             Log.e("NuevoAlquilerMensual", "Error calculando horas extras", e);

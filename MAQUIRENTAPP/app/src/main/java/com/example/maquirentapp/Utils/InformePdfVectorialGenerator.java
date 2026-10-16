@@ -14,6 +14,7 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
+import com.example.maquirentapp.BuildConfig;
 import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.R;
@@ -90,7 +91,7 @@ public class InformePdfVectorialGenerator {
 
             DecimalFormat df = new DecimalFormat("#.##", new java.text.DecimalFormatSymbols(java.util.Locale.US));
 
-            proxHorometro = df.format(hActual + 250);
+            proxHorometro = df.format(com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularProximoMantenimiento(hActual));
 
         } catch (Exception e) { proxHorometro = "N/A"; }
 
@@ -108,7 +109,7 @@ public class InformePdfVectorialGenerator {
         // (Línea de subrayado eliminada a petición)
 
         y += 40;
-        canvas.drawText("Cajamarca, " + fechaHoy + ".", MARGIN, y, paintNegrita);
+        canvas.drawText(BuildConfig.COMPANY_CITY + ", " + fechaHoy + ".", MARGIN, y, paintNegrita);
         y += 20;
         canvas.drawText("Cliente: ", MARGIN, y, paintNegrita);
         canvas.drawText(cliente, MARGIN + 45, y, paintTexto);
@@ -153,7 +154,7 @@ public class InformePdfVectorialGenerator {
 
         y += 10;
 
-        Bitmap bmpFirmaHugo = BitmapFactory.decodeResource(context.getResources(), R.drawable.firmahep);
+        Bitmap bmpFirmaHugo = BitmapFactory.decodeResource(context.getResources(), R.drawable.firma_representante);
         if (bmpFirmaHugo != null) {
             android.graphics.Rect rectFirma = new android.graphics.Rect(MARGIN, y, MARGIN + 120, y + 50);
             canvas.drawBitmap(bmpFirmaHugo, null, rectFirma, null);
@@ -164,11 +165,11 @@ public class InformePdfVectorialGenerator {
         canvas.drawLine(MARGIN, y, MARGIN + 160, y, paintLineas);
 
         y += 15;
-        canvas.drawText("Hugo Esquivel Pando", MARGIN, y, paintNegrita);
+        canvas.drawText(BuildConfig.COMPANY_OWNER, MARGIN, y, paintNegrita);
         y += 15;
         canvas.drawText("GERENTE", MARGIN, y, paintTexto);
         y += 15;
-        canvas.drawText("MAQUIRENT SERVICIOS GENERALES", MARGIN, y, paintTexto);
+        canvas.drawText(BuildConfig.COMPANY_NAME, MARGIN, y, paintTexto);
 
         document.finishPage(page1);
 
@@ -361,7 +362,7 @@ public class InformePdfVectorialGenerator {
                 dibujarCeldaMultilineaCentroVertical(canvas, rNombre, MARGIN, y, 135, alturaNecesaria, textPaintLargo, paintLineas);
 
                 // Las demás celdas usan el mismo alto dinámico para cuadrar perfecto
-                dibujarCeldaTablaCentro(canvas, MARGIN+135, y, 60, alturaNecesaria, "250 hrs", paintTexto, paintLineas);
+                dibujarCeldaTablaCentro(canvas, MARGIN+135, y, 60, alturaNecesaria, com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().getIntervaloMantenimientoHoras() + " hrs", paintTexto, paintLineas);
                 dibujarCeldaTablaCentro(canvas, MARGIN+195, y, 70, alturaNecesaria, mantenimientoActual.getFecha(), paintTexto, paintLineas);
                 dibujarCeldaTablaCentro(canvas, MARGIN+265, y, 70, alturaNecesaria, mantenimientoActual.getHorometro(), paintTexto, paintLineas);
                 dibujarCeldaTablaCentro(canvas, MARGIN+335, y, 70, alturaNecesaria, proxHorometro, paintTexto, paintLineas);
@@ -372,7 +373,7 @@ public class InformePdfVectorialGenerator {
         }
 
         y += 65;
-        canvas.drawText("Representante de la empresa: Hugo Esquivel Pando", MARGIN, y, paintNegrita);
+        canvas.drawText("Representante de la empresa: " + BuildConfig.COMPANY_OWNER, MARGIN, y, paintNegrita);
         y += 25;
         canvas.drawText("Fecha:" + fechaHoy, MARGIN, y, paintNegrita);
 
@@ -418,21 +419,16 @@ public class InformePdfVectorialGenerator {
 
     private static int dibujarEncabezado(Canvas canvas, Paint logoM, Paint logoR, Paint texto, Paint negrita, Paint lineas) {
         int y = 40;
-        float currentX = MARGIN;
-        canvas.drawText("MAQUI", currentX, y, logoM);
-        currentX += logoM.measureText("MAQUI");
-        canvas.drawText("RENT", currentX, y, logoR);
-        currentX += logoR.measureText("RENT") + 10;
-        canvas.drawText("SERVICIOS GENERALES", currentX, y, logoM);
+        canvas.drawText(BuildConfig.COMPANY_NAME, MARGIN, y, logoM);
 
         y += 20;
-        canvas.drawText("HUGO ALBERTO ESQUIVEL PANDO", MARGIN, y, negrita);
-        canvas.drawText("RUC: 10266739414", PAGE_WIDTH - MARGIN - 100, y, negrita);
+        canvas.drawText(BuildConfig.COMPANY_OWNER, MARGIN, y, negrita);
+        canvas.drawText("RUC: " + BuildConfig.COMPANY_RUC, PAGE_WIDTH - MARGIN - 120, y, negrita);
 
         y += 15;
-        canvas.drawText("SERVICIOS Y ALQUILER DE GRUPOS ELECTRÓGENOS Y EQUIPOS DE CONSTRUCCIÓN", MARGIN, y, texto);
+        canvas.drawText(BuildConfig.COMPANY_BUSINESS_LINE, MARGIN, y, texto);
         y += 15;
-        canvas.drawText("AV. ATAHUALPA 810 - CAJAMARCA | TELÉF. 976959490", MARGIN, y, texto);
+        canvas.drawText(BuildConfig.COMPANY_ADDRESS + " | TELÉF. " + BuildConfig.COMPANY_PHONE, MARGIN, y, texto);
 
         y += 15;
         canvas.drawLine(MARGIN, y, PAGE_WIDTH - MARGIN, y, lineas);

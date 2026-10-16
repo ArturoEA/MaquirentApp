@@ -27,6 +27,51 @@ android {
             )
         }
     }
+
+    flavorDimensions += "cliente"
+    productFlavors {
+        create("maquirent") {
+            dimension = "cliente"
+            applicationId = "com.empresa.maquirent"
+            versionCode = 3
+            versionName = "1.1-maquirent"
+
+            buildConfigField("String", "COMPANY_NAME", "\"MAQUIRENT SERVICIOS GENERALES\"")
+            buildConfigField("String", "COMPANY_RUC", "\"10266739414\"")
+            buildConfigField("String", "COMPANY_OWNER", "\"Hugo Alberto Esquivel Pando\"")
+            buildConfigField("String", "COMPANY_ADDRESS", "\"AV. ATAHUALPA 810 - CAJAMARCA\"")
+            buildConfigField("String", "COMPANY_PHONE", "\"976959490 - 955425015 - 969775015\"")
+            buildConfigField("String", "COMPANY_CITY", "\"Cajamarca\"")
+            buildConfigField("String", "COMPANY_BUSINESS_LINE", "\"Alquiler de Grupos Electrógenos y Maquinaria | Cajamarca - Perú\"")
+            buildConfigField("String", "PREFIX_COTIZACION", "\"COT-\"")
+            buildConfigField("String", "PREFIX_VALORIZACION", "\"VAL-\"")
+            buildConfigField("String", "PREFIX_CERTIFICADO", "\"CERT-\"")
+            buildConfigField("double", "TAX_RATE", "0.18")
+            buildConfigField("String", "TAX_LABEL", "\"I.G.V. (18%)\"")
+            buildConfigField("int", "DEFAULT_MAINTENANCE_HOURS", "250")
+        }
+
+        create("clienteTemplate") {
+            dimension = "cliente"
+            applicationId = "com.empresa.clientetemplate"
+            versionCode = 1
+            versionName = "1.0-template"
+
+            buildConfigField("String", "COMPANY_NAME", "\"EMPRESA MAQUINARIAS S.A.C.\"")
+            buildConfigField("String", "COMPANY_RUC", "\"20123456789\"")
+            buildConfigField("String", "COMPANY_OWNER", "\"Representante Legal\"")
+            buildConfigField("String", "COMPANY_ADDRESS", "\"Av. Principal 123 - Lima\"")
+            buildConfigField("String", "COMPANY_PHONE", "\"01-2345678\"")
+            buildConfigField("String", "COMPANY_CITY", "\"Lima\"")
+            buildConfigField("String", "COMPANY_BUSINESS_LINE", "\"Alquiler de Maquinaria Pesada y Equipos\"")
+            buildConfigField("String", "PREFIX_COTIZACION", "\"COT-\"")
+            buildConfigField("String", "PREFIX_VALORIZACION", "\"VAL-\"")
+            buildConfigField("String", "PREFIX_CERTIFICADO", "\"CERT-\"")
+            buildConfigField("double", "TAX_RATE", "0.18")
+            buildConfigField("String", "TAX_LABEL", "\"I.G.V. (18%)\"")
+            buildConfigField("int", "DEFAULT_MAINTENANCE_HOURS", "250")
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

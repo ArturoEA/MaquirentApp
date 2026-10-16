@@ -250,8 +250,8 @@ public class NuevaValorizacionFragment extends Fragment {
         for (ItemValorizacion i : seleccionados) subtotal += i.getTotalItem();
 
         val.setSubtotal(subtotal);
-        val.setIgv(subtotal * 0.18);
-        val.setTotal(subtotal * 1.18);
+        val.setIgv(com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularImpuesto(subtotal));
+        val.setTotal(com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularTotalConImpuesto(subtotal));
 
         btnGenerar.setEnabled(false);
         btnGenerar.setText("Guardando...");
@@ -278,8 +278,7 @@ public class NuevaValorizacionFragment extends Fragment {
     private void generarPdfEnSegundoPlano(Valorizacion valorizacion) {
         new Thread(() -> {
             try {
-                PdfGenerator generator = new PdfGenerator();
-                File archivo = generator.generarValorizacionPdf(requireContext(), valorizacion);
+                File archivo = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarValorizacionPdf(requireContext(), valorizacion);
 
                 requireActivity().runOnUiThread(() -> {
                     if (getContext() == null) return;

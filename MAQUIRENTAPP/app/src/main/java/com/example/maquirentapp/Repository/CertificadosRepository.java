@@ -75,7 +75,7 @@ public class CertificadosRepository {
                         }
                     }
 
-                    String codigoGenerado = String.format("CERT-%06d", nuevoNumero);
+                    String codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy().generarCodigoCertificado(nuevoNumero);
                     certificado.setNumeroCertificado(codigoGenerado);
                     certificado.setId(nuevoCertRef.getId());
 
