@@ -97,7 +97,7 @@ public class NuevaValorizacionFragment extends Fragment {
         itemsCandidatos.clear();
 
         // 1. Obtener alquileres activos de este cliente
-        repository.getAlquileresPorCliente(clienteActual.getNombreEmpresa(), new ValorizacionesRepository.Callback<List<AlquilerMensual>>() {
+        repository.getAlquileresPorCliente(clienteActual.getNombreEmpresa(), new Callback<List<AlquilerMensual>>() {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
                 if (alquileres.isEmpty()) {
@@ -124,7 +124,7 @@ public class NuevaValorizacionFragment extends Fragment {
         for (AlquilerMensual alquiler : alquileres) {
 
             // 1. Buscamos los últimos 2 detalles (Actual y Anterior)
-            repository.getUltimosDetallesMes(alquiler.getId(), new ValorizacionesRepository.Callback<List<DetalleMes>>() {
+            repository.getUltimosDetallesMes(alquiler.getId(), new Callback<List<DetalleMes>>() {
                 @Override
                 public void onSuccess(List<DetalleMes> detalles) {
                     // La lista viene ordenada descendente: [0] = Actual, [1] = Anterior
@@ -257,7 +257,7 @@ public class NuevaValorizacionFragment extends Fragment {
         btnGenerar.setText("Guardando...");
 
         // Guardar en Firebase
-        repository.crearValorizacion(val, new ValorizacionesRepository.Callback<String>() {
+        repository.crearValorizacion(val, new Callback<String>() {
             @Override
             public void onSuccess(String numeroVal) {
                 btnGenerar.setEnabled(true);

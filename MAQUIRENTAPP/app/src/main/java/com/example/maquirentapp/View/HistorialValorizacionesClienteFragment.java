@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.ClienteValorizacion;
 import com.example.maquirentapp.Model.Valorizacion;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.ValorizacionesAdapter;
@@ -97,7 +98,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
     private void cargarHistorial() {
         if (clienteActual == null) return;
 
-        repository.getValorizacionesPorCliente(clienteActual.getId(), new ValorizacionesRepository.Callback<List<Valorizacion>>() {
+        repository.getValorizacionesPorCliente(clienteActual.getId(), new Callback<List<Valorizacion>>() {
             @Override
             public void onSuccess(List<Valorizacion> result) {
                 adapter.submitList(result);
@@ -144,7 +145,7 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
                         .setTitle("Eliminar")
                         .setMessage("¿Eliminar valorización " + item.getNumeroValorizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {
-                            repository.eliminarValorizacion(item.getId(), new ValorizacionesRepository.Callback<Void>() {
+                            repository.eliminarValorizacion(item.getId(), new Callback<Void>() {
                                 @Override public void onSuccess(Void res) {
                                     List<Valorizacion> lista = new ArrayList<>(adapter.getCurrentList());
                                     lista.remove(pos);

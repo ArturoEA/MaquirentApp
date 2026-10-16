@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.Cotizacion;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.CotizacionesAdapter;
@@ -132,7 +133,7 @@ public class HistorialCotizacionesFragment extends Fragment {
     }
 
     private void cargarCotizaciones() {
-        repository.getCotizaciones(new CotizacionesRepository.Callback<List<Cotizacion>>() {
+        repository.getCotizaciones(new Callback<List<Cotizacion>>() {
             @Override
             public void onSuccess(List<Cotizacion> result) {
                 listaCompleta = result;
@@ -194,7 +195,7 @@ public class HistorialCotizacionesFragment extends Fragment {
                         .setTitle("Eliminar Cotización")
                         .setMessage("¿Eliminar " + item.getNumeroCotizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {
-                            repository.eliminarCotizacion(item.getId(), new CotizacionesRepository.Callback<Void>() {
+                            repository.eliminarCotizacion(item.getId(), new Callback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {

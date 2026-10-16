@@ -24,6 +24,7 @@ import com.example.maquirentapp.Model.CertificadoOperatividad;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.CertificadosRepository;
 import com.example.maquirentapp.Utils.PdfGenerator;
 import com.example.maquirentapp.databinding.FragmentNuevoCertificadoBinding;
@@ -76,7 +77,7 @@ public class NuevoCertificadoFragment extends Fragment {
     private void cargarListaGrupos() {
         binding.progressBar.setVisibility(View.VISIBLE);
 
-        repository.getGruposActivos(new CertificadosRepository.Callback<List<GrupoElectrogeno>>() {
+        repository.getGruposActivos(new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> result) {
                 binding.progressBar.setVisibility(View.GONE);
@@ -128,7 +129,7 @@ public class NuevoCertificadoFragment extends Fragment {
         binding.btnGenerarCertificado.setEnabled(false);
         binding.tvResumenTecnico.setText("Cargando datos técnicos...");
 
-        repository.getDatosTecnicos(idGrupo, new CertificadosRepository.Callback<InfoPlaca>() {
+        repository.getDatosTecnicos(idGrupo, new Callback<InfoPlaca>() {
             @Override
             public void onSuccess(InfoPlaca result) {
                 binding.progressBar.setVisibility(View.GONE);
@@ -265,7 +266,7 @@ public class NuevoCertificadoFragment extends Fragment {
         binding.progressBar.setVisibility(View.VISIBLE);
 
         // Guardar en Firebase primero
-        repository.crearCertificado(cert, new CertificadosRepository.Callback<String>() {
+        repository.crearCertificado(cert, new Callback<String>() {
             @Override
             public void onSuccess(String numeroCertificado) {
                 // Guardar referencia para generar PDF

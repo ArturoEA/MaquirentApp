@@ -22,6 +22,7 @@ import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
 import com.example.maquirentapp.adapters.CotizacionItemsAdapter;
 import com.example.maquirentapp.Utils.HtmlGenerator;
@@ -109,7 +110,7 @@ public class NuevaCotizacionFragment extends Fragment {
     }
 
     private void cargarGruposParaAutocompletado() {
-        repository.getGruposParaSeleccion(new CotizacionesRepository.Callback<List<GrupoElectrogeno>>() {
+        repository.getGruposParaSeleccion(new Callback<List<GrupoElectrogeno>>() {
             @Override
             public void onSuccess(List<GrupoElectrogeno> grupos) {
                 listaGruposInventario = grupos;
@@ -382,7 +383,7 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.btnGenerarPdf.setEnabled(false);
 
         if (esEdicion) {
-            repository.actualizarCotizacion(cotizacionActual, new CotizacionesRepository.Callback<Void>() {
+            repository.actualizarCotizacion(cotizacionActual, new Callback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(getContext(), "Cotización actualizada", Toast.LENGTH_SHORT).show();
@@ -398,7 +399,7 @@ public class NuevaCotizacionFragment extends Fragment {
                 }
             });
         } else {
-            repository.crearCotizacion(cotizacionActual, new CotizacionesRepository.Callback<String>() {
+            repository.crearCotizacion(cotizacionActual, new Callback<String>() {
                 @Override
                 public void onSuccess(String numeroCotizacion) {
                     if (getContext() == null) return;

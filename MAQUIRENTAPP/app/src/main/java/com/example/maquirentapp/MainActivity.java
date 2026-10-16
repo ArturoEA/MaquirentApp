@@ -15,13 +15,13 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
@@ -30,13 +30,15 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.UsuarioRepository;
-import com.example.maquirentapp.ViewModel.ScrollStateViewModel;
 
 import android.graphics.drawable.Drawable;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.messaging.FirebaseMessaging;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton btnGlobal; // global FAB
@@ -46,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView headerTitle;
     private ImageView headerIcon;
     private NestedScrollView contentScrollView;
-    private ScrollStateViewModel scrollViewModel;
+    private final Map<String, Integer> scrollPositions = new HashMap<>();
     private UsuarioRepository usuarioRepository;
 
     private NavController navController;
@@ -83,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         usuarioRepository = new UsuarioRepository();
-        scrollViewModel = new ViewModelProvider(this).get(ScrollStateViewModel.class);
 
         // Configurar window insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -494,17 +495,32 @@ public class MainActivity extends AppCompatActivity {
             String fragmentKey = getFragmentKeyByDestinationId(destinationId);
 
             if (fragmentKey != null) {
-                scrollViewModel.saveScrollPosition(fragmentKey, currentScrollY);
+                scrollPositions.put(fragmentKey, currentScrollY);
             }
         }
     }
 
     private void restoreScrollPosition(String fragmentKey) {
         if (contentScrollView != null) {
-            int savedPosition = scrollViewModel.getScrollPosition(fragmentKey);
+            int savedPosition = scrollPositions.getOrDefault(fragmentKey, 0);
 
             // Usar post para asegurar que el contenido se ha cargado
             contentScrollView.post(() -> contentScrollView.scrollTo(0, savedPosition));
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("saved_scroll_positions", new HashMap<>(scrollPositions));
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        java.io.Serializable saved = savedInstanceState.getSerializable("saved_scroll_positions");
+        if (saved instanceof Map) {
+            scrollPositions.putAll((Map<String, Integer>) saved);
         }
     }
 

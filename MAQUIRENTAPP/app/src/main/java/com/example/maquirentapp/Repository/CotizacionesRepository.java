@@ -25,7 +25,6 @@ public class CotizacionesRepository {
     private static final String FIELD_ULTIMA_COT = "ultima_cotizacion";
     private static final String COL_GRUPOS = "gruposElectrogenos";
 
-    public interface Callback<T> extends com.example.maquirentapp.Repository.Callback<T> {}
 
     public CotizacionesRepository() {
         this.db = FirebaseFirestore.getInstance();

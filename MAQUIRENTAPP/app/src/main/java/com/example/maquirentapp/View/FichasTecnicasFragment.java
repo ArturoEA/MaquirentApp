@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -28,12 +30,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.ViewModel.FichaTecnicaViewModel;
 import com.example.maquirentapp.adapters.FichasTecnicasAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class FichasTecnicasFragment extends Fragment {
@@ -94,12 +98,12 @@ public class FichasTecnicasFragment extends Fragment {
         adapter = new FichasTecnicasAdapter(new ArrayList<>(), new FichasTecnicasAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(FichaTecnica ficha) {
-                viewModel.abrirPdf(requireContext(), ficha);
+                abrirPdf(ficha);
             }
 
             @Override
             public void onCompartirClick(FichaTecnica ficha) {
-                viewModel.compartirPdf(requireContext(), ficha);
+                compartirPdf(ficha);
             }
 
             @Override
@@ -226,23 +230,84 @@ public class FichasTecnicasFragment extends Fragment {
                     if (nombreFinal.isEmpty()) {
                         Toast.makeText(getContext(), "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
                     } else {
-                        viewModel.subirPdf(requireContext(), pdfUri, nombreFinal);
+                        viewModel.subirPdf(pdfUri, nombreFinal);
                     }
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
+
+    private void abrirPdf(FichaTecnica ficha) {
+        if (ficha == null || ficha.getUrlPdf() == null || getContext() == null) return;
+        Intent intent = com.example.maquirentapp.View.PdfViewerActivity.newIntent(
+                requireContext(),
+                ficha.getUrlPdf(),
+                ficha.getNombreArchivo()
+        );
+        startActivity(intent);
+    }
+
+    private void compartirPdf(FichaTecnica ficha) {
+        if (ficha == null || ficha.getUrlPdf() == null || getContext() == null) return;
+        File tempFile = new File(requireContext().getCacheDir(), ficha.getNombreArchivo());
+        viewModel.descargarPdfAArchivo(ficha.getUrlPdf(), tempFile, new Callback<File>() {
+            @Override
+            public void onSuccess(File file) {
+                if (getContext() == null) return;
+                Uri fileUri = FileProvider.getUriForFile(requireContext(),
+                        requireContext().getPackageName() + ".provider", file);
+
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/pdf");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, ficha.getNombreArchivo());
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "Te comparto esta ficha técnica");
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                Intent chooser = Intent.createChooser(shareIntent, "Compartir PDF");
+                chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(chooser);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Error al preparar archivo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void descargarPdf(FichaTecnica ficha) {
+        if (ficha == null || ficha.getUrlPdf() == null || getContext() == null) return;
+        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File destFile = new File(downloadsDir, ficha.getNombreArchivo());
+        viewModel.descargarPdfAArchivo(ficha.getUrlPdf(), destFile, new Callback<File>() {
+            @Override
+            public void onSuccess(File file) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Descargado en: " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Handled in viewModel status LiveData
+            }
+        });
+    }
+
     private void verificarPermisoYDescargar(FichaTecnica ficha) {
         // Android 10+ no necesita permiso para usar DIRECTORY_DOWNLOADS
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            viewModel.descargarPdf(requireContext(), ficha);
+            descargarPdf(ficha);
             return;
         }
 
         // Para versiones anteriores, verificar permiso
         if (ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            viewModel.descargarPdf(requireContext(), ficha);
+            descargarPdf(ficha);
         } else {
             requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }

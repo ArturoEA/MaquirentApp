@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.MainActivity;
 import com.example.maquirentapp.Model.ClienteValorizacion;
+import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.ValorizacionesRepository;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.ClientesValorizacionAdapter;
@@ -86,7 +87,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
 
     private void cargarClientes() {
         // Mostrar un pequeño loader si quieres, o solo cargar
-        repository.getClientesPorAnio(anioSeleccionado, new ValorizacionesRepository.Callback<List<ClienteValorizacion>>() {
+        repository.getClientesPorAnio(anioSeleccionado, new Callback<List<ClienteValorizacion>>() {
             @Override
             public void onSuccess(List<ClienteValorizacion> result) {
                 adapter.submitList(result);
@@ -186,7 +187,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
 
             ClienteValorizacion cliente = new ClienteValorizacion(nombre, ruc, dir, ubi, anioSeleccionado);
 
-            repository.crearClienteValorizacion(cliente, new ValorizacionesRepository.Callback<Void>() {
+            repository.crearClienteValorizacion(cliente, new Callback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(getContext(), "Cliente creado para el año " + anioSeleccionado, Toast.LENGTH_SHORT).show();
