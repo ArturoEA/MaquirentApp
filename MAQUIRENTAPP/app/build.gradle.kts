@@ -32,7 +32,7 @@ android {
     productFlavors {
         create("maquirent") {
             dimension = "cliente"
-            applicationId = "com.empresa.maquirent"
+                applicationId = "com.example.maquirentapp"
             versionCode = 3
             versionName = "1.1-maquirent"
 
@@ -51,22 +51,22 @@ android {
             buildConfigField("int", "DEFAULT_MAINTENANCE_HOURS", "250")
         }
 
-        create("clienteTemplate") {
+        create("volker") {
             dimension = "cliente"
-            applicationId = "com.empresa.clientetemplate"
+            applicationId = "com.empresa.volker"
             versionCode = 1
-            versionName = "1.0-template"
+            versionName = "1.0-volker"
 
-            buildConfigField("String", "COMPANY_NAME", "\"EMPRESA MAQUINARIAS S.A.C.\"")
-            buildConfigField("String", "COMPANY_RUC", "\"20123456789\"")
-            buildConfigField("String", "COMPANY_OWNER", "\"Representante Legal\"")
-            buildConfigField("String", "COMPANY_ADDRESS", "\"Av. Principal 123 - Lima\"")
-            buildConfigField("String", "COMPANY_PHONE", "\"01-2345678\"")
+            buildConfigField("String", "COMPANY_NAME", "\"VOLKER MAQUINARIAS S.A.C.\"")
+            buildConfigField("String", "COMPANY_RUC", "\"20609876543\"")
+            buildConfigField("String", "COMPANY_OWNER", "\"Gerencia Volker\"")
+            buildConfigField("String", "COMPANY_ADDRESS", "\"Av. Industrial 456 - Lima\"")
+            buildConfigField("String", "COMPANY_PHONE", "\"01-7654321\"")
             buildConfigField("String", "COMPANY_CITY", "\"Lima\"")
-            buildConfigField("String", "COMPANY_BUSINESS_LINE", "\"Alquiler de Maquinaria Pesada y Equipos\"")
-            buildConfigField("String", "PREFIX_COTIZACION", "\"COT-\"")
-            buildConfigField("String", "PREFIX_VALORIZACION", "\"VAL-\"")
-            buildConfigField("String", "PREFIX_CERTIFICADO", "\"CERT-\"")
+            buildConfigField("String", "COMPANY_BUSINESS_LINE", "\"Alquiler de Generadores y Maquinaria Pesada\"")
+            buildConfigField("String", "PREFIX_COTIZACION", "\"COT-VK-\"")
+            buildConfigField("String", "PREFIX_VALORIZACION", "\"VAL-VK-\"")
+            buildConfigField("String", "PREFIX_CERTIFICADO", "\"CERT-VK-\"")
             buildConfigField("double", "TAX_RATE", "0.18")
             buildConfigField("String", "TAX_LABEL", "\"I.G.V. (18%)\"")
             buildConfigField("int", "DEFAULT_MAINTENANCE_HOURS", "250")
@@ -113,4 +113,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-}
+}

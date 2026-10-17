@@ -3,7 +3,7 @@ package com.example.maquirentapp.strategy;
 import com.example.maquirentapp.BuildConfig;
 import java.util.Locale;
 
-public class ClienteTemplateCorrelativoStrategy implements CorrelativoStrategy {
+public class VolkerCorrelativoStrategy implements CorrelativoStrategy {
 
     @Override
     public String generarCodigoCotizacion(long numero) {

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo de la pantalla de bienvenida (Launcher / Splash) para VOLKER -->
+    <color name="splash_background">#1A2B49</color>
+    
+    <!-- Color de fondo para el ícono de la app en el celular (Adaptive Icon) -->
+    <color name="ic_launcher_background">#1A2B49</color>
+</resources>

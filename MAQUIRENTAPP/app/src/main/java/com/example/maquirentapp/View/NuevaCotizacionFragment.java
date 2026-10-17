@@ -602,7 +602,8 @@ public class NuevaCotizacionFragment extends Fragment {
     }
 
     private void actualizarFechaInput(Calendar cal) {
-        String fecha = String.format(Locale.getDefault(), "Cajamarca, %d de %s del %d",
+        String fecha = String.format(Locale.getDefault(), "%s, %d de %s del %d",
+                com.example.maquirentapp.BuildConfig.COMPANY_CITY,
                 cal.get(Calendar.DAY_OF_MONTH),
                 cal.getDisplayName(Calendar.MONTH, Calendar.LONG, new Locale("es", "ES")),
                 cal.get(Calendar.YEAR));

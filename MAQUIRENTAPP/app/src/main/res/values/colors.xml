@@ -4,6 +4,7 @@
     <color name="gris_200">#555555</color>
     <color name="azul_100">#2877BC</color>
     <color name="azul_200">#0403FD</color>
+    <color name="splash_background">#CCCAE2</color>
 
     <!-- Colores principales -->
     <color name="background_light">#F5F2F0</color>

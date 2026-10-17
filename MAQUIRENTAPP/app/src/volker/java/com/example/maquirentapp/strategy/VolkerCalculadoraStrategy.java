@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class ClienteTemplateCalculadoraStrategy implements CalculadoraAlquilerStrategy {
+public class VolkerCalculadoraStrategy implements CalculadoraAlquilerStrategy {
 
     private static final double DIAS_MES_ESTANDAR = 30.0;
 
@@ -13,7 +13,7 @@ public class ClienteTemplateCalculadoraStrategy implements CalculadoraAlquilerSt
     public double calcularPrecioHoraExtra(double precioAlquiler, int horasMinimas) {
         if (precioAlquiler <= 0) return 0;
         int horasBase = horasMinimas > 0 ? horasMinimas : 200;
-        // Tarifa por hora proporcional estándar
+        // Tarifa Volker estándar
         double precioHE = precioAlquiler / (double) horasBase;
         return Math.round(precioHE * 100.0) / 100.0;
     }
