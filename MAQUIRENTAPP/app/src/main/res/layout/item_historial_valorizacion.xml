@@ -30,9 +30,9 @@
                 android:layout_height="wrap_content"
                 android:text="VAL-000105"
                 android:textStyle="bold"
-                android:textColor="@color/black"
+                android:textColor="@color/white"
                 android:background="@drawable/bg_bottom_nav_rounded"
-                android:backgroundTint="@color/selection_indicator"
+                android:backgroundTint="@color/azul_100"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
                 android:textSize="12sp"/>

@@ -18,8 +18,17 @@ import java.util.Locale;
 
 public class SeleccionValorizacionAdapter extends RecyclerView.Adapter<SeleccionValorizacionAdapter.ViewHolder> {
 
+    public interface OnItemClickListener {
+        void onItemClick(ItemValorizacion item, int position);
+    }
+
     private List<ItemValorizacion> items = new ArrayList<>();
     private List<ItemValorizacion> seleccionados = new ArrayList<>();
+    private OnItemClickListener itemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.itemClickListener = listener;
+    }
 
     public void setItems(List<ItemValorizacion> items) {
         this.items = items;
@@ -29,6 +38,10 @@ public class SeleccionValorizacionAdapter extends RecyclerView.Adapter<Seleccion
 
     public List<ItemValorizacion> getSeleccionados() {
         return seleccionados;
+    }
+
+    public List<ItemValorizacion> getItems() {
+        return items;
     }
 
     public double getTotalSeleccionado() {
@@ -59,11 +72,20 @@ public class SeleccionValorizacionAdapter extends RecyclerView.Adapter<Seleccion
         holder.checkBox.setChecked(seleccionados.contains(item));
 
         holder.checkBox.setOnCheckedChangeListener((v, isChecked) -> {
-            if (isChecked) seleccionados.add(item);
-            else seleccionados.remove(item);
+            if (isChecked) {
+                if (!seleccionados.contains(item)) seleccionados.add(item);
+            } else {
+                seleccionados.remove(item);
+            }
         });
 
-        holder.itemView.setOnClickListener(v -> holder.checkBox.toggle());
+        holder.itemView.setOnClickListener(v -> {
+            if (itemClickListener != null) {
+                itemClickListener.onItemClick(item, position);
+            } else {
+                holder.checkBox.toggle();
+            }
+        });
     }
 
     @Override

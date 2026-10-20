@@ -178,32 +178,14 @@ public class HistorialAlquilerMensualFragment extends Fragment {
     }
 
     private int extraerAñoDeFecha(String fecha) {
+        if (fecha == null || fecha.trim().isEmpty()) {
+            return -1;
+        }
         try {
-            if (fecha == null || fecha.isEmpty()) {
-                return -1;
-            }
-
-            fecha = fecha.trim();
-
-            if (fecha.contains("/")) {
-                String[] partes = fecha.split("/");
-                if (partes.length == 3) {
-                    return Integer.parseInt(partes[2]);
-                }
-            } else if (fecha.contains("-")) {
-                String[] partes = fecha.split("-");
-                if (partes.length == 3) {
-                    if (partes[0].length() == 4) {
-                        return Integer.parseInt(partes[0]);
-                    } else if (partes[2].length() == 4) {
-                        return Integer.parseInt(partes[2]);
-                    }
-                }
-            } else if (fecha.contains("T")) {
-                String[] partes = fecha.split("-");
-                if (partes.length >= 1) {
-                    return Integer.parseInt(partes[0]);
-                }
+            Pattern pattern = Pattern.compile("\\b(19\\d{2}|20\\d{2})\\b");
+            Matcher matcher = pattern.matcher(fecha.trim());
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
             }
         } catch (Exception e) {
             Log.e("FechaError", "Error al extraer año de: '" + fecha + "'", e);
@@ -226,21 +208,49 @@ public class HistorialAlquilerMensualFragment extends Fragment {
             @Override
             public void onSuccess(List<AlquilerMensual> alquileres) {
                 List<AlquilerMensual> filtradosPorGrupo = new ArrayList<>();
-                if (idGrupo != null && !idGrupo.isEmpty()) {
-                    for (AlquilerMensual a : alquileres) {
-                        if (a.getIdGrupo() != null && a.getIdGrupo().equals(idGrupo)) {
-                            filtradosPorGrupo.add(a);
-                        }
+                String idFiltro = (idGrupo != null) ? idGrupo.trim() : "";
+                String codFiltro = (codigo != null) ? codigo.trim() : "";
+
+                for (AlquilerMensual a : alquileres) {
+                    if (a == null) continue;
+                    String gId = (a.getIdGrupo() != null) ? a.getIdGrupo().trim() : "";
+
+                    if (idFiltro.isEmpty() && codFiltro.isEmpty()) {
+                        filtradosPorGrupo.add(a);
+                        continue;
                     }
-                } else if (codigo != null && !codigo.isEmpty()) {
-                    for (AlquilerMensual a : alquileres) {
-                        if (a.getIdGrupo() != null && a.getIdGrupo().equals(codigo)) {
-                            filtradosPorGrupo.add(a);
-                        }
+
+                    boolean coincideId = !idFiltro.isEmpty() && gId.equalsIgnoreCase(idFiltro);
+                    boolean coincideCodigo = !codFiltro.isEmpty() && gId.equalsIgnoreCase(codFiltro);
+
+                    if (coincideId || coincideCodigo) {
+                        filtradosPorGrupo.add(a);
                     }
                 }
 
                 todosLosAlquileres = filtradosPorGrupo;
+
+                // Si en el año seleccionado actualmente no hay alquileres pero sí en otro año, sincronizar con el año más relevante
+                int añoActual = calendarioActual.get(Calendar.YEAR);
+                if (!todosLosAlquileres.isEmpty()) {
+                    boolean hayEnAnioActual = false;
+                    int anioMasReciente = -1;
+                    for (AlquilerMensual a : todosLosAlquileres) {
+                        int anioIni = extraerAñoDeFecha(a.getFechaInicial());
+                        if (anioIni == añoActual || (!a.isFinalizado() && añoActual >= anioIni)) {
+                            hayEnAnioActual = true;
+                            break;
+                        }
+                        if (anioIni > anioMasReciente) {
+                            anioMasReciente = anioIni;
+                        }
+                    }
+                    if (!hayEnAnioActual && anioMasReciente != -1) {
+                        calendarioActual.set(Calendar.YEAR, anioMasReciente);
+                        actualizarTextoAnio();
+                    }
+                }
+
                 filtrarAlquileresPorAnio();
             }
 
@@ -251,9 +261,11 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                     shimmerAlquileres.setVisibility(View.GONE);
                 }
                 Log.e("FetchAlquileres", "Error: " + e.getMessage());
-                Toast.makeText(getContext(),
-                        "Error al cargar alquileres: " + e.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(),
+                            "Error al cargar alquileres: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
                 actualizarUI(new ArrayList<>());
             }
         });
@@ -264,10 +276,21 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         int añoSeleccionado = calendarioActual.get(Calendar.YEAR);
 
         for (AlquilerMensual alquiler : todosLosAlquileres) {
-            String fecha = alquiler.getFechaInicial();
-            int añoAlquiler = extraerAñoDeFecha(fecha);
+            int añoInicio = extraerAñoDeFecha(alquiler.getFechaInicial());
+            int añoFin = extraerAñoDeFecha(alquiler.getFechaFinal());
+            boolean activo = !alquiler.isFinalizado();
 
-            if (añoAlquiler == añoSeleccionado) {
+            boolean coincide = false;
+            if (añoInicio == añoSeleccionado) {
+                coincide = true;
+            } else if (añoFin == añoSeleccionado) {
+                coincide = true;
+            } else if (activo && añoInicio != -1 && añoSeleccionado >= añoInicio && (añoFin == -1 || añoSeleccionado <= añoFin)) {
+                // Alquiler activo iniciado en año previo que sigue vigente en el año seleccionado
+                coincide = true;
+            }
+
+            if (coincide) {
                 alquileresFiltrados.add(alquiler);
             }
         }

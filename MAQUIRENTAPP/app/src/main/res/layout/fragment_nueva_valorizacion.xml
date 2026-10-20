@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:theme="@style/Theme.TextMain"
     android:background="@color/background_light"
+    android:padding="16dp"
     android:paddingBottom="90dp"
     android:clipToPadding="true">
 
@@ -16,20 +17,21 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/black"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="8dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Selecciona los equipos a incluir:"
-        android:textColor="@color/black"
-        android:layout_marginBottom="8dp"/>
+        android:text="Selecciona el periodo o equipo a valorizar:"
+        android:textColor="#555555"
+        android:textSize="13sp"
+        android:layout_marginBottom="12dp"/>
 
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:indeterminateTint="@color/black"
+        android:indeterminateTint="@color/azul_100"
         android:layout_gravity="center"
         android:visibility="gone"/>
 
@@ -43,9 +45,12 @@
     <Button
         android:id="@+id/btnGenerarValorizacion"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
+        android:layout_height="52dp"
         android:textColor="@color/white"
-        android:text="Generar valorización (Excel)"
-        android:backgroundTint="@color/selection_indicator"/>
+        android:text="Configurar y generar Valorización"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/azul_100"/>
 
 </LinearLayout>

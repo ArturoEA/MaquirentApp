@@ -142,7 +142,16 @@ public class ValorizacionesRepository {
                         }
                     }
 
-                    String codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(nuevoNumero);
+                    String codigoGenerado;
+                    if (valorizacion.getCodigoEquipo() != null && !valorizacion.getCodigoEquipo().trim().isEmpty()
+                            && valorizacion.getFechaInicio() != null && !valorizacion.getFechaInicio().trim().isEmpty()) {
+                        codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy()
+                                .generarCodigoValorizacion(valorizacion.getCodigoEquipo(), valorizacion.getFechaInicio());
+                    } else if (valorizacion.getNumeroValorizacion() != null && !valorizacion.getNumeroValorizacion().trim().isEmpty()) {
+                        codigoGenerado = valorizacion.getNumeroValorizacion();
+                    } else {
+                        codigoGenerado = com.example.maquirentapp.strategy.StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(nuevoNumero);
+                    }
                     valorizacion.setNumeroValorizacion(codigoGenerado);
                     valorizacion.setId(nuevaValRef.getId());
 

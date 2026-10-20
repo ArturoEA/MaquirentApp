@@ -4,6 +4,9 @@ import android.content.Context;
 import com.example.maquirentapp.BuildConfig;
 import com.example.maquirentapp.Model.Cotizacion;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VolkerPdfStrategy extends BasePdfGeneratorStrategy {
 
     @Override
@@ -41,5 +44,20 @@ public class VolkerPdfStrategy extends BasePdfGeneratorStrategy {
         sb.append("</ul>");
         sb.append("</div>");
         return sb.toString();
+    }
+
+    @Override
+    public List<String> getCuentasBancarias() {
+        List<String> cuentas = new ArrayList<>();
+        cuentas.add("Nº DE CUENTA CORRIENTE / BCP MONEDA SOLES: 191-98765432-0-11");
+        cuentas.add("Nº DE CUENTA DE DETRACCIONES: 00-000-000000");
+        cuentas.add("Nº DE CUENTA INTERBANCARIA (CCI) SOLES: 002-191-009876543200-11");
+        cuentas.add("Nº DE CUENTA CORRIENTE / BBVA MONEDA DÓLARES: 0011-0123-0100012345");
+        return cuentas;
+    }
+
+    @Override
+    public String getTitularCuentas() {
+        return "NOTA: A favor de " + BuildConfig.COMPANY_NAME;
     }
 }

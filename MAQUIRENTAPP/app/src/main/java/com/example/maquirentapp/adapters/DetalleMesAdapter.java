@@ -49,6 +49,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         void onPagoHEConfirmado(DetalleMes detalle, int position);
 
         void onFechaFinModificada(DetalleMes detalle);
+
+        void onGenerarValorizacion(DetalleMes detalle, int position);
     }
 
     public void setOnDetalleMesListener(OnDetalleMesListener listener) {
@@ -333,6 +335,13 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         // Listeners de botones (igual que antes)
         holder.btnConfirmarPagoMes.setOnClickListener(v -> mostrarConfirmacion(v.getContext(), detalle, position, true));
         holder.btnConfirmarPagoHE.setOnClickListener(v -> mostrarConfirmacion(v.getContext(), detalle, position, false));
+        if (holder.btnGenerarValorizacionMes != null) {
+            holder.btnGenerarValorizacionMes.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onGenerarValorizacion(detalle, position);
+                }
+            });
+        }
     }
     private void mostrarConfirmacion(Context context, DetalleMes detalle, int position, boolean esMes) {
         if (listener == null) return;
@@ -484,7 +493,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         View franjaColor;
         TextInputLayout textInputHorometro;
         TextInputEditText inputHorometro, inputHorasExtras, inputPrecioHE;
-        Button btnConfirmarPagoMes, btnConfirmarPagoHE;
+        Button btnConfirmarPagoMes, btnConfirmarPagoHE, btnGenerarValorizacionMes;
         TextView tvConfirmacionPagoMes, tvConfirmacionPagoHE;
         TextWatcher horometroWatcher;
 
@@ -504,6 +513,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             inputPrecioHE = itemView.findViewById(R.id.inputPrecioHE);
             btnConfirmarPagoMes = itemView.findViewById(R.id.btnConfirmarPagoMes);
             btnConfirmarPagoHE = itemView.findViewById(R.id.btnConfirmarPagoHE);
+            btnGenerarValorizacionMes = itemView.findViewById(R.id.btnGenerarValorizacionMes);
             tvConfirmacionPagoMes = itemView.findViewById(R.id.tvConfirmacionPagoMes);
             tvConfirmacionPagoHE = itemView.findViewById(R.id.tvConfirmacionPagoHE);
         }

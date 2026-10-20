@@ -27,12 +27,13 @@ public class ValorizacionesAdapter extends ListAdapter<Valorizacion, Valorizacio
     private static final DiffUtil.ItemCallback<Valorizacion> DIFF_CALLBACK = new DiffUtil.ItemCallback<Valorizacion>() {
         @Override
         public boolean areItemsTheSame(@NonNull Valorizacion oldItem, @NonNull Valorizacion newItem) {
-            return oldItem.getId().equals(newItem.getId());
+            return oldItem.getId() != null && oldItem.getId().equals(newItem.getId());
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull Valorizacion oldItem, @NonNull Valorizacion newItem) {
             return oldItem.getTotal() == newItem.getTotal() &&
+                    oldItem.getNumeroValorizacion() != null &&
                     oldItem.getNumeroValorizacion().equals(newItem.getNumeroValorizacion());
         }
     };
@@ -71,17 +72,25 @@ public class ValorizacionesAdapter extends ListAdapter<Valorizacion, Valorizacio
         }
 
         public void bind(Valorizacion val, OnItemClickListener listener) {
-            tvNumero.setText(val.getNumeroValorizacion());
-            tvFecha.setText(val.getFechaEmision());
+            tvNumero.setText(val.getNumeroValorizacion() != null ? val.getNumeroValorizacion() : "-");
+            tvFecha.setText(val.getFechaEmision() != null ? val.getFechaEmision() : "");
 
-            StringBuilder equipos = new StringBuilder("Equipos: ");
-            for (ItemValorizacion item : val.getItems()) {
-                equipos.append(item.getDescripcionEquipo().split(" ")[0]).append(", ");
+            if (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty()) {
+                tvEquipos.setText(val.getDescripcionEquipo());
+            } else if (val.getItems() != null && !val.getItems().isEmpty()) {
+                StringBuilder equipos = new StringBuilder("Equipos: ");
+                for (ItemValorizacion item : val.getItems()) {
+                    if (item.getDescripcionEquipo() != null) {
+                        equipos.append(item.getDescripcionEquipo()).append(", ");
+                    }
+                }
+                if (equipos.length() > 2) equipos.setLength(equipos.length() - 2);
+                tvEquipos.setText(equipos.toString());
+            } else {
+                tvEquipos.setText("Equipo en alquiler");
             }
-            if (equipos.length() > 2) equipos.setLength(equipos.length() - 2);
-            tvEquipos.setText(equipos.toString());
 
-            String simbolo = "SOL".equals(val.getMoneda()) ? "S/." : "$";
+            String simbolo = (val.getMoneda() != null && val.getMoneda().contains("USD")) ? "US$" : "S/.";
             tvTotal.setText(String.format(Locale.US, "Total: %s %.2f", simbolo, val.getTotal()));
 
             itemView.setOnClickListener(v -> listener.onClick(val));

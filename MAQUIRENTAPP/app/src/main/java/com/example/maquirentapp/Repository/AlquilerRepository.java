@@ -55,7 +55,6 @@ public class AlquilerRepository {
 
     public void getAlquileresMensuales(Callback<List<AlquilerMensual>> callback) {
         db.collection(COL_MENSUALES)
-                .orderBy("timestampCreacion", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<AlquilerMensual> lista = new ArrayList<>();
@@ -64,6 +63,15 @@ public class AlquilerRepository {
                         alq.setId(doc.getId());
                         lista.add(alq);
                     }
+                    lista.sort((a, b) -> {
+                        if (a.getTimestampCreacion() > 0 && b.getTimestampCreacion() > 0) {
+                            return Long.compare(b.getTimestampCreacion(), a.getTimestampCreacion());
+                        }
+                        if (a.getFechaInicial() != null && b.getFechaInicial() != null) {
+                            return b.getFechaInicial().compareTo(a.getFechaInicial());
+                        }
+                        return 0;
+                    });
                     callback.onSuccess(lista);
                 })
                 .addOnFailureListener(callback::onError);
@@ -87,6 +95,9 @@ public class AlquilerRepository {
     public void crearAlquilerMensual(AlquilerMensual alquiler, Callback<AlquilerMensual> callback) {
         DocumentReference docRef = db.collection(COL_MENSUALES).document();
         alquiler.setId(docRef.getId());
+        if (alquiler.getTimestampCreacion() == 0) {
+            alquiler.setTimestampCreacion(System.currentTimeMillis());
+        }
 
         docRef.set(alquiler)
                 .addOnSuccessListener(v -> callback.onSuccess(alquiler))
@@ -138,7 +149,6 @@ public class AlquilerRepository {
     public void getDetallesMesPorAlquiler(String idAlquilerMensual, Callback<List<DetalleMes>> callback) {
         db.collection(COL_DETALLES_MES)
                 .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
-                .orderBy("numeroMes", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<DetalleMes> detalles = new ArrayList<>();
@@ -147,6 +157,7 @@ public class AlquilerRepository {
                         d.setId(doc.getId());
                         detalles.add(d);
                     }
+                    detalles.sort((d1, d2) -> Integer.compare(d1.getNumeroMes(), d2.getNumeroMes()));
                     callback.onSuccess(detalles);
                 })
                 .addOnFailureListener(callback::onError);
@@ -194,15 +205,22 @@ public class AlquilerRepository {
     public void getUltimoDetalleMes(String idAlquilerMensual, Callback<DetalleMes> callback) {
         db.collection(COL_DETALLES_MES)
                 .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
-                .orderBy("numeroMes", Query.Direction.DESCENDING)
-                .limit(1)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (!snapshot.isEmpty()) {
-                        DocumentSnapshot doc = snapshot.getDocuments().get(0);
-                        DetalleMes d = doc.toObject(DetalleMes.class);
-                        if (d != null) d.setId(doc.getId());
-                        callback.onSuccess(d);
+                        DetalleMes ultimo = null;
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            DetalleMes d = doc.toObject(DetalleMes.class);
+                            d.setId(doc.getId());
+                            if (ultimo == null || d.getNumeroMes() > ultimo.getNumeroMes()) {
+                                ultimo = d;
+                            }
+                        }
+                        if (ultimo != null) {
+                            callback.onSuccess(ultimo);
+                        } else {
+                            callback.onError(new Exception("No hay meses registrados"));
+                        }
                     } else {
                         callback.onError(new Exception("No hay meses registrados"));
                     }
@@ -232,7 +250,6 @@ public class AlquilerRepository {
 
     public void getAlquileresDiarios(Callback<List<AlquilerDia>> callback) {
         db.collection(COL_DIARIOS)
-                .orderBy("timestampCreacion", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<AlquilerDia> lista = new ArrayList<>();
@@ -241,6 +258,15 @@ public class AlquilerRepository {
                         alq.setId(doc.getId());
                         lista.add(alq);
                     }
+                    lista.sort((a, b) -> {
+                        if (a.getTimestampCreacion() > 0 && b.getTimestampCreacion() > 0) {
+                            return Long.compare(b.getTimestampCreacion(), a.getTimestampCreacion());
+                        }
+                        if (a.getFechaInicial() != null && b.getFechaInicial() != null) {
+                            return b.getFechaInicial().compareTo(a.getFechaInicial());
+                        }
+                        return 0;
+                    });
                     callback.onSuccess(lista);
                 })
                 .addOnFailureListener(callback::onError);
@@ -248,15 +274,25 @@ public class AlquilerRepository {
 
     public void getAlquileresDiariosActivos(Callback<List<AlquilerDia>> callback) {
         db.collection(COL_DIARIOS)
-                .whereEqualTo("finalizado", false)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<AlquilerDia> lista = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
                         AlquilerDia alq = doc.toObject(AlquilerDia.class);
                         alq.setId(doc.getId());
-                        lista.add(alq);
+                        if (!alq.isFinalizado()) {
+                            lista.add(alq);
+                        }
                     }
+                    lista.sort((a, b) -> {
+                        if (a.getTimestampCreacion() > 0 && b.getTimestampCreacion() > 0) {
+                            return Long.compare(b.getTimestampCreacion(), a.getTimestampCreacion());
+                        }
+                        if (a.getFechaInicial() != null && b.getFechaInicial() != null) {
+                            return b.getFechaInicial().compareTo(a.getFechaInicial());
+                        }
+                        return 0;
+                    });
                     callback.onSuccess(lista);
                 })
                 .addOnFailureListener(callback::onError);
@@ -280,6 +316,9 @@ public class AlquilerRepository {
     public void crearAlquilerDia(AlquilerDia alquiler, Callback<AlquilerDia> callback) {
         DocumentReference docRef = db.collection(COL_DIARIOS).document();
         alquiler.setId(docRef.getId());
+        if (alquiler.getTimestampCreacion() == 0) {
+            alquiler.setTimestampCreacion(System.currentTimeMillis());
+        }
 
         docRef.set(alquiler)
                 .addOnSuccessListener(v -> callback.onSuccess(alquiler))

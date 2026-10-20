@@ -213,6 +213,13 @@ public class HomeFragment extends Fragment {
         recyclerPagosPendientes.setAdapter(pagoPendienteAdapter);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        cargarAccesoriosYAlquileresDiarios();
+        cargarPagosPendientes();
+    }
+
     private void cargarPagosPendientes() {
         if (shimmerPagosPendientes != null) {
             shimmerPagosPendientes.setVisibility(View.VISIBLE);
@@ -230,7 +237,11 @@ public class HomeFragment extends Fragment {
                 for (GrupoElectrogeno g : grupos) {
                     if (g != null && g.getId() != null) {
                         gruposMap.put(g.getId(), g);
-                        mapaCodigos.put(g.getId(), g.getCodigo());
+                        if (g.getCodigo() != null) {
+                            gruposMap.put(g.getCodigo(), g);
+                            mapaCodigos.put(g.getId(), g.getCodigo());
+                            mapaCodigos.put(g.getCodigo(), g.getCodigo());
+                        }
                     }
                 }
                 if (alquilerDiarioAdapter != null) {
@@ -300,7 +311,16 @@ public class HomeFragment extends Fragment {
                 PagoPendiente pago = new PagoPendiente();
 
                 GrupoElectrogeno grupo = gruposMap.get(alquiler.getIdGrupo());
-                String codigo = (grupo != null) ? grupo.getCodigo() : "(ID: " + alquiler.getIdGrupo() + ")";
+                if (grupo == null && alquiler.getIdGrupo() != null) {
+                    for (GrupoElectrogeno g : gruposMap.values()) {
+                        if (g != null && g.getCodigo() != null && g.getCodigo().equalsIgnoreCase(alquiler.getIdGrupo())) {
+                            grupo = g;
+                            break;
+                        }
+                    }
+                }
+                String codigo = (grupo != null && grupo.getCodigo() != null) ? grupo.getCodigo() :
+                        (alquiler.getIdGrupo() != null ? alquiler.getIdGrupo() : "Equipo");
                 String moneda = (alquiler.getMoneda() != null && alquiler.getMoneda().equals("USD")) ? "$" : "S/.";
 
                 pago.setNombreCliente(alquiler.getNombreCliente());

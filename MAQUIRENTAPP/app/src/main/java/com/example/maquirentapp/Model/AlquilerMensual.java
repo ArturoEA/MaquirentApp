@@ -20,11 +20,13 @@ public class AlquilerMensual implements Serializable {
     private List<String> accesoriosIds;
     private boolean finalizado;
     private String adminUid;
+    private long timestampCreacion;
 
     public AlquilerMensual() {
         this.accesoriosIds = new ArrayList<>();
         this.moneda = "SOL";
         this.finalizado = false;
+        this.timestampCreacion = System.currentTimeMillis();
     }
 
     public String getId() {
@@ -143,5 +145,13 @@ public class AlquilerMensual implements Serializable {
 
     public void setAdminUid(String adminUid) {
         this.adminUid = adminUid;
+    }
+
+    public long getTimestampCreacion() {
+        return timestampCreacion;
+    }
+
+    public void setTimestampCreacion(long timestampCreacion) {
+        this.timestampCreacion = timestampCreacion;
     }
 }

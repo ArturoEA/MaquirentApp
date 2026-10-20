@@ -29,11 +29,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_bottom_nav_rounded"
-                android:backgroundTint="#E0F7FA"
+                android:backgroundTint="@color/azul_100"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
                 android:text="COT-2025-001"
-                android:textColor="@color/black"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 

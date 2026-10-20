@@ -179,6 +179,17 @@
                     android:text="Pago realizado el 25/12/2025"
                     android:visibility="gone"/>
 
+                <Button
+                    android:id="@+id/btnGenerarValorizacionMes"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/azul_100"
+                    android:text="Generar Valorización"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

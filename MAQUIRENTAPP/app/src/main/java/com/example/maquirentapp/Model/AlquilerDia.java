@@ -21,11 +21,13 @@ public class AlquilerDia implements Serializable {
     private List<String> accesoriosIds;
     private boolean finalizado = false;
     private String comentarios;
+    private long timestampCreacion;
 
     public AlquilerDia() {
         // Constructor vacío
         this.accesoriosIds = new ArrayList<>();
         this.horasMaximas = 10;
+        this.timestampCreacion = System.currentTimeMillis();
     }
 
     public String getId() { return id; }
@@ -71,4 +73,7 @@ public class AlquilerDia implements Serializable {
     public void setFinalizado(boolean finalizado) { this.finalizado = finalizado; }
     public String getComentarios() { return comentarios; }
     public void setComentarios(String comentarios) { this.comentarios = comentarios; }
+
+    public long getTimestampCreacion() { return timestampCreacion; }
+    public void setTimestampCreacion(long timestampCreacion) { this.timestampCreacion = timestampCreacion; }
 }

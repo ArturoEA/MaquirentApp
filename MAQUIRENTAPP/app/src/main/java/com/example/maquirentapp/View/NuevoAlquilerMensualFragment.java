@@ -282,6 +282,28 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                 actualizarDetalleMes(detalle);
             }
+
+            @Override
+            public void onGenerarValorizacion(DetalleMes detalle, int position) {
+                if (alquilerActual == null) return;
+                double horometroAnterior;
+                if (detalle.getNumeroMes() == 1) {
+                    horometroAnterior = alquilerActual.getHorometroInicial();
+                } else {
+                    horometroAnterior = obtenerHorometroMesAnterior(detalle.getNumeroMes() - 1);
+                }
+
+                DialogGenerarValorizacion dialog = DialogGenerarValorizacion.newInstance(alquilerActual, detalle, horometroAnterior);
+                dialog.setOnValorizacionGeneradaListener((val, pdf) -> {
+                    if (val.isConHorasExtras() && val.getHorometroFinal() > 0) {
+                        detalle.setHorometro(val.getHorometroFinal());
+                        detalle.setHorasExtras(val.getHorasExtras());
+                        detalle.setPrecioHorasExtras(val.getTotalHorasExtras());
+                        adapterDetallesMes.notifyItemChanged(position);
+                    }
+                });
+                dialog.show(getChildFragmentManager(), "DialogGenerarValorizacion");
+            }
         });
 
         btnFinalizarAlquiler.setOnClickListener(v -> mostrarDialogoConfirmarEnvio());
