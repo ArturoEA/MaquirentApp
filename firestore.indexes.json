@@ -1,0 +1,61 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mantenimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idGrupo", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mantenimientos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idGrupo", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "detallesMes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idAlquilerMensual", "order": "ASCENDING" },
+        { "fieldPath": "numeroMes", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "detallesMes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idAlquilerMensual", "order": "ASCENDING" },
+        { "fieldPath": "numeroMes", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "clientesValorizacion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "anio", "order": "ASCENDING" },
+        { "fieldPath": "nombreEmpresa", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "valorizaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idClienteValorizacion", "order": "ASCENDING" },
+        { "fieldPath": "timestampCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "cotizaciones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "anio", "order": "ASCENDING" },
+        { "fieldPath": "numeroCotizacion", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

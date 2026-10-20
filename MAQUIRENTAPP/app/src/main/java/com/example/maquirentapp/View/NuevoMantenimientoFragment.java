@@ -2,6 +2,7 @@ package com.example.maquirentapp.View;
 
 import static android.view.View.GONE;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
@@ -71,6 +72,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -612,11 +614,17 @@ public class NuevoMantenimientoFragment extends Fragment {
             return;
         }
 
-        List<String> urlsSubidas = new ArrayList<>();
+        Context context = getContext();
+        if (context == null) {
+            listener.onFotosSubidas(new ArrayList<>());
+            return;
+        }
+
+        List<String> urlsSubidas = Collections.synchronizedList(new ArrayList<>());
         final int[] fotosProcesadas = {0};
 
         for (Uri uri : fotosUriList) {
-            byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uri);
+            byte[] dataImagen = ImageUtils.comprimirImagen(context, uri);
 
             if (dataImagen != null) {
                 String fileName = "mantenimientos/" + codigoGrupo + "/" + System.currentTimeMillis() + ".jpg";
@@ -1095,31 +1103,51 @@ public class NuevoMantenimientoFragment extends Fragment {
         // 3. Ejecutamos la generación del PDF en segundo plano
         new Thread(() -> {
             try {
+                Context context = getContext();
+                Activity activity = getActivity();
+                if (context == null || activity == null) {
+                    if (dialogCargaPdf != null && dialogCargaPdf.isShowing()) {
+                        dialogCargaPdf.dismiss();
+                    }
+                    return;
+                }
+
                 String nombreArchivo = "InformeMantenimiento_" + codigoGrupo.replace(" ", "_") + ".pdf";
-                File pdfDir = new File(requireContext().getCacheDir(), "InformesMantenimientosTemporales");
+                File pdfDir = new File(context.getCacheDir(), "InformesMantenimientosTemporales");
                 if (!pdfDir.exists()) pdfDir.mkdirs();
                 File archivoFinal = new File(pdfDir, nombreArchivo);
 
                 // Llamamos a la clase generadora pasándole el Mapa limpio a través de la estrategia
                 com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarInformeMantenimientoPdf(
-                        requireContext(), archivoFinal, mantenimientoActual, infoPlacaActual, codigoGrupo, mapDatos
+                        context, archivoFinal, mantenimientoActual, infoPlacaActual, codigoGrupo, mapDatos
                 );
 
                 // Volvemos a la pantalla principal para abrir el visor
-                requireActivity().runOnUiThread(() -> {
-                    dialogCargaPdf.dismiss();
-                    Intent intent = new Intent(requireContext(), PdfViewerActivity.class);
-                    intent.putExtra("PDF_URL", archivoFinal.getAbsolutePath());
-                    intent.putExtra("NOMBRE_ARCHIVO", nombreArchivo);
-                    startActivity(intent);
+                activity.runOnUiThread(() -> {
+                    if (dialogCargaPdf != null && dialogCargaPdf.isShowing()) {
+                        dialogCargaPdf.dismiss();
+                    }
+                    if (isAdded() && getContext() != null) {
+                        Intent intent = new Intent(getContext(), PdfViewerActivity.class);
+                        intent.putExtra("PDF_URL", archivoFinal.getAbsolutePath());
+                        intent.putExtra("NOMBRE_ARCHIVO", nombreArchivo);
+                        startActivity(intent);
+                    }
                 });
 
             } catch (Exception e) {
                 Log.e(TAG, "Error PDF", e);
-                requireActivity().runOnUiThread(() -> {
-                    dialogCargaPdf.dismiss();
-                    Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> {
+                        if (dialogCargaPdf != null && dialogCargaPdf.isShowing()) {
+                            dialogCargaPdf.dismiss();
+                        }
+                        if (isAdded() && getContext() != null) {
+                            Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
             }
         }).start();
     }

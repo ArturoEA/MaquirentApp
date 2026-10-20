@@ -717,10 +717,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 }
             });
         } else {
-            alquilerRepository.crearAlquilerMensual(alquiler, new Callback<AlquilerMensual>() {
+            DetalleMes primerMes = construirPrimerDetalleMes(alquiler);
+            alquilerRepository.crearAlquilerMensualConPrimerMes(alquiler, primerMes, new Callback<AlquilerMensual>() {
                 @Override
                 public void onSuccess(AlquilerMensual alquilerCreado) {
-                    generarPrimerDetalleMes(alquilerCreado);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
                     }
@@ -739,11 +739,11 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         }
     }
 
-    private void generarPrimerDetalleMes(AlquilerMensual alquiler) {
+    private DetalleMes construirPrimerDetalleMes(AlquilerMensual alquiler) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             Date fechaInicioDate = sdf.parse(alquiler.getFechaInicial());
-            if (fechaInicioDate == null) return;
+            if (fechaInicioDate == null) return null;
 
             Calendar calInicio = Calendar.getInstance();
             calInicio.setTime(fechaInicioDate);
@@ -757,32 +757,15 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             String strFechaFin = sdf.format(fechaFinDate);
 
             DetalleMes primerMes = new DetalleMes();
-            primerMes.setIdAlquilerMensual(alquiler.getId());
             primerMes.setNumeroMes(1);
             primerMes.setFechaInicio(strFechaInicio);
             primerMes.setFechaFin(strFechaFin);
-            // Precio full por defecto
             primerMes.setMontoMes(alquiler.getPrecioAlquiler());
             primerMes.setTituloPeriodo("Mes 1: " + strFechaInicio + " - " + strFechaFin);
-
-            alquilerRepository.crearDetalleMes(primerMes, new Callback<DetalleMes>() {
-                @Override
-                public void onSuccess(DetalleMes detalle) {
-                    Log.i("NuevoAlquiler", "Primer detalle de mes creado.");
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Error al crear detalle de mes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-
+            return primerMes;
         } catch (ParseException e) {
-            if (getContext() != null) {
-                Toast.makeText(getContext(), "Error al procesar fechas", Toast.LENGTH_SHORT).show();
-            }
+            Log.e("NuevoAlquiler", "Error al procesar fechas para primer mes", e);
+            return null;
         }
     }
 

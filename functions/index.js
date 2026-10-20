@@ -375,6 +375,15 @@ exports.confirmarEliminacionUsuario = onCall(
     // Eliminar el código ya usado
     await docRef.delete();
 
+    // Eliminar fotos de perfil en Storage si existen
+    try {
+      const bucket = getStorage().bucket();
+      await bucket.deleteFiles({ prefix: `perfiles/${usuarioId}/` });
+      logger.info(`Fotos de Storage eliminadas para usuario ${usuarioId}`);
+    } catch (storageErr) {
+      logger.warn(`No se pudieron eliminar fotos de Storage para usuario ${usuarioId}:`, storageErr);
+    }
+
     logger.info(`Usuario ${usuarioId} eliminado correctamente.`);
     return { success: true, message: "Usuario eliminado correctamente." };
   }
@@ -388,6 +397,8 @@ exports.notificarPagosPendientes = onSchedule({
   schedule: "0 9 * * 1",
   timeZone: "America/Lima",
   region: "us-central1",
+  timeoutSeconds: 300,
+  maxInstances: 1,
 }, async (event) => {
   logger.info("Ejecutando notificarPagosPendientes...");
   const db = admin.firestore();
@@ -405,18 +416,21 @@ exports.notificarPagosPendientes = onSchedule({
       return null;
     }
 
-    // 2. Buscar pagos pendientes
+    // 2. Buscar pagos pendientes en paralelo
     let totalPendientes = 0;
-    
-    for (const alquilerDoc of alquileresSnapshot.docs) {
+    const alquileresDocs = alquileresSnapshot.docs;
+    const detallesSnapshots = await Promise.all(
+      alquileresDocs.map(doc =>
+        db.collection("detallesMes")
+          .where("idAlquilerMensual", "==", doc.id)
+          .get()
+      )
+    );
+
+    alquileresDocs.forEach((alquilerDoc, idx) => {
       const alquiler = alquilerDoc.data();
-      
-      // Obtener detalles de mes para este alquiler
-      const detallesSnapshot = await db
-        .collection("detallesMes")
-        .where("idAlquilerMensual", "==", alquilerDoc.id)
-        .get();
-      
+      const detallesSnapshot = detallesSnapshots[idx];
+
       detallesSnapshot.forEach((detalleDoc) => {
         const detalle = detalleDoc.data();
         
@@ -433,7 +447,7 @@ exports.notificarPagosPendientes = onSchedule({
           totalPendientes++;
         }
       });
-    }
+    });
 
     if (totalPendientes === 0) {
       logger.info("No hay pagos pendientes.");
@@ -850,6 +864,8 @@ exports.procesarFacturacionMensual = onSchedule({
   schedule: "5 0 * * *",
   timeZone: "America/Lima",
   region: "us-central1",
+  timeoutSeconds: 300,
+  maxInstances: 1,
 }, async (event) => {
   logger.info("Iniciando revisión diaria de alquileres mensuales...");
   const db = admin.firestore();
@@ -931,7 +947,8 @@ exports.procesarFacturacionMensual = onSchedule({
           creadoEn: admin.firestore.FieldValue.serverTimestamp()
         };
 
-        await db.collection("detallesMes").add(nuevoDetalle);
+        const idDetalleDeterministic = `${alquilerId}_mes_${nuevoNumeroMes}`;
+        await db.collection("detallesMes").doc(idDetalleDeterministic).set(nuevoDetalle, { merge: true });
         mesesCreados++;
         logger.info(`Nuevo mes ${nuevoNumeroMes} generado para alquiler ${alquilerId}: ${tituloPeriodo}`);
       }

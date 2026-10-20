@@ -183,17 +183,29 @@ public class GeneradorRepository {
         String fileName = "grupos/" + nuevoCodigo + "_" + System.currentTimeMillis() + ".jpg";
         StorageReference storageRef = storage.getReference().child(fileName);
 
-        storageRef.putBytes(dataImagen)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) throw task.getException();
-                    return storageRef.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri -> {
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("codigo", nuevoCodigo);
-                    updates.put("foto", downloadUri.toString());
-                    db.collection(COL_GRUPOS).document(grupoId).update(updates)
-                            .addOnSuccessListener(v -> callback.onSuccess(null))
+        db.collection(COL_GRUPOS).document(grupoId).get()
+                .addOnSuccessListener(doc -> {
+                    String oldFotoUrl = doc != null ? doc.getString("foto") : null;
+                    storageRef.putBytes(dataImagen)
+                            .continueWithTask(task -> {
+                                if (!task.isSuccessful()) throw task.getException();
+                                return storageRef.getDownloadUrl();
+                            })
+                            .addOnSuccessListener(downloadUri -> {
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("codigo", nuevoCodigo);
+                                updates.put("foto", downloadUri.toString());
+                                db.collection(COL_GRUPOS).document(grupoId).update(updates)
+                                        .addOnSuccessListener(v -> {
+                                            if (oldFotoUrl != null && !oldFotoUrl.isEmpty() && oldFotoUrl.contains("firebasestorage")) {
+                                                try {
+                                                    storage.getReferenceFromUrl(oldFotoUrl).delete();
+                                                } catch (Exception ignored) {}
+                                            }
+                                            callback.onSuccess(null);
+                                        })
+                                        .addOnFailureListener(callback::onError);
+                            })
                             .addOnFailureListener(callback::onError);
                 })
                 .addOnFailureListener(callback::onError);
@@ -216,7 +228,7 @@ public class GeneradorRepository {
 
                     functions.getHttpsCallable("enviarCodigoEliminacion").call(data)
                             .addOnSuccessListener(result -> callback.onSuccess(codigo))
-                            .addOnFailureListener(e -> callback.onSuccess(codigo));
+                            .addOnFailureListener(callback::onError);
                 })
                 .addOnFailureListener(callback::onError);
     }

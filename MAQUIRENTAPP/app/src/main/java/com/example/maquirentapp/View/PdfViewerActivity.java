@@ -19,8 +19,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.maquirentapp.adapters.PdfPageAdapter;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.PdfCacheManager;
+import com.example.maquirentapp.adapters.PdfPageAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
@@ -128,31 +129,24 @@ public class PdfViewerActivity extends AppCompatActivity {
             return;
         }
 
+        // Modo Offline Cache-First: Si el PDF ya está almacenado localmente, abrirlo al instante sin red
+        if (PdfCacheManager.isFileCached(this, nombreArchivo)) {
+            File cachedFile = PdfCacheManager.getCachedFile(this, nombreArchivo);
+            mostrarPdfDesdeArchivo(cachedFile);
+            return;
+        }
+
         executor.execute(() -> {
             try {
-                pdfFile = new File(getCacheDir(), "temp_" + nombreArchivo + ".pdf");
-                URL url = new URL(pdfUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-
-                FileOutputStream fos = new FileOutputStream(pdfFile);
-                InputStream is = connection.getInputStream();
-
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = is.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len);
-                }
-                fos.close();
-                is.close();
-
-                runOnUiThread(() -> mostrarPdfDesdeArchivo(pdfFile));
+                // Descarga y almacena permanentemente en la caché offline
+                File cachedFile = PdfCacheManager.obtenerPdf(this, pdfUrl, nombreArchivo);
+                runOnUiThread(() -> mostrarPdfDesdeArchivo(cachedFile));
 
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error al descargar PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Documento no disponible sin conexión (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -242,8 +236,8 @@ public class PdfViewerActivity extends AppCompatActivity {
             }
         }
 
-        // Eliminar archivo temporal
-        if (pdfFile != null && pdfFile.exists()) {
+        // Eliminar únicamente archivos temporales de descarga si hubiesen quedado huérfanos, conservando los offline
+        if (pdfFile != null && pdfFile.exists() && pdfFile.getName().startsWith("temp_")) {
             pdfFile.delete();
         }
 

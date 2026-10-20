@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.Callback;
+import com.example.maquirentapp.Utils.PdfCacheManager;
 import com.example.maquirentapp.ViewModel.FichaTecnicaViewModel;
 import com.example.maquirentapp.adapters.FichasTecnicasAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -254,25 +255,22 @@ public class FichasTecnicasFragment extends Fragment {
     }
 
     private void compartirPdf(FichaTecnica ficha) {
-        if (ficha == null || ficha.getUrlPdf() == null || getContext() == null) return;
+        if (ficha == null || getContext() == null) return;
+
+        // Modo Offline: Si ya está en la caché local, compartir directamente sin red
+        if (PdfCacheManager.isFileCached(requireContext(), ficha.getNombreArchivo())) {
+            File cachedFile = PdfCacheManager.getCachedFile(requireContext(), ficha.getNombreArchivo());
+            lanzarIntentCompartir(cachedFile, ficha.getNombreArchivo());
+            return;
+        }
+
+        if (ficha.getUrlPdf() == null) return;
         File tempFile = new File(requireContext().getCacheDir(), ficha.getNombreArchivo());
         viewModel.descargarPdfAArchivo(ficha.getUrlPdf(), tempFile, new Callback<File>() {
             @Override
             public void onSuccess(File file) {
                 if (getContext() == null) return;
-                Uri fileUri = FileProvider.getUriForFile(requireContext(),
-                        requireContext().getPackageName() + ".provider", file);
-
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("application/pdf");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, ficha.getNombreArchivo());
-                shareIntent.putExtra(Intent.EXTRA_TEXT, "Te comparto esta ficha técnica");
-                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                Intent chooser = Intent.createChooser(shareIntent, "Compartir PDF");
-                chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(chooser);
+                lanzarIntentCompartir(file, ficha.getNombreArchivo());
             }
 
             @Override
@@ -284,10 +282,38 @@ public class FichasTecnicasFragment extends Fragment {
         });
     }
 
+    private void lanzarIntentCompartir(File file, String nombreArchivo) {
+        Uri fileUri = FileProvider.getUriForFile(requireContext(),
+                requireContext().getPackageName() + ".provider", file);
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("application/pdf");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, nombreArchivo);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Te comparto esta ficha técnica");
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        Intent chooser = Intent.createChooser(shareIntent, "Compartir PDF");
+        chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(chooser);
+    }
+
     private void descargarPdf(FichaTecnica ficha) {
-        if (ficha == null || ficha.getUrlPdf() == null || getContext() == null) return;
+        if (ficha == null || getContext() == null) return;
         File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File destFile = new File(downloadsDir, ficha.getNombreArchivo());
+
+        // Modo Offline: Si ya está en la caché local, copiar directamente a Descargas
+        if (PdfCacheManager.isFileCached(requireContext(), ficha.getNombreArchivo())) {
+            try {
+                File cachedFile = PdfCacheManager.getCachedFile(requireContext(), ficha.getNombreArchivo());
+                java.nio.file.Files.copy(cachedFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                Toast.makeText(getContext(), "Descargado en: " + destFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                return;
+            } catch (Exception ignored) {}
+        }
+
+        if (ficha.getUrlPdf() == null) return;
         viewModel.descargarPdfAArchivo(ficha.getUrlPdf(), destFile, new Callback<File>() {
             @Override
             public void onSuccess(File file) {
@@ -324,6 +350,7 @@ public class FichasTecnicasFragment extends Fragment {
                 .setTitle("Eliminar ficha")
                 .setMessage("¿Estás seguro de eliminar '" + ficha.getNombreArchivo() + "'?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {
+                    PdfCacheManager.eliminarPdfOffline(requireContext(), ficha.getNombreArchivo());
                     viewModel.eliminarPdf(ficha);
                 })
                 .setNegativeButton("Cancelar", null)
@@ -335,6 +362,9 @@ public class FichasTecnicasFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         hideGlobalFab();
+        if (adapter != null) {
+            adapter.shutdown();
+        }
         // Limpiar observadores
         viewModel.getFichasLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getOperacionStatus().removeObservers(getViewLifecycleOwner());

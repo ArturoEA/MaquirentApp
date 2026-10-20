@@ -1,5 +1,6 @@
 package com.example.maquirentapp.adapters;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.pdf.PdfRenderer;
 import android.os.ParcelFileDescriptor;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.PdfCacheManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,7 +32,7 @@ import java.util.concurrent.Executors;
 public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAdapter.ViewHolder> {
     private List<FichaTecnica> fichas;
     private OnItemClickListener listener;
-    private ExecutorService executor = Executors.newFixedThreadPool(3);
+    private final ExecutorService executor = Executors.newFixedThreadPool(3);
 
     public interface OnItemClickListener {
         void onItemClick(FichaTecnica ficha);
@@ -66,6 +68,18 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
     public void actualizarLista(List<FichaTecnica> nuevasFichas) {
         this.fichas = nuevasFichas != null ? nuevasFichas : new ArrayList<>();
         notifyDataSetChanged();
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        shutdown();
+    }
+
+    public void shutdown() {
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -120,52 +134,56 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
             ivPdfIcon.setVisibility(View.VISIBLE);
             progressPreview.setVisibility(View.VISIBLE);
 
+            if (executor.isShutdown()) return;
+
+            Context context = itemView.getContext();
+
             executor.execute(() -> {
+                ParcelFileDescriptor fd = null;
+                PdfRenderer renderer = null;
+                PdfRenderer.Page page = null;
+
                 try {
-                    // Descargar el PDF temporalmente
-                    URL url = new URL(ficha.getUrlPdf());
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.connect();
+                    // Modo Offline Cache-First: obtiene el archivo de la caché local o lo descarga y guarda para siempre
+                    File pdfFile = PdfCacheManager.obtenerPdf(context, ficha.getUrlPdf(), ficha.getNombreArchivo());
 
-                    File tempFile = File.createTempFile("preview", ".pdf", itemView.getContext().getCacheDir());
-                    FileOutputStream fos = new FileOutputStream(tempFile);
-                    InputStream is = connection.getInputStream();
+                    if (pdfFile != null && pdfFile.exists() && pdfFile.length() > 0) {
+                        fd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY);
+                        renderer = new PdfRenderer(fd);
+                        if (renderer.getPageCount() > 0) {
+                            page = renderer.openPage(0);
+                            Bitmap bitmap = Bitmap.createBitmap(page.getWidth(), page.getHeight(), Bitmap.Config.ARGB_8888);
+                            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
-                    byte[] buffer = new byte[1024];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
+                            // Actualizar UI en el hilo principal
+                            itemView.post(() -> {
+                                progressPreview.setVisibility(View.GONE);
+                                ivPdfIcon.setVisibility(View.GONE);
+                                ivPreview.setVisibility(View.VISIBLE);
+                                ivPreview.setImageBitmap(bitmap);
+                            });
+                        }
+                    } else {
+                        itemView.post(() -> {
+                            progressPreview.setVisibility(View.GONE);
+                            ivPdfIcon.setVisibility(View.VISIBLE);
+                        });
                     }
-                    fos.close();
-                    is.close();
-
-                    // Renderizar la primera página
-                    ParcelFileDescriptor fd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY);
-                    PdfRenderer renderer = new PdfRenderer(fd);
-                    PdfRenderer.Page page = renderer.openPage(0);
-
-                    Bitmap bitmap = Bitmap.createBitmap(page.getWidth(), page.getHeight(), Bitmap.Config.ARGB_8888);
-                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-
-                    page.close();
-                    renderer.close();
-                    fd.close();
-                    tempFile.delete();
-
-                    // Actualizar UI en el hilo principal
-                    itemView.post(() -> {
-                        progressPreview.setVisibility(View.GONE);
-                        ivPdfIcon.setVisibility(View.GONE);
-                        ivPreview.setVisibility(View.VISIBLE);
-                        ivPreview.setImageBitmap(bitmap);
-                    });
-
                 } catch (Exception e) {
-                    e.printStackTrace();
                     itemView.post(() -> {
                         progressPreview.setVisibility(View.GONE);
                         ivPdfIcon.setVisibility(View.VISIBLE);
                     });
+                } finally {
+                    if (page != null) {
+                        try { page.close(); } catch (Exception ignored) {}
+                    }
+                    if (renderer != null) {
+                        try { renderer.close(); } catch (Exception ignored) {}
+                    }
+                    if (fd != null) {
+                        try { fd.close(); } catch (Exception ignored) {}
+                    }
                 }
             });
         }

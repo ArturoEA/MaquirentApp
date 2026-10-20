@@ -31,6 +31,7 @@ import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -259,28 +260,25 @@ public class HomeFragment extends Fragment {
     }
 
     private void cargarAlquileresActivos() {
-        alquilerRepository.getAlquileresMensuales(new Callback<List<AlquilerMensual>>() {
+        alquilerRepository.getAlquileresMensualesActivos(new Callback<List<AlquilerMensual>>() {
             @Override
-            public void onSuccess(List<AlquilerMensual> alquileres) {
-                List<AlquilerMensual> alquileresActivos = new ArrayList<>();
-                for (AlquilerMensual a : alquileres) {
-                    if (a != null && !a.isFinalizado()) {
-                        alquileresActivos.add(a);
-                    }
-                }
-
-                if (alquileresActivos.isEmpty()) {
+            public void onSuccess(List<AlquilerMensual> alquileresActivos) {
+                if (alquileresActivos == null || alquileresActivos.isEmpty()) {
+                    pagosPendientesList.clear();
                     actualizarAdaptadorPagos();
                     return;
                 }
 
+                List<PagoPendiente> listaTemp = Collections.synchronizedList(new ArrayList<>());
                 AtomicInteger counter = new AtomicInteger(alquileresActivos.size());
                 for (AlquilerMensual alquiler : alquileresActivos) {
                     alquilerRepository.getDetallesMesPorAlquiler(alquiler.getId(), new Callback<List<DetalleMes>>() {
                         @Override
                         public void onSuccess(List<DetalleMes> detalles) {
-                            procesarDetallesDeAlquiler(alquiler, detalles);
+                            procesarDetallesDeAlquiler(alquiler, detalles, listaTemp);
                             if (counter.decrementAndGet() == 0) {
+                                pagosPendientesList.clear();
+                                pagosPendientesList.addAll(listaTemp);
                                 actualizarAdaptadorPagos();
                             }
                         }
@@ -288,6 +286,8 @@ public class HomeFragment extends Fragment {
                         @Override
                         public void onError(Exception e) {
                             if (counter.decrementAndGet() == 0) {
+                                pagosPendientesList.clear();
+                                pagosPendientesList.addAll(listaTemp);
                                 actualizarAdaptadorPagos();
                             }
                         }
@@ -297,12 +297,14 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onError(Exception e) {
+                pagosPendientesList.clear();
                 actualizarAdaptadorPagos();
             }
         });
     }
 
-    private void procesarDetallesDeAlquiler(AlquilerMensual alquiler, List<DetalleMes> detalles) {
+    private void procesarDetallesDeAlquiler(AlquilerMensual alquiler, List<DetalleMes> detalles, List<PagoPendiente> destino) {
+        if (detalles == null) return;
         for (DetalleMes detalle : detalles) {
             boolean mesPendiente = !detalle.isPagoMesConfirmado();
             boolean hePendiente = !detalle.isPagoHEConfirmado() && detalle.getPrecioHorasExtras() > 0;
@@ -339,7 +341,7 @@ public class HomeFragment extends Fragment {
                     pago.setEstadoColor(R.color.yellow_accent);
                 }
 
-                pagosPendientesList.add(pago);
+                destino.add(pago);
             }
         }
     }

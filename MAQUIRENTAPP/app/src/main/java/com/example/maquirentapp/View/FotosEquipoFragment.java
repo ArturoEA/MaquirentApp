@@ -1,5 +1,6 @@
 package com.example.maquirentapp.View;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.Context;
@@ -126,20 +127,26 @@ public class FotosEquipoFragment extends Fragment {
                         generadorRepository.subirFotoEquipoBytes(idGrupo, dataImagen, new Callback<Void>() {
                             @Override
                             public void onSuccess(Void result) {
-                                Toast.makeText(getContext(), "Foto subida correctamente", Toast.LENGTH_SHORT).show();
-                                cargarFotos();
-                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (isAdded() && getContext() != null) {
+                                    Toast.makeText(getContext(), "Foto subida correctamente", Toast.LENGTH_SHORT).show();
+                                    cargarFotos();
+                                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                                }
                             }
 
                             @Override
                             public void onError(Exception e) {
-                                Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                                if (isAdded() && getContext() != null) {
+                                    Toast.makeText(getContext(), "Error al subir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                                }
                             }
                         });
                     } else {
                         if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                        if (isAdded() && getContext() != null) {
+                            Toast.makeText(getContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }
@@ -276,29 +283,45 @@ public class FotosEquipoFragment extends Fragment {
     }
 
     private void compartirBitmap(Bitmap bitmap, String fileName) {
+        Context context = getContext();
+        if (context == null || !isAdded()) return;
+
         try {
-            File cachePath = new File(requireContext().getCacheDir(), "images");
+            File cachePath = new File(context.getCacheDir(), "images");
             if (!cachePath.exists()) cachePath.mkdirs();
             File newFile = new File(cachePath, fileName);
             FileOutputStream stream = new FileOutputStream(newFile);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
             stream.close();
 
-            Uri contentUri = FileProvider.getUriForFile(requireContext(),
-                    requireContext().getPackageName() + ".provider", newFile);
+            Uri contentUri = FileProvider.getUriForFile(context,
+                    context.getPackageName() + ".provider", newFile);
 
             if (contentUri != null) {
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
+                shareIntent.setDataAndType(contentUri, context.getContentResolver().getType(contentUri));
                 shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-                requireActivity().runOnUiThread(() -> {
-                    startActivity(Intent.createChooser(shareIntent, "Compartir vía"));
-                });
+                
+                Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> {
+                        if (isAdded()) {
+                            startActivity(Intent.createChooser(shareIntent, "Compartir vía"));
+                        }
+                    });
+                }
             }
         } catch (IOException e) {
-            Toast.makeText(getContext(), "Error al compartir", Toast.LENGTH_SHORT).show();
+            Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(() -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Error al compartir", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         }
     }
 

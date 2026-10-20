@@ -77,6 +77,22 @@ public class AlquilerRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    public void getAlquileresMensualesActivos(Callback<List<AlquilerMensual>> callback) {
+        db.collection(COL_MENSUALES)
+                .whereEqualTo("finalizado", false)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<AlquilerMensual> lista = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        AlquilerMensual alq = doc.toObject(AlquilerMensual.class);
+                        alq.setId(doc.getId());
+                        lista.add(alq);
+                    }
+                    callback.onSuccess(lista);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
     public void getAlquilerMensualPorId(String id, Callback<AlquilerMensual> callback) {
         db.collection(COL_MENSUALES).document(id)
                 .get()
@@ -100,6 +116,27 @@ public class AlquilerRepository {
         }
 
         docRef.set(alquiler)
+                .addOnSuccessListener(v -> callback.onSuccess(alquiler))
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void crearAlquilerMensualConPrimerMes(AlquilerMensual alquiler, DetalleMes primerMes, Callback<AlquilerMensual> callback) {
+        WriteBatch batch = db.batch();
+        DocumentReference docRef = db.collection(COL_MENSUALES).document();
+        alquiler.setId(docRef.getId());
+        if (alquiler.getTimestampCreacion() == 0) {
+            alquiler.setTimestampCreacion(System.currentTimeMillis());
+        }
+        batch.set(docRef, alquiler);
+
+        if (primerMes != null) {
+            DocumentReference detalleRef = db.collection(COL_DETALLES_MES).document();
+            primerMes.setId(detalleRef.getId());
+            primerMes.setIdAlquilerMensual(alquiler.getId());
+            batch.set(detalleRef, primerMes);
+        }
+
+        batch.commit()
                 .addOnSuccessListener(v -> callback.onSuccess(alquiler))
                 .addOnFailureListener(callback::onError);
     }
@@ -473,9 +510,21 @@ public class AlquilerRepository {
     }
 
     public void eliminarAccesorio(String id, Callback<Void> callback) {
-        db.collection(COL_ACCESORIOS).document(id)
-                .delete()
-                .addOnSuccessListener(v -> callback.onSuccess(null))
+        db.collection(COL_ACCESORIOS).document(id).get()
+                .addOnSuccessListener(doc -> {
+                    String fotoUrl = doc != null ? doc.getString("foto") : null;
+                    db.collection(COL_ACCESORIOS).document(id)
+                            .delete()
+                            .addOnSuccessListener(v -> {
+                                if (fotoUrl != null && !fotoUrl.isEmpty() && fotoUrl.contains("firebasestorage")) {
+                                    try {
+                                        storage.getReferenceFromUrl(fotoUrl).delete();
+                                    } catch (Exception ignored) {}
+                                }
+                                callback.onSuccess(null);
+                            })
+                            .addOnFailureListener(callback::onError);
+                })
                 .addOnFailureListener(callback::onError);
     }
 

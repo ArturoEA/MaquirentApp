@@ -291,8 +291,11 @@ public class PlanosCambioVoltajeFragment extends Fragment {
     }
 
     private void compartirBitmap(Bitmap bitmap, String fileName) {
+        Context context = getContext();
+        if (context == null || !isAdded()) return;
+
         try {
-            File cachePath = new File(requireContext().getCacheDir(), "images");
+            File cachePath = new File(context.getCacheDir(), "images");
             if (!cachePath.exists()) cachePath.mkdirs();
 
             File newFile = new File(cachePath, fileName);
@@ -301,23 +304,36 @@ public class PlanosCambioVoltajeFragment extends Fragment {
             stream.close();
 
             // Obtener URI segura usando FileProvider
-            Uri contentUri = FileProvider.getUriForFile(requireContext(),
-                    requireContext().getPackageName() + ".provider", newFile);
+            Uri contentUri = FileProvider.getUriForFile(context,
+                    context.getPackageName() + ".provider", newFile);
 
             if (contentUri != null) {
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                shareIntent.setDataAndType(contentUri, requireContext().getContentResolver().getType(contentUri));
+                shareIntent.setDataAndType(contentUri, context.getContentResolver().getType(contentUri));
                 shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-                requireActivity().runOnUiThread(() -> {
-                    startActivity(Intent.createChooser(shareIntent, "Compartir plano vía"));
-                });
+                
+                android.app.Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(() -> {
+                        if (isAdded()) {
+                            startActivity(Intent.createChooser(shareIntent, "Compartir plano vía"));
+                        }
+                    });
+                }
             }
         } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
             Log.e("Compartir", "Error: " + e.getMessage());
-            Toast.makeText(getContext(), "Error al compartir. Verifique FileProvider.", Toast.LENGTH_LONG).show();
+            android.app.Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(() -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Error al compartir. Verifique FileProvider.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
         }
     }
 
