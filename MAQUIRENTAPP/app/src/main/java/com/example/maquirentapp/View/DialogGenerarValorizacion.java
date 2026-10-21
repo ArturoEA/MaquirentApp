@@ -44,6 +44,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -70,7 +71,8 @@ public class DialogGenerarValorizacion extends DialogFragment {
 
     // Vistas
     private androidx.appcompat.widget.Toolbar toolbarDialog;
-    private TextView tvCliente, tvRuc, tvEquipo, tvPeriodo, tvLugarTrabajo;
+    private TextView tvCliente, tvPeriodo;
+    private TextInputEditText inputEquipo, inputRucCliente, inputDireccionCliente, inputLugarTrabajo;
     private RadioGroup rgModalidad;
     private RadioButton rbSinHorasExtras, rbConHorasExtras;
     private View cardHorasExtras;
@@ -97,8 +99,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
     private double totalFinal = 0.0;
     private String textoTotalEnLetras = "";
 
-    private String rucCliente = "";
-    private String direccionCliente = "";
+    private ClienteValorizacion clienteValorizacionActual;
     private String marcaGrupo = "MODASA";
     private String descripcionGrupo = "";
     private String codigoGrupo = "";
@@ -157,10 +158,11 @@ public class DialogGenerarValorizacion extends DialogFragment {
     private void initViews(View v) {
         toolbarDialog = v.findViewById(R.id.toolbarDialog);
         tvCliente = v.findViewById(R.id.tvCliente);
-        tvRuc = v.findViewById(R.id.tvRuc);
-        tvEquipo = v.findViewById(R.id.tvEquipo);
         tvPeriodo = v.findViewById(R.id.tvPeriodo);
-        tvLugarTrabajo = v.findViewById(R.id.tvLugarTrabajo);
+        inputEquipo = v.findViewById(R.id.inputEquipo);
+        inputRucCliente = v.findViewById(R.id.inputRucCliente);
+        inputDireccionCliente = v.findViewById(R.id.inputDireccionCliente);
+        inputLugarTrabajo = v.findViewById(R.id.inputLugarTrabajo);
 
         rgModalidad = v.findViewById(R.id.rgModalidad);
         rbSinHorasExtras = v.findViewById(R.id.rbSinHorasExtras);
@@ -218,8 +220,38 @@ public class DialogGenerarValorizacion extends DialogFragment {
         if (diasCalculados <= 0) diasCalculados = 30;
 
         tvPeriodo.setText("Periodo: " + fechaInicio + " al " + fechaFin + " (" + diasCalculados + " días)");
-        tvCliente.setText("Cliente: " + (alquiler.getNombreCliente() != null ? alquiler.getNombreCliente() : "-"));
-        tvLugarTrabajo.setText("Lugar: " + (alquiler.getUbicacion() != null ? alquiler.getUbicacion() : "-"));
+        String nombreCli = (alquiler.getNombreCliente() != null) ? alquiler.getNombreCliente() : "-";
+        tvCliente.setText("Cliente: " + nombreCli);
+        
+        String ubicacionAlq = (alquiler.getUbicacion() != null) ? alquiler.getUbicacion() : "";
+        if (inputLugarTrabajo != null) {
+            inputLugarTrabajo.setText(ubicacionAlq);
+        }
+
+        // Buscar datos previos del cliente (RUC, Dirección, etc.) en Firestore
+        if (alquiler.getNombreCliente() != null && !alquiler.getNombreCliente().trim().isEmpty()) {
+            valorizacionesRepository.buscarClientePorNombre(alquiler.getNombreCliente(), new Callback<ClienteValorizacion>() {
+                @Override
+                public void onSuccess(ClienteValorizacion cliente) {
+                    if (cliente != null && getContext() != null) {
+                        clienteValorizacionActual = cliente;
+                        if (inputRucCliente != null && cliente.getRuc() != null && !cliente.getRuc().isEmpty()) {
+                            inputRucCliente.setText(cliente.getRuc());
+                        }
+                        if (inputDireccionCliente != null && cliente.getDireccion() != null && !cliente.getDireccion().isEmpty()) {
+                            inputDireccionCliente.setText(cliente.getDireccion());
+                        }
+                        if (inputLugarTrabajo != null && (inputLugarTrabajo.getText() == null || inputLugarTrabajo.getText().toString().trim().isEmpty())
+                                && cliente.getUbicacionTrabajo() != null) {
+                            inputLugarTrabajo.setText(cliente.getUbicacionTrabajo());
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) { }
+            });
+        }
 
         // Precio mensual base
         if (montoMesDetalle > 0) {
@@ -255,8 +287,9 @@ public class DialogGenerarValorizacion extends DialogFragment {
                 @Override
                 public void onSuccess(GrupoElectrogeno grupo) {
                     codigoGrupo = grupo != null && grupo.getCodigo() != null ? grupo.getCodigo() : "GEP";
-                    descripcionGrupo = "Grupo electrógeno | " + codigoGrupo;
-                    tvEquipo.setText("Equipo: " + descripcionGrupo);
+                    String tipoPorDefecto = codigoGrupo.toUpperCase().startsWith("CAP") ? "Compresora de aire" : "Grupo electrógeno";
+                    descripcionGrupo = tipoPorDefecto + " | " + codigoGrupo;
+                    if (inputEquipo != null) inputEquipo.setText(descripcionGrupo);
 
                     generadorRepository.getInfoPlaca(alquiler.getIdGrupo(), new Callback<InfoPlaca>() {
                         @Override
@@ -265,11 +298,14 @@ public class DialogGenerarValorizacion extends DialogFragment {
                                 if (placa.getMarcaGrupo() != null && !placa.getMarcaGrupo().isEmpty()) {
                                     marcaGrupo = placa.getMarcaGrupo();
                                 }
-                                String pot = placa.getPotenciaStandBy() != null ? placa.getPotenciaStandBy() : "";
+                                String tipo = placa.getTipoEquipoOrDefault(codigoGrupo);
+                                String pot = placa.getPotenciaStandBy() != null ? placa.getPotenciaStandBy().trim() : "";
                                 if (!pot.isEmpty()) {
-                                    descripcionGrupo = "Grupo electrógeno " + pot + " | " + codigoGrupo;
-                                    tvEquipo.setText("Equipo: " + descripcionGrupo);
+                                    descripcionGrupo = tipo + " " + pot + " | " + codigoGrupo;
+                                } else {
+                                    descripcionGrupo = tipo + " | " + codigoGrupo;
                                 }
+                                if (inputEquipo != null) inputEquipo.setText(descripcionGrupo);
                             }
                         }
 
@@ -280,7 +316,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
 
                 @Override
                 public void onError(Exception e) {
-                    tvEquipo.setText("Equipo: Grupo electrógeno");
+                    if (inputEquipo != null) inputEquipo.setText("Equipo");
                 }
             });
         }
@@ -308,7 +344,13 @@ public class DialogGenerarValorizacion extends DialogFragment {
     }
 
     private void calcularTodo() {
-        String monedaSimbolo = (alquiler != null && "USD".equalsIgnoreCase(alquiler.getMoneda())) ? "US$" : "S/.";
+        boolean esDolar = alquiler != null && alquiler.getMoneda() != null && (
+                alquiler.getMoneda().equalsIgnoreCase("USD") ||
+                alquiler.getMoneda().toUpperCase().contains("DOLAR") ||
+                alquiler.getMoneda().toUpperCase().contains("DÓLAR") ||
+                alquiler.getMoneda().contains("$")
+        );
+        String monedaSimbolo = esDolar ? "$" : "S/.";
 
         // 1. Días y costo diario
         if (diasCalculados <= 0) diasCalculados = 30;
@@ -424,6 +466,13 @@ public class DialogGenerarValorizacion extends DialogFragment {
         String fechaFin = args != null ? args.getString("fechaFin", "") : "";
         int numeroMes = args != null ? args.getInt("numeroMes", 1) : 1;
 
+        String rucIngresado = inputRucCliente != null && inputRucCliente.getText() != null ? inputRucCliente.getText().toString().trim() : "";
+        String dirIngresada = inputDireccionCliente != null && inputDireccionCliente.getText() != null ? inputDireccionCliente.getText().toString().trim() : "";
+        String lugarIngresado = inputLugarTrabajo != null && inputLugarTrabajo.getText() != null ? inputLugarTrabajo.getText().toString().trim() : "";
+        if (lugarIngresado.isEmpty() && alquiler != null && alquiler.getUbicacion() != null) {
+            lugarIngresado = alquiler.getUbicacion();
+        }
+
         // Construir modelo Valorización
         Valorizacion val = new Valorizacion();
         val.setConHorasExtras(conExtras);
@@ -431,9 +480,9 @@ public class DialogGenerarValorizacion extends DialogFragment {
         val.setIdDetalleMes(idDetalle);
         val.setNumeroMes(numeroMes);
         val.setNombreCliente(alquiler != null ? alquiler.getNombreCliente() : "");
-        val.setClienteRuc(rucCliente);
-        val.setClienteDireccion(direccionCliente);
-        val.setUbicacionTrabajo(alquiler != null && alquiler.getUbicacion() != null ? alquiler.getUbicacion() : "-");
+        val.setClienteRuc(rucIngresado);
+        val.setClienteDireccion(dirIngresada);
+        val.setUbicacionTrabajo(lugarIngresado.isEmpty() ? "-" : lugarIngresado);
         val.setFechaInicio(fechaInicio);
         val.setFechaFin(fechaFin);
         val.setFechaEmision(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date()));
@@ -441,7 +490,9 @@ public class DialogGenerarValorizacion extends DialogFragment {
 
         val.setCodigoEquipo(codigoGrupo);
         val.setNumeroValorizacion(StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(codigoGrupo, fechaInicio));
-        val.setDescripcionEquipo(descripcionGrupo);
+        String descEquipoFinal = (inputEquipo != null && inputEquipo.getText() != null) ? inputEquipo.getText().toString().trim() : descripcionGrupo;
+        if (descEquipoFinal.isEmpty()) descEquipoFinal = descripcionGrupo;
+        val.setDescripcionEquipo(descEquipoFinal);
         val.setMarcaEquipo(marcaGrupo);
 
         val.setDiasValorizados(diasCalculados);
@@ -482,6 +533,42 @@ public class DialogGenerarValorizacion extends DialogFragment {
         items.add(item);
         val.setItems(items);
 
+        // Guardar o actualizar datos del cliente en Firestore para persistencia futura
+        Calendar cal = Calendar.getInstance();
+        int anioActual = cal.get(Calendar.YEAR);
+        if (clienteValorizacionActual == null) {
+            clienteValorizacionActual = new ClienteValorizacion(
+                    alquiler != null && alquiler.getNombreCliente() != null ? alquiler.getNombreCliente() : "",
+                    rucIngresado,
+                    dirIngresada,
+                    lugarIngresado,
+                    anioActual
+            );
+        } else {
+            clienteValorizacionActual.setRuc(rucIngresado);
+            clienteValorizacionActual.setDireccion(dirIngresada);
+            if (!lugarIngresado.isEmpty()) {
+                clienteValorizacionActual.setUbicacionTrabajo(lugarIngresado);
+            }
+        }
+
+        valorizacionesRepository.guardarOActualizarClienteValorizacion(clienteValorizacionActual, new Callback<ClienteValorizacion>() {
+            @Override
+            public void onSuccess(ClienteValorizacion cGuardado) {
+                if (cGuardado != null) {
+                    val.setIdClienteValorizacion(cGuardado.getId());
+                }
+                ejecutarGuardadoValorizacion(val, idDetalle, conExtras);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                ejecutarGuardadoValorizacion(val, idDetalle, conExtras);
+            }
+        });
+    }
+
+    private void ejecutarGuardadoValorizacion(Valorizacion val, String idDetalle, boolean conExtras) {
         // Guardar y sincronizar con Firestore
         valorizacionesRepository.crearValorizacion(val, new Callback<String>() {
             @Override
@@ -534,7 +621,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
                             listener.onValorizacionGenerada(valorizacion, archivoPdf);
                         }
 
-                        abrirOCompartirPdf(archivoPdf);
+                        abrirEnVisorInterno(archivoPdf, valorizacion.getNumeroValorizacion());
                         dismiss();
                     });
                 }
@@ -551,19 +638,15 @@ public class DialogGenerarValorizacion extends DialogFragment {
         }).start();
     }
 
-    private void abrirOCompartirPdf(File archivo) {
+    private void abrirEnVisorInterno(File archivo, String nombreArchivo) {
         if (getContext() == null || archivo == null) return;
         try {
-            Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".provider", archivo);
-
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("application/pdf");
-            intent.putExtra(Intent.EXTRA_STREAM, uri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            startActivity(Intent.createChooser(intent, "Compartir Valorización en PDF"));
+            Intent intent = new Intent(getContext(), PdfViewerActivity.class);
+            intent.putExtra("PDF_URL", archivo.getAbsolutePath());
+            intent.putExtra("NOMBRE_ARCHIVO", nombreArchivo != null ? nombreArchivo : archivo.getName());
+            startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Error al compartir archivo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error al abrir visor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 }

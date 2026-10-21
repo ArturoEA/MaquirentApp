@@ -17,7 +17,7 @@
             android:id="@+id/toolbarDialog"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@drawable/icon_back_blanco"
+            app:navigationIcon="@drawable/ic_arrow_back_white"
             app:title="Generar Valorización"
             app:titleTextColor="@color/white"
             app:subtitleTextColor="#CCCCCC" />
@@ -71,24 +71,6 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvRuc"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="RUC: 20496094345"
-                        android:textColor="#555555"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
-
-                    <TextView
-                        android:id="@+id/tvEquipo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Equipo: Grupo electrógeno 105 kW | GEP 105-111"
-                        android:textColor="@color/black"
-                        android:textSize="13sp"
-                        android:layout_marginTop="6dp" />
-
-                    <TextView
                         android:id="@+id/tvPeriodo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -98,14 +80,70 @@
                         android:textStyle="bold"
                         android:layout_marginTop="4dp" />
 
-                    <TextView
-                        android:id="@+id/tvLugarTrabajo"
-                        android:layout_width="wrap_content"
+                    <!-- Descripción de Equipo / Maquinaria editable -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/CustomTextInputLayout"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Lugar: Hospital Leoncio Prado - Huamachuco"
-                        android:textColor="#666666"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="10dp"
+                        android:hint="Descripción del Equipo / Maquinaria">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputEquipo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences"
+                            android:textColor="@color/black" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- RUC del Cliente editable -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/CustomTextInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="RUC del Cliente">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputRucCliente"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number"
+                            android:maxLength="11"
+                            android:textColor="@color/black" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Dirección Fiscal editable -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/CustomTextInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="Dirección Fiscal del Cliente">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputDireccionCliente"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences"
+                            android:textColor="@color/black" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Lugar de Trabajo / Obra editable -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/CustomTextInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="Lugar de Trabajo / Ubicación de la Obra">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputLugarTrabajo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences"
+                            android:textColor="@color/black" />
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -148,6 +186,8 @@
                             android:text="Tarifa Plana (Sin detalle de horómetro)"
                             android:textColor="@color/black"
                             android:textSize="13sp"
+                            android:buttonTint="@color/black"
+                            app:buttonTint="@color/black"
                             android:checked="true" />
 
                         <RadioButton
@@ -156,7 +196,9 @@
                             android:layout_height="wrap_content"
                             android:text="Con Horas Extras (Incluye cálculo de horómetros)"
                             android:textColor="@color/black"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            android:buttonTint="@color/black"
+                            app:buttonTint="@color/black" />
                     </RadioGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -538,7 +580,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:backgroundTint="@color/azul_100"
-                android:text="📄 Generar Valorización y Guardar PDF"
+                android:text="Generar Valorización"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="14sp"

@@ -1,6 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -83,11 +84,9 @@ public class HistorialValorizacionesClienteFragment extends Fragment {
         adapter = new ValorizacionesAdapter(valorizacion -> {
             try {
                 File pdf = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy().generarValorizacionPdf(requireContext(), valorizacion);
-                android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                        requireContext(), requireContext().getPackageName() + ".provider", pdf);
-                android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(uri, "application/pdf");
-                intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Intent intent = new Intent(getContext(), PdfViewerActivity.class);
+                intent.putExtra("PDF_URL", pdf.getAbsolutePath());
+                intent.putExtra("NOMBRE_ARCHIVO", valorizacion.getNumeroValorizacion() != null ? valorizacion.getNumeroValorizacion() : pdf.getName());
                 startActivity(intent);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Error abriendo PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();

@@ -22,6 +22,7 @@ public class InfoPlaca {
 
     private String potenciaStandBy = "";
     private String potenciaContinua= "";
+    private String tipoEquipo = "";
 
     public InfoPlaca() {
         this.imagenesUrls = new ArrayList<>();
@@ -146,5 +147,26 @@ public class InfoPlaca {
 
     public void setPotenciaContinua(String PotenciaContinua) {
         this.potenciaContinua = potenciaContinua;
+    }
+
+    public String getTipoEquipo() {
+        return tipoEquipo;
+    }
+
+    public void setTipoEquipo(String tipoEquipo) {
+        this.tipoEquipo = tipoEquipo;
+    }
+
+    public String getTipoEquipoOrDefault(String codigoGrupo) {
+        if (tipoEquipo != null && !tipoEquipo.trim().isEmpty()) {
+            return tipoEquipo.trim();
+        }
+        if (codigoGrupo != null && codigoGrupo.toUpperCase().startsWith("GEP")) {
+            return "Grupo electrógeno";
+        }
+        if (codigoGrupo != null && (codigoGrupo.toUpperCase().startsWith("CAP") || codigoGrupo.toUpperCase().startsWith("COM"))) {
+            return "Compresora de aire";
+        }
+        return "Grupo electrógeno";
     }
 }

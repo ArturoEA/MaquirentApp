@@ -1,11 +1,18 @@
 package com.example.maquirentapp.strategy;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
+import android.graphics.pdf.PdfRenderer;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+
+import androidx.core.content.res.ResourcesCompat;
 
 import com.example.maquirentapp.BuildConfig;
 import com.example.maquirentapp.Model.CertificadoOperatividad;
@@ -22,6 +29,7 @@ import com.example.maquirentapp.Utils.PdfGenerator;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -332,385 +340,361 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         return sb.toString();
     }
 
-        @Override
+    @Override
     public File generarPdfValorizacion(Context context, Valorizacion val) throws Exception {
-        // Formato horizontal estricto (A4 Landscape: 842 pt de ancho x 595 pt de alto)
-        int A4_WIDTH_PTS = 842;
-        int A4_HEIGHT_PTS = 595;
+        boolean esHE = val.isConHorasExtras() || val.getHorasExtras() > 0 || val.getHorometroFinal() > 0;
 
-        PdfDocument document = new PdfDocument();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(A4_WIDTH_PTS, A4_HEIGHT_PTS, 1).create();
-        PdfDocument.Page page = document.startPage(pageInfo);
-        android.graphics.Canvas canvas = page.getCanvas();
-
-        // Fondo blanco
-        Paint bgPaint = new Paint();
-        bgPaint.setColor(Color.WHITE);
-        canvas.drawRect(0, 0, A4_WIDTH_PTS, A4_HEIGHT_PTS, bgPaint);
-
-        // Colores idénticos a la plantilla Excel
-        Paint navyBoxPaint = new Paint();
-        navyBoxPaint.setColor(Color.parseColor("#3B5F90"));
-        navyBoxPaint.setStyle(Paint.Style.FILL);
-
-        Paint sundayRedPaint = new Paint();
-        sundayRedPaint.setColor(Color.parseColor("#EE1212"));
-        sundayRedPaint.setStyle(Paint.Style.FILL);
-
-        Paint linePaint = new Paint();
-        linePaint.setColor(Color.BLACK);
-        linePaint.setStrokeWidth(0.6f);
-        linePaint.setStyle(Paint.Style.STROKE);
-
-        // Tipografías exactas
-        Paint bannerTitlePaint = new Paint();
-        bannerTitlePaint.setColor(Color.WHITE);
-        bannerTitlePaint.setTextSize(14f);
-        bannerTitlePaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint bannerNumPaint = new Paint();
-        bannerNumPaint.setColor(Color.WHITE);
-        bannerNumPaint.setTextSize(14f);
-        bannerNumPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint whiteBoldCenter = new Paint();
-        whiteBoldCenter.setColor(Color.WHITE);
-        whiteBoldCenter.setTextSize(7.5f);
-        whiteBoldCenter.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint whiteBoldLeft = new Paint();
-        whiteBoldLeft.setColor(Color.WHITE);
-        whiteBoldLeft.setTextSize(7.5f);
-        whiteBoldLeft.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint textPaint = new Paint();
-        textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(7.5f);
-
-        Paint textCenterPaint = new Paint();
-        textCenterPaint.setColor(Color.BLACK);
-        textCenterPaint.setTextSize(7.5f);
-
-        Paint boldPaint = new Paint();
-        boldPaint.setColor(Color.BLACK);
-        boldPaint.setTextSize(7.5f);
-        boldPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint boldCenterPaint = new Paint();
-        boldCenterPaint.setColor(Color.BLACK);
-        boldCenterPaint.setTextSize(7.5f);
-        boldCenterPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-
-        Paint italicPaint = new Paint();
-        italicPaint.setColor(Color.BLACK);
-        italicPaint.setTextSize(6.5f);
-        italicPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
-
-        float xStart = 26f;
-        float y = 24f;
-
-        // Correlativo exacto: VAL-{grupo}-{MM}{yy} (ej. VAL-111-1026)
+        // Correlativo exacto: VAL-{codMaquina}-{MM}{yy} (ej. VAL-111-1026 o VAL-101-1026)
+        String codVal = StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(val.getCodigoEquipo(), val.getFechaInicio());
         String numVal = val.getNumeroValorizacion();
-        if (numVal == null || numVal.isEmpty() || !numVal.startsWith("VAL-")) {
-            numVal = StrategyProvider.getCorrelativoStrategy().generarCodigoValorizacion(val.getCodigoEquipo(), val.getFechaInicio());
+        if (codVal != null && !codVal.equals("VAL-000-0000")) {
+            numVal = codVal;
+            val.setNumeroValorizacion(numVal);
+        } else if (numVal == null || numVal.isEmpty() || !numVal.startsWith("VAL-")) {
+            numVal = "VAL-000-0000";
+            val.setNumeroValorizacion(numVal);
         }
 
-        // ========================================================
-        // 1. BANNER SUPERIOR (Idéntico a D2:U3 y V2:AE3 de Excel)
-        // ========================================================
-        drawCell(canvas, 200f, y, 396f, 32f, "VALORIZACIÓN DE EQUIPO EN ALQUILER", navyBoxPaint, linePaint, bannerTitlePaint, Paint.Align.CENTER);
-        drawCell(canvas, 596f, y, 220f, 32f, numVal, navyBoxPaint, linePaint, bannerNumPaint, Paint.Align.CENTER);
-
-        // ========================================================
-        // 2. DATOS DE LA EMPRESA (Filas 4, 5 y 6)
-        // ========================================================
-        y = 66f;
-        Paint compBold = new Paint(boldPaint);
-        compBold.setTextSize(8.5f);
-
-        canvas.drawText("RUC: " + getRuc(), xStart, y + 8f, compBold);
-        canvas.drawText(getDireccion(), 178f, y + 8f, compBold);
-        y += 13f;
-        canvas.drawText(getRubro(), xStart, y + 8f, compBold);
-        y += 13f;
-        canvas.drawText("Teléfonos: " + getTelefono(), xStart, y + 8f, compBold);
-        y += 18f;
-
-        // ========================================================
-        // 3. CUADRO DE DATOS CLIENTE Y EQUIPO (Filas 8 a 12)
-        // ========================================================
-        float hRowClient = 15f;
-        float wColA = 130f;
-        float wColBP = 330f;
-        float wColQR = 44f;
-        float wColSU = 66f;
-
-        // Fila 8: CLIENTE y RUC
-        String cliNom = val.getNombreCliente() != null ? val.getNombreCliente() : "-";
-        String rucVal = val.getClienteRuc() != null ? val.getClienteRuc() : "-";
-        drawCell(canvas, xStart, y, wColA, hRowClient, "CLIENTE ", navyBoxPaint, linePaint, whiteBoldLeft, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA, y, wColBP, hRowClient, cliNom, null, linePaint, textPaint, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA + wColBP, y, wColQR, hRowClient, "RUC ", navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        drawCell(canvas, xStart + wColA + wColBP + wColQR, y, wColSU, hRowClient, rucVal, null, linePaint, textCenterPaint, Paint.Align.CENTER);
-        y += hRowClient;
-
-        // Fila 9: DIRECCIÓN y FECHA
-        String dirVal = val.getClienteDireccion() != null ? val.getClienteDireccion() : "-";
-        String fecVal = val.getFechaEmision() != null ? val.getFechaEmision() : "-";
-        drawCell(canvas, xStart, y, wColA, hRowClient, "DIRECCIÓN", navyBoxPaint, linePaint, whiteBoldLeft, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA, y, wColBP, hRowClient, dirVal, null, linePaint, textPaint, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA + wColBP, y, wColQR, hRowClient, "FECHA", navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        drawCell(canvas, xStart + wColA + wColBP + wColQR, y, wColSU, hRowClient, fecVal, null, linePaint, textCenterPaint, Paint.Align.CENTER);
-        y += hRowClient;
-
-        // Fila 10: EQUIPO
-        String eqVal = (val.getDescripcionEquipo() != null ? val.getDescripcionEquipo() : "Grupo electrógeno") +
-                (val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty() ? " | " + val.getCodigoEquipo() : "");
-        drawCell(canvas, xStart, y, wColA, hRowClient, "EQUIPO", navyBoxPaint, linePaint, whiteBoldLeft, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA, y, wColBP, hRowClient, eqVal, null, linePaint, textPaint, Paint.Align.LEFT);
-        y += hRowClient;
-
-        // Fila 11: MARCA
-        String marcaVal = (val.getMarcaEquipo() != null && !val.getMarcaEquipo().isEmpty()) ? val.getMarcaEquipo() : "MODASA";
-        drawCell(canvas, xStart, y, wColA, hRowClient, "MARCA", navyBoxPaint, linePaint, whiteBoldLeft, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA, y, wColBP, hRowClient, marcaVal, null, linePaint, textPaint, Paint.Align.LEFT);
-        y += hRowClient;
-
-        // Fila 12: LUGAR DE TRABAJO
-        String lugVal = val.getUbicacionTrabajo() != null ? val.getUbicacionTrabajo() : "-";
-        drawCell(canvas, xStart, y, wColA, hRowClient, "LUGAR DE TRABAJO", navyBoxPaint, linePaint, whiteBoldLeft, Paint.Align.LEFT);
-        drawCell(canvas, xStart + wColA, y, wColBP, hRowClient, lugVal, null, linePaint, textPaint, Paint.Align.LEFT);
-        y += hRowClient + 14f;
-
-        // ========================================================
-        // 4. MATRIZ DE TAREO (30 días en columnas horizontales)
-        // ========================================================
-        CalendarioTareoHelper.TareoInfo tareo = CalendarioTareoHelper.generarTareo(val.getFechaInicio(), val.getFechaFin());
-        int totalDias = tareo.getTotalDias();
-        if (totalDias <= 0) totalDias = 30;
-        float dayColW = 22f;
-        float hTareo = 14f;
-
-        // Fila Meses
-        drawCell(canvas, xStart, y, wColA, hTareo, "", null, linePaint, null, Paint.Align.CENTER);
-        float curX = xStart + wColA;
-        for (CalendarioTareoHelper.MesSpan mes : tareo.getMeses()) {
-            float spanW = mes.getCantidadDias() * dayColW;
-            drawCell(canvas, curX, y, spanW, hTareo, mes.getNombreMes(), null, linePaint, boldCenterPaint, Paint.Align.CENTER);
-            curX += spanW;
+        // Cargar tipografía Montserrat requerida
+        Typeface montserratReg;
+        Typeface montserratBold;
+        try {
+            montserratReg = ResourcesCompat.getFont(context, R.font.montserrat_regular);
+            montserratBold = ResourcesCompat.getFont(context, R.font.montserrat_bold);
+        } catch (Exception e) {
+            montserratReg = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+            montserratBold = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
         }
-        y += hTareo;
+        if (montserratReg == null) montserratReg = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+        if (montserratBold == null) montserratBold = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD);
 
-        // Fila EQUIPO / DÍAS
-        drawCell(canvas, xStart, y, wColA, hTareo, "EQUIPO                      DÍAS", navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        for (int i = 0; i < totalDias; i++) {
-            boolean isSunday = (i < tareo.getEsDomingo().size()) && tareo.getEsDomingo().get(i);
-            Paint fillP = isSunday ? sundayRedPaint : navyBoxPaint;
-            int diaNum = (i < tareo.getDiasDelMes().size()) ? tareo.getDiasDelMes().get(i) : (i + 1);
-            drawCell(canvas, xStart + wColA + (i * dayColW), y, dayColW, hTareo, String.valueOf(diaNum), fillP, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        }
-        y += hTareo;
+        // Dimensiones del documento (1008 x 612 pt - Legal horizontal exacto de la plantilla)
+        int pageWidth = 1008;
+        int pageHeight = 612;
+        String assetPath = esHE ? "templates/PlantillaValorizacionHE.pdf" : "templates/PlantillaValorizacion.pdf";
 
-        // Fila Código de Máquina y Asistencia (1s)
-        String cod = val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty() ? val.getCodigoEquipo() : "GEP 105-111";
-        drawCell(canvas, xStart, y, wColA, hTareo, cod, navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        for (int i = 0; i < totalDias; i++) {
-            drawCell(canvas, xStart + wColA + (i * dayColW), y, dayColW, hTareo, "1", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-        }
-        y += hTareo;
-
-        // Fila Días trabajados
-        drawCell(canvas, xStart, y, wColA, hTareo, "Días trabajados", navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-        for (int i = 0; i < totalDias; i++) {
-            int acum = (i < tareo.getDiasAcumulados().size()) ? tareo.getDiasAcumulados().get(i) : (i + 1);
-            drawCell(canvas, xStart + wColA + (i * dayColW), y, dayColW, hTareo, String.valueOf(acum), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-        }
-        y += hTareo + 16f;
-
-        // ========================================================
-        // 5. SECCIÓN ECONÓMICA Y HORÓMETROS
-        // ========================================================
-        float rowH = 15f;
-        String descEq = (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty()) ? val.getDescripcionEquipo().toUpperCase() : "GRUPO ELECTRÓGENO 105 kW";
-
-        if (val.isConHorasExtras()) {
-            // ====================================================
-            // PLANTILLA CON HORAS EXTRAS (media_...9104d455.xlsx)
-            // ====================================================
-            float yRow = y;
-
-            // Encabezados
-            drawCell(canvas, 26f, yRow, 350f, rowH, "DETALLE DE HORAS", navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-            drawCell(canvas, 442f, yRow, 154f, rowH, descEq, navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 22
-            drawCell(canvas, 26f, yRow, 84f, rowH, "HORÓMETRO INICIAL", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 110f, yRow, 68f, rowH, formatHorometro(val.getHorometroInicial()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 110f, rowH, "COSTO HORA EXTRA*", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 288f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 310f, yRow, 66f, rowH, formatMonto(val.getCostoHoraExtra()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-
-            drawCell(canvas, 442f, yRow, 88f, rowH, "DÍAS VALORIZADOS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 66f, rowH, String.valueOf(val.getDiasValorizados()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 23
-            drawCell(canvas, 26f, yRow, 84f, rowH, "HORÓMETRO FINAL", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 110f, yRow, 68f, rowH, formatHorometro(val.getHorometroFinal()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 110f, rowH, "TOTAL HORAS EXTRAS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 288f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 310f, yRow, 66f, rowH, formatMonto(val.getTotalHorasExtras()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-
-            drawCell(canvas, 442f, yRow, 88f, rowH, "COSTO DIARIO", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getCostoDiario()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 24
-            drawCell(canvas, 26f, yRow, 84f, rowH, "HORAS PERMITIDAS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 110f, yRow, 68f, rowH, formatHorometro(val.getHorasPermitidas()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            // Cuadro de nota explicativa del 25% descuento (fusionado filas 24 a 26)
-            canvas.drawRect(178f, yRow, 376f, yRow + (rowH * 3f), linePaint);
-            Paint noteP = new Paint(italicPaint);
-            noteP.setTextSize(6.5f);
-            canvas.drawText("*El precio de la hora extra se calcula", 182f, yRow + 14f, noteP);
-            canvas.drawText("aplicando un descuento del 25% sobre", 182f, yRow + 24f, noteP);
-            canvas.drawText("la tarifa de la hora base.", 182f, yRow + 34f, noteP);
-
-            drawCell(canvas, 442f, yRow, 88f, rowH, "COSTO PARCIAL", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getCostoParcial()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 25
-            drawCell(canvas, 26f, yRow, 84f, rowH, "HORAS USADAS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 110f, yRow, 68f, rowH, formatHorometro(val.getHorasUsadas()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-
-            drawCell(canvas, 442f, yRow, 88f, rowH, "TOTAL HORAS EXTRAS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getTotalHorasExtras()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 26
-            drawCell(canvas, 26f, yRow, 84f, rowH, "HORAS EXTRAS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 110f, yRow, 68f, rowH, formatHorometro(val.getHorasExtras()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-
-            drawCell(canvas, 442f, yRow, 88f, rowH, "SUBTOTAL", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getSubtotal()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 27
-            drawCell(canvas, 442f, yRow, 88f, rowH, "IGV", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getIgv()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 28
-            drawCell(canvas, 442f, yRow, 88f, rowH, "TOTAL", null, linePaint, boldCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 530f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 552f, yRow, 44f, rowH, formatMonto(val.getTotal()), null, linePaint, boldCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 29 (Son: ...)
-            if (val.getTotalEnLetras() != null && !val.getTotalEnLetras().isEmpty()) {
-                canvas.drawText("Son: " + val.getTotalEnLetras(), 442f, yRow + 10f, boldPaint);
+        // Renderizar plantilla oficial limpia en un Bitmap de alta resolución (2x: 2016 x 1224)
+        File tempFile = new File(context.getCacheDir(), "val_bg_template_" + System.currentTimeMillis() + ".pdf");
+        try (InputStream in = context.getAssets().open(assetPath);
+             FileOutputStream out = new FileOutputStream(tempFile)) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
             }
-            y = yRow + 24f;
+        }
+
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        PdfRenderer renderer = new PdfRenderer(pfd);
+        PdfRenderer.Page rendererPage = renderer.openPage(0);
+
+        int renderW = pageWidth * 2;
+        int renderH = pageHeight * 2;
+        Bitmap bgBitmap = Bitmap.createBitmap(renderW, renderH, Bitmap.Config.ARGB_8888);
+        Canvas bgCanvas = new Canvas(bgBitmap);
+        bgCanvas.drawColor(Color.WHITE);
+        rendererPage.render(bgBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
+
+        rendererPage.close();
+        renderer.close();
+        pfd.close();
+        tempFile.delete();
+
+        // Iniciar PdfDocument vectorial
+        PdfDocument document = new PdfDocument();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create();
+        PdfDocument.Page page = document.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+
+        // Dibujar la plantilla oficial de fondo con resolución nativa 1:1
+        canvas.drawBitmap(bgBitmap, null, new RectF(0, 0, pageWidth, pageHeight), null);
+        bgBitmap.recycle();
+
+        // Configuración de pinturas con la tipografía Montserrat exacta (-2 pt a pedido)
+        // 1. Código en el banner superior derecho: tamaño 18 y en negrita
+        Paint headerCodePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        headerCodePaint.setTypeface(montserratBold);
+        headerCodePaint.setTextSize(16f);
+        headerCodePaint.setColor(Color.WHITE);
+
+        // 2. Tabla dinámica:
+        // Textos de los meses: tamaño 8 Montserrat en negrita
+        Paint tableMonthPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tableMonthPaint.setTypeface(montserratBold);
+        tableMonthPaint.setTextSize(8f);
+        tableMonthPaint.setColor(Color.BLACK);
+
+        // Números de días: fondo azul #3B5F90 (o #EE1212 para domingos), letra blanca en negrita tamaño 8
+        Paint tableDayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tableDayPaint.setTypeface(montserratBold);
+        tableDayPaint.setTextSize(8f);
+        tableDayPaint.setColor(Color.WHITE);
+
+        // Texto regular de la tabla: tamaño 8 Montserrat
+        Paint tableTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tableTextPaint.setTypeface(montserratReg);
+        tableTextPaint.setTextSize(8f);
+        tableTextPaint.setColor(Color.BLACK);
+
+        // Código de máquina sobre días trabajados: fondo azul, texto blanco en negrita tamaño 8
+        Paint tableBoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        tableBoldPaint.setTypeface(montserratBold);
+        tableBoldPaint.setTextSize(8f);
+        tableBoldPaint.setColor(Color.WHITE);
+
+        // 3. Fuera de la tabla dinámica: tamaño 9 Montserrat
+        Paint outsideTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outsideTextPaint.setTypeface(montserratReg);
+        outsideTextPaint.setTextSize(8f);
+        outsideTextPaint.setColor(Color.BLACK);
+
+        Paint outsideBoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outsideBoldPaint.setTypeface(montserratBold);
+        outsideBoldPaint.setTextSize(8f);
+        outsideBoldPaint.setColor(Color.BLACK);
+
+        Paint outsideBoldWhitePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        outsideBoldWhitePaint.setTypeface(montserratBold);
+        outsideBoldWhitePaint.setTextSize(8f);
+        outsideBoldWhitePaint.setColor(Color.WHITE);
+
+        // Pinturas de fondos y bordes (#7F7F7F para las nuevas líneas)
+        Paint fillNavy = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fillNavy.setColor(Color.parseColor("#3B5F90"));
+        fillNavy.setStyle(Paint.Style.FILL);
+
+        Paint fillSundayRed = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fillSundayRed.setColor(Color.parseColor("#EE1212"));
+        fillSundayRed.setStyle(Paint.Style.FILL);
+
+        Paint fillWhite = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fillWhite.setColor(Color.WHITE);
+        fillWhite.setStyle(Paint.Style.FILL);
+
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setColor(Color.parseColor("#7F7F7F"));
+        borderPaint.setStrokeWidth(0.72f);
+        borderPaint.setStyle(Paint.Style.STROKE);
+
+        // Generar tareo dinámico de fechas
+        CalendarioTareoHelper.TareoInfo tareo = CalendarioTareoHelper.generarTareo(val.getFechaInicio(), val.getFechaFin());
+        boolean esDolar = val.getMoneda() != null && (
+                val.getMoneda().equalsIgnoreCase("USD") ||
+                val.getMoneda().toUpperCase().contains("DOLAR") ||
+                val.getMoneda().toUpperCase().contains("DÓLAR") ||
+                val.getMoneda().contains("$")
+        );
+        String simboloMoneda = esDolar ? "$" : "S/.";
+
+        if (esHE) {
+            // ========================================================
+            // PLANTILLA CON HORAS EXTRAS (PlantillaValorizacionHE.pdf)
+            // ========================================================
+
+            // 1. Código en el banner superior derecho: número 20, bold, blanco
+            drawCenteredText(canvas, numVal, 666.91f, 66.38f, 250.82f, 24.60f, headerCodePaint);
+
+            // 2. Datos del cliente y equipo (fuera de la tabla, tamaño 11 Montserrat)
+            drawText(canvas, val.getNombreCliente(), 167.06f, 141.86f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getClienteDireccion(), 167.06f, 153.74f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+            String eq = (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty())
+                    ? val.getDescripcionEquipo()
+                    : ((val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty()) ? "Equipo | " + val.getCodigoEquipo() : "Equipo");
+            drawText(canvas, eq, 167.06f, 165.63f, 11.90f, outsideTextPaint, Paint.Align.LEFT);
+            String marca = (val.getMarcaEquipo() != null && !val.getMarcaEquipo().isEmpty()) ? val.getMarcaEquipo() : "MODASA";
+            drawText(canvas, marca, 167.06f, 177.53f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getUbicacionTrabajo(), 167.06f, 189.41f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+
+            drawText(canvas, val.getClienteRuc(), 593.47f, 141.86f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getFechaEmision(), 593.47f, 153.74f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+
+            // 3. Tabla dinámica de tareo (30 columnas de 25.08 pt cada una)
+            float xStart = 165.26f;
+            float colW = 25.082f;
+
+            // Fila 1 (Meses): tamaño 10 Montserrat bold, centrado
+            canvas.drawRect(xStart, 223.85f, xStart + (30 * colW), 223.85f + 12.72f, fillWhite);
+            canvas.drawRect(xStart, 223.85f, xStart + (30 * colW), 223.85f + 12.72f, borderPaint);
+            float curX = xStart;
+            for (CalendarioTareoHelper.MesSpan mes : tareo.getMeses()) {
+                float spanW = mes.getCantidadDias() * colW;
+                canvas.drawRect(curX, 223.85f, curX + spanW, 223.85f + 12.72f, borderPaint);
+                drawCenteredText(canvas, mes.getNombreMes(), curX, 223.85f, spanW, 12.72f, tableMonthPaint);
+                curX += spanW;
+            }
+
+            // Fila 2 (Días): fondo azul #3B5F90 (rojo #EE1212 domingos), letra blanca en negrita tamaño 10
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                boolean isSunday = (i < tareo.getEsDomingo().size()) && tareo.getEsDomingo().get(i);
+                Paint cellBg = isSunday ? fillSundayRed : fillNavy;
+                canvas.drawRect(cellX, 236.57f, cellX + colW, 236.57f + 11.88f, cellBg);
+                canvas.drawRect(cellX, 236.57f, cellX + colW, 236.57f + 11.88f, borderPaint);
+                int diaNum = (i < tareo.getDiasDelMes().size()) ? tareo.getDiasDelMes().get(i) : (i + 1);
+                drawCenteredText(canvas, String.valueOf(diaNum), cellX, 236.57f, colW, 11.88f, tableDayPaint);
+            }
+
+            // Fila 3 (Código de Máquina y Asistencia "1"): tamaño 10 Montserrat
+            String codEquipo = (val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty()) ? val.getCodigoEquipo() : "GEP 105-111";
+            drawCenteredText(canvas, codEquipo, 70.44f, 248.45f, 94.82f, 11.88f, tableBoldPaint);
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                drawCenteredText(canvas, "1", cellX, 248.45f, colW, 11.88f, tableTextPaint);
+            }
+
+            // Fila 4 (Días acumulados 1..30): tamaño 10 Montserrat
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                int acum = (i < tareo.getDiasAcumulados().size()) ? tareo.getDiasAcumulados().get(i) : (i + 1);
+                drawCenteredText(canvas, String.valueOf(acum), cellX, 260.33f, colW, 11.88f, tableTextPaint);
+            }
+
+            // 4. Detalle de Horas y Horómetros (fuera de la tabla dinámica, tamaño 11 Montserrat)
+            String cellHeader = "EQUIPO";
+            if (val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty()) {
+                cellHeader = val.getCodigoEquipo().split("-")[0].trim().toUpperCase();
+            } else if (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty()) {
+                cellHeader = val.getDescripcionEquipo().toUpperCase();
+            }
+            drawCenteredText(canvas, cellHeader, 466.25f, 296.33f, 200.66f, 11.88f, outsideBoldWhitePaint);
+
+            // Horómetros (Izquierda)
+            drawCenteredText(canvas, formatHorometro(val.getHorometroInicial()), 190.34f, 308.21f, 50.16f, 11.90f, outsideTextPaint);
+            drawCenteredText(canvas, formatHorometro(val.getHorometroFinal()), 190.34f, 320.11f, 50.16f, 11.88f, outsideTextPaint);
+            drawCenteredText(canvas, formatHorometro(val.getHorasPermitidas()), 190.34f, 331.99f, 50.16f, 11.88f, outsideTextPaint);
+            drawCenteredText(canvas, formatHorometro(val.getHorasUsadas()), 190.34f, 343.87f, 50.16f, 11.88f, outsideTextPaint);
+            drawCenteredText(canvas, formatHorometro(val.getHorasExtras()), 190.34f, 355.75f, 50.16f, 11.88f, outsideTextPaint);
+
+            // Costo hora extra y total horas extras (Centro)
+            drawCenteredText(canvas, simboloMoneda, 340.84f, 308.21f, 25.09f, 11.90f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getCostoHoraExtra()), 412.0f, 308.21f, 11.90f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 340.84f, 320.11f, 25.09f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getTotalHorasExtras()), 412.0f, 320.11f, 11.88f, outsideTextPaint);
+
+            // Resumen económico (Derecha)
+            drawRightAlignedText(canvas, String.valueOf(val.getDiasValorizados()), 664.0f, 308.21f, 11.90f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 320.11f, 25.08f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getCostoDiario()), 664.0f, 320.11f, 11.88f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 331.99f, 25.08f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getCostoParcial()), 664.0f, 331.99f, 11.88f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 343.87f, 25.08f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getTotalHorasExtras()), 664.0f, 343.87f, 11.88f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 355.75f, 25.08f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getSubtotal()), 664.0f, 355.75f, 11.88f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 367.63f, 25.08f, 11.88f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getIgv()), 664.0f, 367.63f, 11.88f, outsideTextPaint);
+
+            drawCenteredText(canvas, simboloMoneda, 591.67f, 379.51f, 25.08f, 12.24f, outsideBoldPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getTotal()), 664.0f, 379.51f, 12.24f, outsideBoldPaint);
+
+            // Son en letras
+            if (val.getTotalEnLetras() != null && !val.getTotalEnLetras().isEmpty()) {
+                drawText(canvas, val.getTotalEnLetras(), 496.0f, 391.75f, 11.88f, outsideTextPaint, Paint.Align.LEFT);
+            }
 
         } else {
-            // ====================================================
-            // PLANTILLA TARIFA PLANA / NORMAL (media_...81fd8b35.xlsx)
-            // ====================================================
-            float yRow = y;
+            // ========================================================
+            // PLANTILLA SIMPLE (PlantillaValorizacion.pdf)
+            // ========================================================
 
-            // Fila 20: Título del equipo
-            drawCell(canvas, 26f, yRow, 218f, rowH, descEq, navyBoxPaint, linePaint, whiteBoldCenter, Paint.Align.CENTER);
-            yRow += rowH;
+            // 1. Código en el banner superior derecho: número 20, bold, blanco
+            drawCenteredText(canvas, numVal, 701.11f, 65.30f, 265.37f, 26.04f, headerCodePaint);
 
-            // Fila 21
-            drawCell(canvas, 26f, yRow, 152f, rowH, "DÍAS VALORIZADOS", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 178f, yRow, 66f, rowH, String.valueOf(val.getDiasValorizados()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
+            // 2. Datos del cliente y equipo (fuera de la tabla, tamaño 11 Montserrat)
+            drawText(canvas, val.getNombreCliente(), 172.0f, 144.99f, 12.48f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getClienteDireccion(), 172.0f, 157.47f, 12.50f, outsideTextPaint, Paint.Align.LEFT);
+            String eq = (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty())
+                    ? val.getDescripcionEquipo()
+                    : ((val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty()) ? "Equipo | " + val.getCodigoEquipo() : "Equipo");
+            drawText(canvas, eq, 172.0f, 169.97f, 12.48f, outsideTextPaint, Paint.Align.LEFT);
+            String marca = (val.getMarcaEquipo() != null && !val.getMarcaEquipo().isEmpty()) ? val.getMarcaEquipo() : "MODASA";
+            drawText(canvas, marca, 172.0f, 182.45f, 12.48f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getUbicacionTrabajo(), 172.0f, 194.93f, 12.48f, outsideTextPaint, Paint.Align.LEFT);
 
-            // Fila 22
-            drawCell(canvas, 26f, yRow, 130f, rowH, "COSTO DIARIO", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 156f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 66f, rowH, formatMonto(val.getCostoDiario()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
+            drawText(canvas, val.getClienteRuc(), 623.0f, 144.99f, 12.48f, outsideTextPaint, Paint.Align.LEFT);
+            drawText(canvas, val.getFechaEmision(), 623.0f, 157.47f, 12.50f, outsideTextPaint, Paint.Align.LEFT);
 
-            // Fila 23
-            drawCell(canvas, 26f, yRow, 130f, rowH, "COSTO PARCIAL", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 156f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 66f, rowH, formatMonto(val.getCostoParcial()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
+            // 3. Tabla dinámica de tareo (30 columnas de 26.52 pt cada una)
+            float xStart = 170.30f;
+            float colW = 26.52f;
 
-            // Fila 24
-            drawCell(canvas, 26f, yRow, 130f, rowH, "IGV", null, linePaint, textPaint, Paint.Align.LEFT);
-            drawCell(canvas, 156f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 66f, rowH, formatMonto(val.getIgv()), null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 25
-            drawCell(canvas, 26f, yRow, 130f, rowH, "TOTAL", null, linePaint, boldCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 156f, yRow, 22f, rowH, "S/.", null, linePaint, textCenterPaint, Paint.Align.CENTER);
-            drawCell(canvas, 178f, yRow, 66f, rowH, formatMonto(val.getTotal()), null, linePaint, boldCenterPaint, Paint.Align.CENTER);
-            yRow += rowH;
-
-            // Fila 26 (Son: ...)
-            if (val.getTotalEnLetras() != null && !val.getTotalEnLetras().isEmpty()) {
-                canvas.drawText("Son: " + val.getTotalEnLetras(), 26f, yRow + 10f, boldPaint);
+            // Fila 1 (Meses): tamaño 10 Montserrat bold, centrado
+            canvas.drawRect(xStart, 217.85f, xStart + (30 * colW), 217.85f + 11.76f, fillWhite);
+            canvas.drawRect(xStart, 217.85f, xStart + (30 * colW), 217.85f + 11.76f, borderPaint);
+            float curX = xStart;
+            for (CalendarioTareoHelper.MesSpan mes : tareo.getMeses()) {
+                float spanW = mes.getCantidadDias() * colW;
+                canvas.drawRect(curX, 217.85f, curX + spanW, 217.85f + 11.76f, borderPaint);
+                drawCenteredText(canvas, mes.getNombreMes(), curX, 217.85f, spanW, 11.76f, tableMonthPaint);
+                curX += spanW;
             }
-            y = yRow + 24f;
+
+            // Fila 2 (Días): fondo azul #3B5F90 (rojo #EE1212 domingos), letra blanca en negrita tamaño 10
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                boolean isSunday = (i < tareo.getEsDomingo().size()) && tareo.getEsDomingo().get(i);
+                Paint cellBg = isSunday ? fillSundayRed : fillNavy;
+                canvas.drawRect(cellX, 229.61f, cellX + colW, 229.61f + 13.44f, cellBg);
+                canvas.drawRect(cellX, 229.61f, cellX + colW, 229.61f + 13.44f, borderPaint);
+                int diaNum = (i < tareo.getDiasDelMes().size()) ? tareo.getDiasDelMes().get(i) : (i + 1);
+                drawCenteredText(canvas, String.valueOf(diaNum), cellX, 229.61f, colW, 13.44f, tableDayPaint);
+            }
+
+            // Fila 3 (Código de Máquina y Asistencia "1"): tamaño 10 Montserrat
+            String codEquipo = (val.getCodigoEquipo() != null && !val.getCodigoEquipo().isEmpty()) ? val.getCodigoEquipo() : "GEP 105-111";
+            drawCenteredText(canvas, codEquipo, 70.44f, 243.05f, 99.86f, 12.48f, tableBoldPaint);
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                drawCenteredText(canvas, "1", cellX, 243.05f, colW, 12.48f, tableTextPaint);
+            }
+
+            // Fila 4 (Días acumulados 1..30): tamaño 10 Montserrat
+            for (int i = 0; i < 30; i++) {
+                float cellX = xStart + (i * colW);
+                int acum = (i < tareo.getDiasAcumulados().size()) ? tareo.getDiasAcumulados().get(i) : (i + 1);
+                drawCenteredText(canvas, String.valueOf(acum), cellX, 255.53f, colW, 12.48f, tableTextPaint);
+            }
+
+            // 4. Detalle económico (fuera de la tabla dinámica, tamaño 11 Montserrat)
+            // Fila 0: Barra azul de encabezado (y_top = 289.61, h = 12.48)
+            String descEq = (val.getDescripcionEquipo() != null && !val.getDescripcionEquipo().isEmpty()) ? val.getDescripcionEquipo().toUpperCase() : "VALORIZACIÓN";
+            drawCenteredText(canvas, descEq, 70.44f, 289.61f, 206.42f, 12.48f, outsideBoldWhitePaint);
+
+            // Fila 1: DÍAS VALORIZADOS (y_top = 302.09, h = 12.50)
+            drawRightAlignedText(canvas, String.valueOf(val.getDiasValorizados()), 272.0f, 302.09f, 12.50f, outsideTextPaint);
+
+            // Fila 2: COSTO DIARIO (y_top = 314.59, h = 12.48)
+            drawCenteredText(canvas, simboloMoneda, 196.82f, 314.59f, 26.52f, 12.48f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getCostoDiario()), 272.0f, 314.59f, 12.48f, outsideTextPaint);
+
+            // Fila 3: COSTO PARCIAL (y_top = 327.07, h = 12.48)
+            drawCenteredText(canvas, simboloMoneda, 196.82f, 327.07f, 26.52f, 12.48f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getCostoParcial()), 272.0f, 327.07f, 12.48f, outsideTextPaint);
+
+            // Fila 4: IGV (y_top = 339.55, h = 12.48)
+            drawCenteredText(canvas, simboloMoneda, 196.82f, 339.55f, 26.52f, 12.48f, outsideTextPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getIgv()), 272.0f, 339.55f, 12.48f, outsideTextPaint);
+
+            // Fila 5: TOTAL (y_top = 352.03, h = 12.48)
+            drawCenteredText(canvas, simboloMoneda, 196.82f, 352.03f, 26.52f, 12.48f, outsideBoldPaint);
+            drawRightAlignedText(canvas, formatMonto(val.getTotal()), 272.0f, 352.03f, 12.48f, outsideBoldPaint);
+
+            // Fila 6: Son en letras (y_top = 364.51 a 378)
+            if (val.getTotalEnLetras() != null && !val.getTotalEnLetras().isEmpty()) {
+                drawText(canvas, val.getTotalEnLetras(), 104.0f, 364.51f, 14.0f, outsideTextPaint, Paint.Align.LEFT);
+            }
         }
-
-        // ========================================================
-        // 6. CUENTAS BANCARIAS Y NOTA DE TITULAR (Idéntico a filas 36 a 40)
-        // ========================================================
-        y = Math.max(y, 445f);
-
-        List<String> cuentas = getCuentasBancarias();
-        String ctaBcp = "Nº DE CUENTA DE AHORROS / BCP MONEDA SOLES  245-21165261077";
-        String ctaDetraccion = "Nº DE CUENTA DE DETRACCIONES  00761027077";
-        String ctaScotia = "Nº DE CUENTA DE AHORROS / SCOTIABANK  MONEDA SOLES  722- 7753048";
-        String ctaBbvaSoles = "Nº DE CUENTA DE AHORROS / BBVA MONEDA SOLES 0011-0248-0200277022";
-        String ctaBbvaDolares = "Nº DE CUENTA DE AHORROS / BBVA MONEDA DÓLARES 0011-0248-0200277030";
-
-        for (String c : cuentas) {
-            if (c.contains("BCP") && c.contains("SOLES")) ctaBcp = c;
-            else if (c.contains("DETRACCION")) ctaDetraccion = c;
-            else if (c.contains("SCOTIABANK")) ctaScotia = c;
-            else if (c.contains("BBVA") && c.contains("SOLES")) ctaBbvaSoles = c;
-            else if (c.contains("BBVA") && c.contains("DOLARES")) ctaBbvaDolares = c;
-        }
-
-        Paint footText = new Paint(textPaint);
-        footText.setTextSize(7.5f);
-
-        // Fila 1 de cuentas
-        canvas.drawText(ctaBcp, xStart, y + 8f, footText);
-        canvas.drawText(ctaDetraccion, 442f, y + 8f, footText);
-        y += 14f;
-
-        // Fila 2 de cuentas
-        canvas.drawText(ctaScotia, xStart, y + 8f, footText);
-        y += 14f;
-
-        // Fila 3 de cuentas
-        canvas.drawText(ctaBbvaSoles, xStart, y + 8f, footText);
-        y += 14f;
-
-        // Fila 4 de cuentas
-        canvas.drawText(ctaBbvaDolares, xStart, y + 8f, footText);
-        y += 14f;
-
-        // Fila 5: NOTA de titular
-        canvas.drawText("NOTA:  A favor de " + getPropietario(), xStart, y + 8f, footText);
 
         document.finishPage(page);
 
-        String nombreArchivo = "Valorizacion_" + (numVal != null ? numVal : "temp") + ".pdf";
+        // Nomenclatura obligatoria estricta: VAL-CODMAQUINA-MESAÑO.pdf
+        String nombreArchivo = (numVal != null && !numVal.isEmpty() ? numVal : "VAL-000-0000") + ".pdf";
         File dir = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Valorizaciones");
         if (!dir.exists()) {
             dir.mkdirs();
@@ -724,27 +708,33 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         return archivo;
     }
 
-    private void drawCell(android.graphics.Canvas canvas, float left, float top, float width, float height,
-                          String text, Paint bgPaint, Paint borderPaint, Paint textPaint, Paint.Align align) {
-        if (bgPaint != null) {
-            canvas.drawRect(left, top, left + width, top + height, bgPaint);
+    private void drawCenteredText(Canvas canvas, String text, float x, float yTop, float width, float height, Paint paint) {
+        if (text == null || text.isEmpty()) return;
+        Paint p = paint;
+        float textW = paint.measureText(text);
+        if (textW > width - 4f) {
+            p = new Paint(paint);
+            float newSize = paint.getTextSize() * (width - 4f) / textW;
+            p.setTextSize(Math.max(6f, newSize));
         }
-        if (borderPaint != null) {
-            canvas.drawRect(left, top, left + width, top + height, borderPaint);
-        }
-        if (text != null && !text.isEmpty() && textPaint != null) {
-            textPaint.setTextAlign(align);
-            float x;
-            if (align == Paint.Align.CENTER) {
-                x = left + (width / 2f);
-            } else if (align == Paint.Align.RIGHT) {
-                x = left + width - 4f;
-            } else {
-                x = left + 4f;
-            }
-            float y = top + (height / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f);
-            canvas.drawText(text, x, y, textPaint);
-        }
+        p.setTextAlign(Paint.Align.CENTER);
+        float textX = x + (width / 2f);
+        float textY = yTop + (height / 2f) - ((p.descent() + p.ascent()) / 2f);
+        canvas.drawText(text, textX, textY, p);
+    }
+
+    private void drawRightAlignedText(Canvas canvas, String text, float rightX, float yTop, float height, Paint paint) {
+        if (text == null || text.isEmpty()) return;
+        paint.setTextAlign(Paint.Align.RIGHT);
+        float textY = yTop + (height / 2f) - ((paint.descent() + paint.ascent()) / 2f);
+        canvas.drawText(text, rightX, textY, paint);
+    }
+
+    private void drawText(Canvas canvas, String text, float leftX, float yTop, float height, Paint paint, Paint.Align align) {
+        if (text == null || text.isEmpty()) return;
+        paint.setTextAlign(align);
+        float textY = yTop + (height / 2f) - ((paint.descent() + paint.ascent()) / 2f);
+        canvas.drawText(text, leftX, textY, paint);
     }
 
     private String formatMonto(double monto) {

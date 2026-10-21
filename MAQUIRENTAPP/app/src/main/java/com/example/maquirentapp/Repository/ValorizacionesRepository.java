@@ -9,6 +9,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.Transaction;
@@ -94,6 +95,52 @@ public class ValorizacionesRepository {
         ref.set(cliente)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
+    }
+
+    public void buscarClientePorNombre(String nombreEmpresa, Callback<ClienteValorizacion> callback) {
+        if (nombreEmpresa == null || nombreEmpresa.trim().isEmpty()) {
+            callback.onSuccess(null);
+            return;
+        }
+        db.collection(COL_CLIENTES_VAL)
+                .whereEqualTo("nombreEmpresa", nombreEmpresa.trim())
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        callback.onSuccess(querySnapshot.getDocuments().get(0).toObject(ClienteValorizacion.class));
+                    } else {
+                        callback.onSuccess(null);
+                    }
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void guardarOActualizarClienteValorizacion(ClienteValorizacion cliente, Callback<ClienteValorizacion> callback) {
+        if (cliente == null) {
+            if (callback != null) callback.onError(new Exception("Cliente nulo"));
+            return;
+        }
+        if (cliente.getId() != null && !cliente.getId().trim().isEmpty()) {
+            db.collection(COL_CLIENTES_VAL).document(cliente.getId())
+                    .set(cliente, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> {
+                        if (callback != null) callback.onSuccess(cliente);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (callback != null) callback.onError(e);
+                    });
+        } else {
+            DocumentReference ref = db.collection(COL_CLIENTES_VAL).document();
+            cliente.setId(ref.getId());
+            ref.set(cliente)
+                    .addOnSuccessListener(aVoid -> {
+                        if (callback != null) callback.onSuccess(cliente);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (callback != null) callback.onError(e);
+                    });
+        }
     }
     public void getClientesPorAnio(int anio, Callback<List<ClienteValorizacion>> callback) {
         db.collection(COL_CLIENTES_VAL)

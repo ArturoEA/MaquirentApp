@@ -144,6 +144,21 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.itemView.setOnClickListener(expandListener);
         holder.btnExpandir.setOnClickListener(expandListener);
 
+        // Configurar botón de generar valorización SIEMPRE (accesible tanto en solo lectura como en edición)
+        if (holder.btnGenerarValorizacionMes != null) {
+            holder.btnGenerarValorizacionMes.setEnabled(true);
+            holder.btnGenerarValorizacionMes.setOnClickListener(v -> {
+                if (listener != null) {
+                    int adapterPos = holder.getBindingAdapterPosition();
+                    if (adapterPos != RecyclerView.NO_POSITION && adapterPos < items.size()) {
+                        listener.onGenerarValorizacion(items.get(adapterPos), adapterPos);
+                    } else {
+                        listener.onGenerarValorizacion(detalle, position);
+                    }
+                }
+            });
+        }
+
         if (!modoSoloLectura) {
             holder.btnEditarFechaFin.setVisibility(View.VISIBLE);
             holder.btnEditarFechaFin.setOnClickListener(v -> mostrarDatePickerFechaFin(holder.itemView.getContext(), detalle, position));
@@ -427,6 +442,9 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setFocusable(false);
         holder.btnConfirmarPagoMes.setEnabled(false);
         holder.btnConfirmarPagoHE.setEnabled(false);
+        if (holder.btnGenerarValorizacionMes != null) {
+            holder.btnGenerarValorizacionMes.setEnabled(true);
+        }
     }
 
     public List<DetalleMes> getItems() {

@@ -15,6 +15,8 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -74,6 +76,7 @@ public class InformacionGeneralFragment extends Fragment {
     private InfoPlaca infoPlacaActual;
     private FotosSimpleAdapter fotosAdapter;
     private SpecsPlacaAdapter specsAdapter;
+    private AutoCompleteTextView spinnerTipoEquipo;
     private TextInputEditText inputPotenciaSB, inputPotenciaC, inputMarcaG, inputModeloG, inputSerieG;
     private TextInputEditText inputMarcaM, inputModeloM, inputSerieM;
     private TextInputEditText inputMarcaGen, inputModeloGen, inputSerieGen;
@@ -121,6 +124,13 @@ public class InformacionGeneralFragment extends Fragment {
         recyclerFotosPlaca = view.findViewById(R.id.recyclerFotosPlaca);
         recyclerSpecsPlaca = view.findViewById(R.id.recyclerSpecsPlaca);
         btnAddSpecPlaca = view.findViewById(R.id.btnAddSpecPlaca);
+
+        spinnerTipoEquipo = view.findViewById(R.id.spinnerTipoEquipo);
+        if (spinnerTipoEquipo != null) {
+            String[] tiposEquipo = new String[]{"Grupo electrógeno", "Compresora de aire", "Torre de iluminación", "Motobomba"};
+            ArrayAdapter<String> adapterTipos = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, tiposEquipo);
+            spinnerTipoEquipo.setAdapter(adapterTipos);
+        }
 
         inputPotenciaSB = view.findViewById(R.id.inputPotenciaStandBy);
         inputPotenciaC = view.findViewById(R.id.inputPotenciaContinua);
@@ -366,6 +376,11 @@ public class InformacionGeneralFragment extends Fragment {
         }
         if (infoPlacaActual.getEspecificaciones() == null) {
             infoPlacaActual.setEspecificaciones(new ArrayList<>());
+        }
+
+        if (spinnerTipoEquipo != null) {
+            String tipo = infoPlacaActual.getTipoEquipoOrDefault(codigoGrupo);
+            spinnerTipoEquipo.setText(tipo, false);
         }
 
         inputPotenciaSB.setText(infoPlacaActual.getPotenciaStandBy());
@@ -654,6 +669,10 @@ public class InformacionGeneralFragment extends Fragment {
         if (infoPlacaActual == null) {
             infoPlacaActual = new InfoPlaca();
             infoPlacaActual.setIdGrupo(idGrupo);
+        }
+
+        if (spinnerTipoEquipo != null) {
+            infoPlacaActual.setTipoEquipo(spinnerTipoEquipo.getText().toString().trim());
         }
 
         infoPlacaActual.setPotenciaStandBy(inputPotenciaSB.getText().toString().trim());
