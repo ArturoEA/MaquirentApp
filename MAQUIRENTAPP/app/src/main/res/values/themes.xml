@@ -20,7 +20,7 @@
 
         <item name="colorSurface">@color/black</item>
         <item name="colorOnSurface">@color/white</item>
-        <item name="colorOnSurfaceVariant">@color/white</item>ss
+        <item name="colorOnSurfaceVariant">@color/white</item>
         <item name="colorPrimary">@color/white</item>
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColorSecondary">@color/white</item>

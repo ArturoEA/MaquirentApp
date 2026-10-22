@@ -203,6 +203,9 @@ public class HomeFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("idGrupo", pago.getIdGrupo());
             args.putString("alquilerId", pago.getAlquilerId());
+            if (pago.getCodigoGrupo() != null) {
+                args.putString("codigo", pago.getCodigoGrupo());
+            }
             args.putBoolean("modoSoloLectura", true);
 
             try {

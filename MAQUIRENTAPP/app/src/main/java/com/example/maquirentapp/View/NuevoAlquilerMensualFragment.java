@@ -1,7 +1,6 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -39,6 +38,7 @@ import com.example.maquirentapp.Model.Ingreso;
 import com.example.maquirentapp.Repository.AlquilerRepository;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.UsuarioRepository;
+import com.example.maquirentapp.Utils.CustomDatePickerDialog;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -65,7 +65,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private Spinner spinnerMoneda;
     private TextView tvSimboloMoneda;
     private RecyclerView recyclerAccesorios, recyclerDetallesMes;
-    private Button btnFinalizarAlquiler;
+    private com.facebook.shimmer.ShimmerFrameLayout shimmerDetallesMes;
+    private Button btnGenerarSiguienteMesManual, btnFinalizarAlquiler;
 
     private AccesorioSeleccionAdapter adapterAccesorios;
     private DetalleMesAdapter adapterDetallesMes;
@@ -79,6 +80,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private String monedaSeleccionada = "SOL";
     private AlquilerMensual alquilerActual;
+    private String codigo;
+    private boolean isGenerandoSiguienteMes = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,6 +89,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (getArguments() != null) {
             idGrupo = getArguments().getString("idGrupo");
             alquilerId = getArguments().getString("alquilerId");
+            codigo = getArguments().getString("codigo");
             modoSoloLectura = getArguments().getBoolean("modoSoloLectura", false);
             modoEdicion = alquilerId != null;
         }
@@ -135,6 +139,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         spinnerMoneda = view.findViewById(R.id.spinnerMoneda);
         tvSimboloMoneda = view.findViewById(R.id.tvSimboloMoneda);
         btnFinalizarAlquiler = view.findViewById(R.id.btnFinalizarAlquiler);
+        btnGenerarSiguienteMesManual = view.findViewById(R.id.btnGenerarSiguienteMesManual);
+        if (btnGenerarSiguienteMesManual != null) {
+            btnGenerarSiguienteMesManual.setOnClickListener(v -> mostrarDialogoGenerarSiguienteMesManual());
+        }
 
         recyclerAccesorios = view.findViewById(R.id.recyclerAccesorios);
         recyclerAccesorios.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -143,6 +151,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         recyclerAccesorios.setAdapter(adapterAccesorios);
 
         recyclerDetallesMes = view.findViewById(R.id.recyclerDetallesMes);
+        shimmerDetallesMes = view.findViewById(R.id.shimmerDetallesMes);
         recyclerDetallesMes.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerDetallesMes.setNestedScrollingEnabled(false);
         adapterDetallesMes = new DetalleMesAdapter();
@@ -161,8 +170,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         });
 
         if (modoEdicion) {
-            recyclerDetallesMes.setVisibility(View.VISIBLE);
             btnFinalizarAlquiler.setVisibility(View.VISIBLE);
+            if (btnGenerarSiguienteMesManual != null) {
+                btnGenerarSiguienteMesManual.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -410,8 +421,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 return;
             }
 
+            int horasMinimasEfectivas = detalle.getHorasMinimas() > 0 ? detalle.getHorasMinimas() : alquilerActual.getHorasMinimas();
             com.example.maquirentapp.strategy.ResultadoHorasExtras resultado = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularHorasExtras(
-                    horometroActual, horometroAnterior, alquilerActual.getHorasMinimas(), detalle.getFechaInicio(), detalle.getFechaFin(), alquilerActual.getPrecioHoraExtra()
+                    horometroActual, horometroAnterior, horasMinimasEfectivas, detalle.getFechaInicio(), detalle.getFechaFin(), alquilerActual.getPrecioHoraExtra()
             );
 
             detalle.setHorometro(horometroActual);
@@ -451,32 +463,44 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private void configurarDatePickers() {
         inputFechaInicial.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
-            DatePickerDialog datePickerDialog = new DatePickerDialog(
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            try {
+                if (inputFechaInicial.getText() != null && !inputFechaInicial.getText().toString().isEmpty()) {
+                    calendar.setTime(sdf.parse(inputFechaInicial.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            new CustomDatePickerDialog(
                     requireContext(),
-                    (view1, year, month, dayOfMonth) -> {
-                        String fecha = String.format(Locale.US, "%02d/%02d/%d", dayOfMonth, month + 1, year);
-                        inputFechaInicial.setText(fecha);
-                    },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-            );
-            datePickerDialog.show();
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                    (year, month, dayOfMonth) -> {
+                        String fecha = String.format(Locale.US, "%02d/%02d/%d", dayOfMonth, month + 1, year);
+                        inputFechaInicial.setText(fecha);
+                    }
+            ).show();
         });
 
         inputFechaFinal.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
-            DatePickerDialog datePickerDialog = new DatePickerDialog(
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            try {
+                if (inputFechaFinal.getText() != null && !inputFechaFinal.getText().toString().isEmpty()) {
+                    calendar.setTime(sdf.parse(inputFechaFinal.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            new CustomDatePickerDialog(
                     requireContext(),
-                    (view1, year, month, dayOfMonth) -> {
-                        String fecha = String.format(Locale.US, "%02d/%02d/%d", dayOfMonth, month + 1, year);
-                        inputFechaFinal.setText(fecha);
-                    },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-            );
-            datePickerDialog.show();
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                    (year, month, dayOfMonth) -> {
+                        String fecha = String.format(Locale.US, "%02d/%02d/%d", dayOfMonth, month + 1, year);
+                        inputFechaFinal.setText(fecha);
+                    }
+            ).show();
         });
     }
 
@@ -502,6 +526,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             public void onSuccess(AlquilerMensual alquiler) {
                 alquilerActual = alquiler;
                 idGrupo = alquiler.getIdGrupo();
+                if (codigo != null && !codigo.isEmpty() && getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).updateHeaderTitle("Nuevo alquiler mensual\n" + codigo);
+                }
                 inputEmpresa.setText(alquiler.getNombreCliente());
                 inputUbicacion.setText(alquiler.getUbicacion());
                 inputFechaInicial.setText(formatearFecha(alquiler.getFechaInicial()));
@@ -519,6 +546,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     adapterAccesorios.setAccesoriosSeleccionados(alquiler.getAccesoriosIds());
                 }
 
+                String simbolo = "USD".equals(moneda) ? "$" : "S/.";
+                adapterDetallesMes.setSimboloMoneda(simbolo);
                 adapterDetallesMes.setPrecioMensualBase(alquiler.getPrecioAlquiler());
 
                 cargarDetallesMes();
@@ -526,8 +555,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 if (alquiler.isFinalizado()) {
                     deshabilitarCampos();
                     hideGlobalFab();
+                    if (btnGenerarSiguienteMesManual != null) btnGenerarSiguienteMesManual.setVisibility(View.GONE);
                 } else {
                     configureGlobalFab();
+                    if (btnGenerarSiguienteMesManual != null) btnGenerarSiguienteMesManual.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -542,15 +573,31 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
     private void cargarDetallesMes() {
         if (alquilerId == null) return;
+        if (shimmerDetallesMes != null) {
+            shimmerDetallesMes.setVisibility(View.VISIBLE);
+            shimmerDetallesMes.startShimmer();
+        }
+        recyclerDetallesMes.setVisibility(View.GONE);
+
         alquilerRepository.getDetallesMesPorAlquiler(alquilerId, new Callback<List<DetalleMes>>() {
             @Override
             public void onSuccess(List<DetalleMes> detalles) {
+                if (shimmerDetallesMes != null) {
+                    shimmerDetallesMes.stopShimmer();
+                    shimmerDetallesMes.setVisibility(View.GONE);
+                }
+                recyclerDetallesMes.setVisibility(View.VISIBLE);
                 adapterDetallesMes.setItems(detalles);
                 adapterDetallesMes.setModoSoloLectura(modoSoloLectura && !editandoActualmente);
             }
 
             @Override
             public void onError(Exception e) {
+                if (shimmerDetallesMes != null) {
+                    shimmerDetallesMes.stopShimmer();
+                    shimmerDetallesMes.setVisibility(View.GONE);
+                }
+                recyclerDetallesMes.setVisibility(View.VISIBLE);
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Error al cargar detalles", Toast.LENGTH_SHORT).show();
                 }
@@ -921,6 +968,11 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             return;
         }
 
+        if (isGenerandoSiguienteMes) {
+            Log.w(TAG, "Ya se está generando el siguiente mes. Ignorando llamada simultánea.");
+            return;
+        }
+
         List<DetalleMes> listaActual = adapterDetallesMes.getItems();
         if (listaActual.isEmpty()) return;
 
@@ -929,20 +981,48 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (!detallePagado.getId().equals(ultimoMes.getId())) {
             return;
         }
+
+        int siguienteNumero = detallePagado.getNumeroMes() + 1;
+        for (DetalleMes d : listaActual) {
+            if (d.getNumeroMes() >= siguienteNumero) {
+                Log.w(TAG, "El mes " + siguienteNumero + " ya existe en la lista. No se duplicará.");
+                return;
+            }
+        }
+
         long diasDuracion = calcularDiasEntreFechas(detallePagado.getFechaInicio(), detallePagado.getFechaFin());
         if (diasDuracion < 30) {
             if (getContext() != null) {
-                Toast.makeText(getContext(), "Último período generado", Toast.LENGTH_LONG).show();
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Período con corte parcial (" + diasDuracion + " días)")
+                        .setMessage("Este período duró menos de 30 días.\n\n¿El cliente continuará con el alquiler para el siguiente mes?")
+                        .setPositiveButton("Sí, continuar alquiler", (dialog, which) -> {
+                            generarSiguienteMesAuto(detallePagado);
+                        })
+                        .setNegativeButton("No, es el último período", (dialog, which) -> {
+                            if (getContext() != null) {
+                                Toast.makeText(getContext(), "Período guardado como último. Puede presionar 'Finalizar alquiler' cuando devuelvan el equipo.", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .show();
             }
             return;
         }
 
+        generarSiguienteMesAuto(detallePagado);
+    }
+
+    private void generarSiguienteMesAuto(DetalleMes detallePagado) {
+        if (alquilerActual == null || alquilerActual.isFinalizado()) return;
+
+        int siguienteNumero = detallePagado.getNumeroMes() + 1;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
             Date fechaFinAnterior = sdf.parse(detallePagado.getFechaFin());
             Calendar cal = Calendar.getInstance();
-            cal.setTime(fechaFinAnterior);
+            if (fechaFinAnterior != null) {
+                cal.setTime(fechaFinAnterior);
+            }
 
             cal.add(Calendar.DAY_OF_YEAR, 1);
             Date nuevaFechaInicio = cal.getTime();
@@ -952,41 +1032,225 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             Date nuevaFechaFin = cal.getTime();
             String strFechaFin = sdf.format(nuevaFechaFin);
 
+            crearPeriodoMes(siguienteNumero, strFechaInicio, strFechaFin, alquilerActual.getPrecioAlquiler(), alquilerActual.getHorasMinimas());
+        } catch (ParseException e) {
+            Log.e(TAG, "Error en fechas al auto-generar mes", e);
+        }
+    }
+
+    private void mostrarDialogoGenerarSiguienteMesManual() {
+        if (alquilerActual == null || getContext() == null) return;
+
+        List<DetalleMes> listaActual = adapterDetallesMes.getItems();
+        int nuevoNumero = 1;
+        String fechaInicioSugerida = "";
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        Calendar cal = Calendar.getInstance();
+
+        if (!listaActual.isEmpty()) {
+            DetalleMes ultimo = listaActual.get(listaActual.size() - 1);
+            nuevoNumero = ultimo.getNumeroMes() + 1;
+            if (ultimo.getFechaFin() != null && !ultimo.getFechaFin().isEmpty()) {
+                try {
+                    Date dFin = sdf.parse(ultimo.getFechaFin());
+                    if (dFin != null) {
+                        cal.setTime(dFin);
+                        cal.add(Calendar.DAY_OF_YEAR, 1);
+                        fechaInicioSugerida = sdf.format(cal.getTime());
+                    }
+                } catch (Exception ignored) {}
+            }
+        } else {
+            fechaInicioSugerida = formatearFecha(alquilerActual.getFechaInicial());
+        }
+
+        if (fechaInicioSugerida.isEmpty()) {
+            fechaInicioSugerida = sdf.format(new Date());
+        }
+
+        String fechaFinSugerida = "";
+        try {
+            Date dIni = sdf.parse(fechaInicioSugerida);
+            if (dIni != null) {
+                cal.setTime(dIni);
+                cal.add(Calendar.DAY_OF_YEAR, 29);
+                fechaFinSugerida = sdf.format(cal.getTime());
+            }
+        } catch (Exception ignored) {}
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_generar_mes_manual, null);
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvTitulo = dialogView.findViewById(R.id.tvTituloDialogoGenerar);
+        TextView tvSubtitulo = dialogView.findViewById(R.id.tvSubtituloGenerar);
+        TextInputEditText inputInicio = dialogView.findViewById(R.id.inputFechaInicioManual);
+        TextInputEditText inputFin = dialogView.findViewById(R.id.inputFechaFinManual);
+        TextView tvDias = dialogView.findViewById(R.id.tvDiasCalculadosManual);
+        TextInputEditText inputMonto = dialogView.findViewById(R.id.inputMontoMesManual);
+        TextInputEditText inputHorasMin = dialogView.findViewById(R.id.inputHorasMinimasManual);
+        Button btnCancelar = dialogView.findViewById(R.id.btnCancelarGenerar);
+        Button btnCrear = dialogView.findViewById(R.id.btnConfirmarGenerar);
+
+        tvTitulo.setText("Generar Mes " + nuevoNumero);
+        tvSubtitulo.setText("Configura el período para el nuevo mes de alquiler");
+        inputInicio.setText(fechaInicioSugerida);
+        inputFin.setText(fechaFinSugerida);
+        inputMonto.setText(String.format(Locale.US, "%.2f", alquilerActual.getPrecioAlquiler()));
+        inputHorasMin.setText(String.valueOf(alquilerActual.getHorasMinimas() > 0 ? alquilerActual.getHorasMinimas() : 200));
+
+        final int numMesFinal = nuevoNumero;
+        actualizarDiasManual(tvDias, inputInicio.getText().toString(), inputFin.getText().toString());
+
+        inputInicio.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            try {
+                Date d = sdf.parse(inputInicio.getText().toString().trim());
+                if (d != null) c.setTime(d);
+            } catch (Exception ignored) {}
+            new CustomDatePickerDialog(getContext(), c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH),
+                    (year, month, day) -> {
+                        String f = String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year);
+                        inputInicio.setText(f);
+                        actualizarDiasManual(tvDias, f, inputFin.getText().toString());
+                    }).show();
+        });
+
+        inputFin.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            try {
+                Date d = sdf.parse(inputFin.getText().toString().trim());
+                if (d != null) c.setTime(d);
+            } catch (Exception ignored) {}
+            CustomDatePickerDialog dpd = new CustomDatePickerDialog(getContext(), c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH),
+                    (year, month, day) -> {
+                        String f = String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year);
+                        inputFin.setText(f);
+                        actualizarDiasManual(tvDias, inputInicio.getText().toString(), f);
+                    });
+            try {
+                Date dIni = sdf.parse(inputInicio.getText().toString().trim());
+                if (dIni != null) dpd.setMinDate(dIni.getTime());
+            } catch (Exception ignored) {}
+            dpd.show();
+        });
+
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+
+        btnCrear.setOnClickListener(v -> {
+            String strIni = inputInicio.getText() != null ? inputInicio.getText().toString().trim() : "";
+            String strFin = inputFin.getText() != null ? inputFin.getText().toString().trim() : "";
+            if (strIni.isEmpty() || strFin.isEmpty()) {
+                Toast.makeText(getContext(), "Complete las fechas de inicio y fin", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            long dias = calcularDiasEntreFechas(strIni, strFin);
+            if (dias <= 0) {
+                Toast.makeText(getContext(), "La fecha final debe ser posterior a la de inicio", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double monto;
+            try {
+                monto = Double.parseDouble(inputMonto.getText().toString().trim());
+                if (monto < 0) throw new NumberFormatException();
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Ingrese un monto válido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int horasMin;
+            try {
+                horasMin = Integer.parseInt(inputHorasMin.getText().toString().trim());
+                if (horasMin < 0) horasMin = 0;
+            } catch (Exception e) {
+                horasMin = 0;
+            }
+
+            dialog.dismiss();
+            crearPeriodoMes(numMesFinal, strIni, strFin, monto, horasMin);
+        });
+
+        dialog.show();
+    }
+
+    private void actualizarDiasManual(TextView tvDias, String inicio, String fin) {
+        if (tvDias == null) return;
+        long dias = calcularDiasEntreFechas(inicio, fin);
+        if (dias <= 0) {
+            tvDias.setText("Duración inválida");
+            tvDias.setTextColor(Color.RED);
+        } else if (dias < 30) {
+            tvDias.setText("Duración: " + dias + " días (corte parcial)");
+            tvDias.setTextColor(Color.parseColor("#2877BC"));
+        } else {
+            tvDias.setText("Duración: " + dias + " días (período completo)");
+            tvDias.setTextColor(Color.parseColor("#2877BC"));
+        }
+    }
+
+    private void crearPeriodoMes(int numeroMes, String strFechaInicio, String strFechaFin, double monto, int horasMinimas) {
+        if (alquilerActual == null || isGenerandoSiguienteMes) return;
+
+        isGenerandoSiguienteMes = true;
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            Date dInicio = sdf.parse(strFechaInicio);
+
             DetalleMes nuevoMes = new DetalleMes();
             nuevoMes.setIdAlquilerMensual(alquilerActual.getId());
-            nuevoMes.setNumeroMes(detallePagado.getNumeroMes() + 1);
+            nuevoMes.setNumeroMes(numeroMes);
             nuevoMes.setFechaInicio(strFechaInicio);
             nuevoMes.setFechaFin(strFechaFin);
-            nuevoMes.setMontoMes(alquilerActual.getPrecioAlquiler()); // Hereda precio base
+            nuevoMes.setMontoMes(monto);
+            nuevoMes.setHorasMinimas(horasMinimas);
 
+            long dias = calcularDiasEntreFechas(strFechaInicio, strFechaFin);
             SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
-            String mesNombre = monthFormat.format(nuevaFechaInicio);
-            String titulo = "Mes " + nuevoMes.getNumeroMes() + ": " +
-                    mesNombre.substring(0, 1).toUpperCase() + mesNombre.substring(1) +
-                    " (" + strFechaInicio + " - " + strFechaFin + ")";
+            String mesNombre = dInicio != null ? monthFormat.format(dInicio) : "";
+            if (!mesNombre.isEmpty()) {
+                mesNombre = mesNombre.substring(0, 1).toUpperCase() + mesNombre.substring(1);
+            }
+
+            String titulo = "Mes " + numeroMes + ": " + mesNombre + " (" + strFechaInicio + " - " + strFechaFin + ")";
+            if (dias < 30) {
+                titulo += " [" + dias + " días]";
+            }
             nuevoMes.setTituloPeriodo(titulo);
 
             if (getContext() != null) {
-                Toast.makeText(getContext(), "Generando siguiente mes...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Generando Mes " + numeroMes + "...", Toast.LENGTH_SHORT).show();
             }
 
             alquilerRepository.crearDetalleMes(nuevoMes, new Callback<DetalleMes>() {
                 @Override
                 public void onSuccess(DetalleMes detalleCreado) {
+                    isGenerandoSiguienteMes = false;
                     cargarDetallesMes();
                     if (getContext() != null) {
-                        Toast.makeText(getContext(), "Siguiente mes generado", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Mes " + numeroMes + " generado exitosamente", Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Log.e(TAG, "Error generando siguiente mes auto", e);
+                    isGenerandoSiguienteMes = false;
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Error al generar mes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
-
-        } catch (ParseException e) {
-            Log.e(TAG, "Error en fechas al generar mes", e);
+        } catch (Exception e) {
+            isGenerandoSiguienteMes = false;
+            Log.e(TAG, "Error parseando fechas para nuevo mes", e);
         }
     }
     @Override
@@ -1013,7 +1277,12 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         inputPrecioHoraExtra.setEnabled(false);
         spinnerMoneda.setEnabled(false);
         adapterAccesorios.setClickEnabled(false);
-        btnFinalizarAlquiler.setVisibility(View.GONE);
+        if (alquilerActual != null && alquilerActual.isFinalizado()) {
+            btnFinalizarAlquiler.setVisibility(View.GONE);
+            if (btnGenerarSiguienteMesManual != null) {
+                btnGenerarSiguienteMesManual.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void habilitarCampos() {
@@ -1032,6 +1301,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         if (alquilerActual == null || !alquilerActual.isFinalizado()) {
             btnFinalizarAlquiler.setVisibility(View.VISIBLE);
             btnFinalizarAlquiler.setEnabled(true);
+            if (btnGenerarSiguienteMesManual != null) {
+                btnGenerarSiguienteMesManual.setVisibility(View.VISIBLE);
+                btnGenerarSiguienteMesManual.setEnabled(true);
+            }
         }
     }
 }

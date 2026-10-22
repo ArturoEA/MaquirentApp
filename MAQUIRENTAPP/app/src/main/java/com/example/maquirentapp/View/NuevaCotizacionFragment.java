@@ -1,7 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
+import com.example.maquirentapp.Utils.CustomDatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -595,10 +595,10 @@ public class NuevaCotizacionFragment extends Fragment {
 
     private void mostrarDatePicker() {
         Calendar cal = Calendar.getInstance();
-        new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+        new CustomDatePickerDialog(requireContext(), cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), (year, month, dayOfMonth) -> {
             cal.set(year, month, dayOfMonth);
             actualizarFechaInput(cal);
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
+        }).show();
     }
 
     private void actualizarFechaInput(Calendar cal) {

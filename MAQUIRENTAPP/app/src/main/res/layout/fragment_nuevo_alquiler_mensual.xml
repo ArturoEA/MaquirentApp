@@ -7,6 +7,10 @@
     android:layout_marginBottom="50dp"
     android:paddingBottom="30dp"
     android:clipToPadding="true"
+    android:fillViewport="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:descendantFocusability="beforeDescendants"
     android:background="@color/background_light"
     android:theme="@style/Theme.TextMain"
     tools:context=".View.NuevoAlquilerMensualFragment">
@@ -268,12 +272,35 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <include
+            android:id="@+id/shimmerDetallesMes"
+            layout="@layout/skeleton_list_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:visibility="gone" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerDetallesMes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:nestedScrollingEnabled="false"
+            android:descendantFocusability="beforeDescendants"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnGenerarSiguienteMesManual"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/azul_100"
+            android:text="+ Generar siguiente período"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
             android:visibility="gone" />
 
         <Button

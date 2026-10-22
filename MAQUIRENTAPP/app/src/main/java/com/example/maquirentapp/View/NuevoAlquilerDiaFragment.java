@@ -1,7 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
+import com.example.maquirentapp.Utils.CustomDatePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -201,18 +201,30 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     private void configurarDatePickers() {
         inputFechaInicial.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
-            DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            try {
+                if (inputFechaInicial.getText() != null && !inputFechaInicial.getText().toString().isEmpty()) {
+                    cal.setTime(sdf.parse(inputFechaInicial.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            new CustomDatePickerDialog(requireContext(), cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), (year, month, day) -> {
                 inputFechaInicial.setText(String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year));
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-            dpd.show();
+            }).show();
         });
 
         inputFechaFinal.setOnClickListener(v -> {
             Calendar cal = Calendar.getInstance();
-            DatePickerDialog dpd = new DatePickerDialog(getContext(), (picker, year, month, day) -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            try {
+                if (inputFechaFinal.getText() != null && !inputFechaFinal.getText().toString().isEmpty()) {
+                    cal.setTime(sdf.parse(inputFechaFinal.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            new CustomDatePickerDialog(requireContext(), cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), (year, month, day) -> {
                 inputFechaFinal.setText(String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year));
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
-            dpd.show();
+            }).show();
         });
     }
 

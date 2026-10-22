@@ -3,7 +3,7 @@ package com.example.maquirentapp.View;
 import static android.view.View.GONE;
 
 import android.app.Activity;
-import android.app.DatePickerDialog;
+import com.example.maquirentapp.Utils.CustomDatePickerDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.ContentValues;
@@ -199,18 +199,23 @@ public class NuevoMantenimientoFragment extends Fragment {
 
     private void mostrarDatePicker() {
         Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        try {
+            if (inputFecha.getText() != null && !inputFecha.getText().toString().isEmpty()) {
+                calendar.setTime(sdf.parse(inputFecha.getText().toString().trim()));
+            }
+        } catch (Exception ignored) {}
+
+        new CustomDatePickerDialog(
                 requireContext(),
-                (view, year, month, dayOfMonth) -> {
-                    calendar.set(year, month, dayOfMonth);
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-                    inputFecha.setText(sdf.format(calendar.getTime()));
-                },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-        );
-        datePickerDialog.show();
+                calendar.get(Calendar.DAY_OF_MONTH),
+                (year, month, dayOfMonth) -> {
+                    calendar.set(year, month, dayOfMonth);
+                    inputFecha.setText(sdf.format(calendar.getTime()));
+                }
+        ).show();
     }
 
     private void cargarItemsConfiguracion() {
@@ -739,10 +744,23 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         inputProxFecha.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
-            new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
-                calendar.set(year, month, dayOfMonth);
-                inputProxFecha.setText(new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(calendar.getTime()));
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            try {
+                if (inputProxFecha.getText() != null && !inputProxFecha.getText().toString().isEmpty()) {
+                    calendar.setTime(sdf.parse(inputProxFecha.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            new CustomDatePickerDialog(
+                    requireContext(),
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH),
+                    (year, month, dayOfMonth) -> {
+                        calendar.set(year, month, dayOfMonth);
+                        inputProxFecha.setText(sdf.format(calendar.getTime()));
+                    }
+            ).show();
         });
 
         // Opciones sugeridas de Aceite

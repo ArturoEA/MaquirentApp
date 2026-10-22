@@ -1,6 +1,6 @@
 package com.example.maquirentapp.adapters;
 
-import android.app.DatePickerDialog;
+import android.app.Activity;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,12 +15,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.graphics.Color;
+import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Model.DetalleMes;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.CustomDatePickerDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -38,6 +41,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     private OnDetalleMesListener listener;
     private boolean modoSoloLectura = false;
     private double precioMensualBase = 0;
+    private String simboloMoneda = "S/.";
 
     public interface OnDetalleMesListener {
         void onHorometroChanged(DetalleMes detalle, double nuevoHorometro);
@@ -59,6 +63,10 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
     public void setPrecioMensualBase(double precio) {
         this.precioMensualBase = precio;
+    }
+
+    public void setSimboloMoneda(String simbolo) {
+        this.simboloMoneda = (simbolo != null && !simbolo.isEmpty()) ? simbolo : "S/.";
     }
 
     public void setItems(List<DetalleMes> nuevos) {
@@ -93,7 +101,8 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setOnEditorActionListener(null);
 
         holder.tvTituloPeriodo.setText(detalle.getTituloPeriodo());
-        holder.tvMontoMes.setText(String.format(Locale.US, "Monto Mes: %.2f", detalle.getMontoMes()));
+        double montoAMostrar = detalle.getMontoMes() > 0 ? detalle.getMontoMes() : precioMensualBase;
+        holder.tvMontoMes.setText(String.format(Locale.US, "Monto: %s %.2f", simboloMoneda, montoAMostrar));
 
         if (detalle.getFechaFin() != null && !detalle.getFechaFin().isEmpty()) {
             holder.textInputHorometro.setHint("Horómetro al " + detalle.getFechaFin());
@@ -103,7 +112,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
                 String.valueOf(detalle.getHorometro()) : "");
 
         holder.inputHorasExtras.setText(String.valueOf((int) detalle.getHorasExtras()));
-        holder.inputPrecioHE.setText(String.format(Locale.US, "%.2f", detalle.getPrecioHorasExtras()));
+        holder.inputPrecioHE.setText(String.format(Locale.US, "%s %.2f", simboloMoneda, detalle.getPrecioHorasExtras()));
 
 
         configurarConfirmaciones(holder, detalle);
@@ -115,32 +124,31 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         View.OnClickListener expandListener = v -> {
             ocultarTeclado(v);
+            quitarFocoDeInputs(holder);
 
-            // 1. Obtener el RecyclerView padre
-            // Usamos 'v' que es el item clicado (holder.itemView o el botón)
-            // Subimos en la jerarquía hasta encontrar el RecyclerView si es necesario,
-            // pero normalmente holder.itemView.getParent() es el RecyclerView.
-            View parentView = (View) holder.itemView.getParent();
-
-            if (parentView instanceof RecyclerView) {
-                RecyclerView recyclerView = (RecyclerView) parentView;
-
-                // 2. Hacer el RecyclerView "focusable" temporalmente para que pueda recibir el foco
-                recyclerView.setFocusable(true);
-                recyclerView.setFocusableInTouchMode(true);
-
-                // 3. Forzar el foco al RecyclerView.
-                // Esto quita el foco del EditText problemático ANTES de que desaparezca.
-                recyclerView.requestFocus();
+            // Quitar foco global si alguna vista lo tenía
+            if (v.getContext() instanceof Activity) {
+                View focused = ((Activity) v.getContext()).getCurrentFocus();
+                if (focused != null) {
+                    focused.clearFocus();
+                }
             }
 
-            // 4. Usar post para diferir la actualización visual al siguiente frame
-            v.post(() -> {
-                detalle.setExpandido(!detalle.isExpandido());
-                notifyItemChanged(position);
-            });
+            boolean nuevoEstado = !detalle.isExpandido();
+            detalle.setExpandido(nuevoEstado);
+
+            // Expandir / colapsar directamente en la vista sin llamar a notifyItemChanged
+            // para evitar que RecyclerView recicle/desconecte vistas con foco dentro de NestedScrollView
+            holder.layoutContenido.setVisibility(nuevoEstado ? View.VISIBLE : View.GONE);
+            holder.btnExpandir.animate()
+                    .rotation(nuevoEstado ? 180f : 0f)
+                    .setDuration(200)
+                    .start();
         };
 
+        if (holder.headerLayout != null) {
+            holder.headerLayout.setOnClickListener(expandListener);
+        }
         holder.itemView.setOnClickListener(expandListener);
         holder.btnExpandir.setOnClickListener(expandListener);
 
@@ -161,7 +169,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         if (!modoSoloLectura) {
             holder.btnEditarFechaFin.setVisibility(View.VISIBLE);
-            holder.btnEditarFechaFin.setOnClickListener(v -> mostrarDatePickerFechaFin(holder.itemView.getContext(), detalle, position));
+            holder.btnEditarFechaFin.setOnClickListener(v -> mostrarDialogoEditarPeriodo(holder.itemView.getContext(), detalle, position));
         } else {
             holder.btnEditarFechaFin.setVisibility(View.GONE);
         }
@@ -177,62 +185,143 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         }
     }
 
-    private void mostrarDatePickerFechaFin(Context context, DetalleMes detalle, int position) {
-        Calendar calFin = Calendar.getInstance();
+    private void mostrarDialogoEditarPeriodo(Context context, DetalleMes detalle, int position) {
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_editar_periodo_mes, null);
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(dialogView)
+                .create();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
-        try {
-            if (detalle.getFechaFin() != null) {
-                calFin.setTime(sdf.parse(detalle.getFechaFin()));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
-        DatePickerDialog dpd = new DatePickerDialog(context, (view, year, month, day) -> {
-            // 1. Nueva Fecha Fin
-            String nuevaFechaFin = String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year);
-            detalle.setFechaFin(nuevaFechaFin);
+        TextView tvTituloDialogo = dialogView.findViewById(R.id.tvTituloDialogo);
+        TextView tvFechaInicioInfo = dialogView.findViewById(R.id.tvFechaInicioInfo);
+        TextInputEditText inputFechaFin = dialogView.findViewById(R.id.inputFechaFin);
+        TextView tvDiasCalculados = dialogView.findViewById(R.id.tvDiasCalculados);
+        TextInputEditText inputMontoMes = dialogView.findViewById(R.id.inputMontoMes);
+        TextInputEditText inputHorasMinimas = dialogView.findViewById(R.id.inputHorasMinimas);
+        Button btnCancelar = dialogView.findViewById(R.id.btnCancelar);
+        Button btnGuardar = dialogView.findViewById(R.id.btnGuardar);
 
-            // 2. Calcular Días Reales
-            long dias = calcularDiferenciaDias(detalle.getFechaInicio(), nuevaFechaFin);
+        tvTituloDialogo.setText("Editar período (Mes " + detalle.getNumeroMes() + ")");
+        final String fechaInicioStr = detalle.getFechaInicio() != null ? detalle.getFechaInicio() : "";
+        tvFechaInicioInfo.setText("Fecha inicio: " + (fechaInicioStr.isEmpty() ? "--" : fechaInicioStr));
+        inputFechaFin.setText(detalle.getFechaFin() != null ? detalle.getFechaFin() : "");
 
+        double montoInicial = detalle.getMontoMes() > 0 ? detalle.getMontoMes() : precioMensualBase;
+        inputMontoMes.setText(String.format(Locale.US, "%.2f", montoInicial));
+
+        int horasMinInicial = detalle.getHorasMinimas() > 0 ? detalle.getHorasMinimas() : 200;
+        inputHorasMinimas.setText(String.valueOf(horasMinInicial));
+
+        final long[] diasArr = new long[]{calcularDiferenciaDias(fechaInicioStr, inputFechaFin.getText().toString().trim())};
+        actualizarTextoDias(tvDiasCalculados, diasArr[0]);
+
+        View.OnClickListener dateClick = v -> {
+            Calendar calFin = Calendar.getInstance();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            try {
+                if (inputFechaFin.getText() != null && !inputFechaFin.getText().toString().isEmpty()) {
+                    calFin.setTime(sdf.parse(inputFechaFin.getText().toString().trim()));
+                }
+            } catch (Exception ignored) {}
+
+            CustomDatePickerDialog dpd = new CustomDatePickerDialog(context,
+                    calFin.get(Calendar.YEAR), calFin.get(Calendar.MONTH), calFin.get(Calendar.DAY_OF_MONTH),
+                    (year, month, day) -> {
+                        String nuevaFechaFin = String.format(Locale.US, "%02d/%02d/%d", day, month + 1, year);
+                        inputFechaFin.setText(nuevaFechaFin);
+                        diasArr[0] = calcularDiferenciaDias(fechaInicioStr, nuevaFechaFin);
+                        actualizarTextoDias(tvDiasCalculados, diasArr[0]);
+
+                        if (diasArr[0] > 0 && diasArr[0] < 30) {
+                            double prorrateado = (precioMensualBase / 30.0) * diasArr[0];
+                            inputMontoMes.setText(String.format(Locale.US, "%.2f", prorrateado));
+                        } else if (diasArr[0] >= 30) {
+                            inputMontoMes.setText(String.format(Locale.US, "%.2f", precioMensualBase));
+                        }
+                    });
+
+            try {
+                Date dInicio = sdf.parse(fechaInicioStr);
+                if (dInicio != null) {
+                    dpd.setMinDate(dInicio.getTime());
+                }
+            } catch (Exception ignored) {}
+            dpd.show();
+        };
+
+        inputFechaFin.setOnClickListener(dateClick);
+        View layoutFechaFin = dialogView.findViewById(R.id.layoutFechaFin);
+        if (layoutFechaFin != null) layoutFechaFin.setOnClickListener(dateClick);
+
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+
+        btnGuardar.setOnClickListener(v -> {
+            String finStr = inputFechaFin.getText() != null ? inputFechaFin.getText().toString().trim() : "";
+            if (finStr.isEmpty()) {
+                Toast.makeText(context, "Ingrese una fecha final", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            long dias = calcularDiferenciaDias(fechaInicioStr, finStr);
             if (dias <= 0) {
-                Toast.makeText(context, "La fecha final debe ser mayor a la inicial", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "La fecha final debe ser posterior a la fecha de inicio", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 3. Calcular Precio Prorrateado
-            if (dias < 30) {
-                double precioDiario = precioMensualBase / 30.0;
-                double nuevoMonto = precioDiario * dias;
-
-                detalle.setMontoMes(nuevoMonto);
-                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s) [%d días]",
-                        detalle.getNumeroMes(), detalle.getFechaInicio(), nuevaFechaFin, dias));
-            } else {
-                detalle.setMontoMes(precioMensualBase);
-                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s)",
-                        detalle.getNumeroMes(), detalle.getFechaInicio(), nuevaFechaFin));
+            double nuevoMonto;
+            try {
+                nuevoMonto = Double.parseDouble(inputMontoMes.getText().toString().trim());
+                if (nuevoMonto < 0) throw new NumberFormatException();
+            } catch (Exception e) {
+                Toast.makeText(context, "Ingrese una tarifa válida", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            // 4. Notificar cambios
+            int nuevasHorasMin;
+            try {
+                nuevasHorasMin = Integer.parseInt(inputHorasMinimas.getText().toString().trim());
+                if (nuevasHorasMin < 0) nuevasHorasMin = 0;
+            } catch (Exception e) {
+                nuevasHorasMin = 0;
+            }
+
+            detalle.setFechaFin(finStr);
+            detalle.setMontoMes(nuevoMonto);
+            detalle.setHorasMinimas(nuevasHorasMin);
+
+            if (dias < 30) {
+                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s) [%d días]",
+                        detalle.getNumeroMes(), detalle.getFechaInicio(), finStr, dias));
+            } else {
+                detalle.setTituloPeriodo(String.format(Locale.US, "Mes %d (%s - %s)",
+                        detalle.getNumeroMes(), detalle.getFechaInicio(), finStr));
+            }
+
+            dialog.dismiss();
+
             if (listener != null) {
                 listener.onFechaFinModificada(detalle);
             }
             notifyItemChanged(position);
+        });
 
-        }, calFin.get(Calendar.YEAR), calFin.get(Calendar.MONTH), calFin.get(Calendar.DAY_OF_MONTH));
+        dialog.show();
+    }
 
-        try {
-            Date fechaInicio = sdf.parse(detalle.getFechaInicio());
-            if (fechaInicio != null) {
-                dpd.getDatePicker().setMinDate(fechaInicio.getTime());
-            }
-        } catch (Exception e) {
+    private void actualizarTextoDias(TextView tvDias, long dias) {
+        if (tvDias == null) return;
+        if (dias <= 0) {
+            tvDias.setText("Duración inválida");
+            tvDias.setTextColor(Color.RED);
+        } else if (dias < 30) {
+            tvDias.setText("Duración: " + dias + " días (corte parcial)");
+            tvDias.setTextColor(Color.parseColor("#2877BC"));
+        } else {
+            tvDias.setText("Duración: " + dias + " días (período completo)");
+            tvDias.setTextColor(Color.parseColor("#2877BC"));
         }
-
-        dpd.show();
     }
 
     private long calcularDiferenciaDias(String inicio, String fin) {
@@ -434,7 +523,25 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     }
 
     private void quitarFocoDeInputs(ViewHolder holder) {
-        holder.inputHorometro.clearFocus();
+        if (holder == null) return;
+        if (holder.inputHorometro != null && holder.inputHorometro.hasFocus()) {
+            holder.inputHorometro.clearFocus();
+        }
+        if (holder.inputHorasExtras != null && holder.inputHorasExtras.hasFocus()) {
+            holder.inputHorasExtras.clearFocus();
+        }
+        if (holder.inputPrecioHE != null && holder.inputPrecioHE.hasFocus()) {
+            holder.inputPrecioHE.clearFocus();
+        }
+        if (holder.itemView != null && holder.itemView.hasFocus()) {
+            holder.itemView.clearFocus();
+        }
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        quitarFocoDeInputs(holder);
     }
 
     private void deshabilitarCampos(ViewHolder holder) {
@@ -507,7 +614,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTituloPeriodo, tvMontoMes;
         ImageView btnExpandir, btnEditarFechaFin;
-        LinearLayout layoutContenido;
+        LinearLayout headerLayout, layoutContenido;
         View franjaColor;
         TextInputLayout textInputHorometro;
         TextInputEditText inputHorometro, inputHorasExtras, inputPrecioHE;
@@ -517,6 +624,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
 
         ViewHolder(View itemView) {
             super(itemView);
+            headerLayout = itemView.findViewById(R.id.headerLayout);
             tvTituloPeriodo = itemView.findViewById(R.id.tvTituloPeriodo);
             tvMontoMes = itemView.findViewById(R.id.tvMontoMes);
 

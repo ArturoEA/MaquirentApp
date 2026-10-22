@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import android.net.Uri;
+import android.util.Log;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -188,12 +189,23 @@ public class AlquilerRepository {
                 .whereEqualTo("idAlquilerMensual", idAlquilerMensual)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    List<DetalleMes> detalles = new ArrayList<>();
+                    Map<Integer, DetalleMes> unicos = new HashMap<>();
                     for (QueryDocumentSnapshot doc : snapshot) {
                         DetalleMes d = doc.toObject(DetalleMes.class);
                         d.setId(doc.getId());
-                        detalles.add(d);
+                        int num = d.getNumeroMes();
+                        if (!unicos.containsKey(num)) {
+                            unicos.put(num, d);
+                        } else {
+                            DetalleMes anterior = unicos.get(num);
+                            boolean anteriorTieneDatos = anterior != null && (anterior.isPagoMesConfirmado() || anterior.getHorometro() > 0 || anterior.isPagoHEConfirmado());
+                            boolean dTieneDatos = d.isPagoMesConfirmado() || d.getHorometro() > 0 || d.isPagoHEConfirmado();
+                            if (!anteriorTieneDatos && dTieneDatos) {
+                                unicos.put(num, d);
+                            }
+                        }
                     }
+                    List<DetalleMes> detalles = new ArrayList<>(unicos.values());
                     detalles.sort((d1, d2) -> Integer.compare(d1.getNumeroMes(), d2.getNumeroMes()));
                     callback.onSuccess(detalles);
                 })
@@ -217,12 +229,35 @@ public class AlquilerRepository {
 
     public void crearDetalleMes(DetalleMes detalle, Callback<DetalleMes> callback) {
         db.collection(COL_DETALLES_MES)
-                .add(detalle)
-                .addOnSuccessListener(ref -> {
-                    detalle.setId(ref.getId());
-                    callback.onSuccess(detalle);
+                .whereEqualTo("idAlquilerMensual", detalle.getIdAlquilerMensual())
+                .whereEqualTo("numeroMes", detalle.getNumeroMes())
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot != null && !snapshot.isEmpty()) {
+                        Log.w("AlquilerRepository", "Mes " + detalle.getNumeroMes() + " ya existe. Evitando duplicado.");
+                        QueryDocumentSnapshot doc = (QueryDocumentSnapshot) snapshot.getDocuments().get(0);
+                        DetalleMes existente = doc.toObject(DetalleMes.class);
+                        existente.setId(doc.getId());
+                        callback.onSuccess(existente);
+                        return;
+                    }
+                    db.collection(COL_DETALLES_MES)
+                            .add(detalle)
+                            .addOnSuccessListener(ref -> {
+                                detalle.setId(ref.getId());
+                                callback.onSuccess(detalle);
+                            })
+                            .addOnFailureListener(callback::onError);
                 })
-                .addOnFailureListener(callback::onError);
+                .addOnFailureListener(e -> {
+                    db.collection(COL_DETALLES_MES)
+                            .add(detalle)
+                            .addOnSuccessListener(ref -> {
+                                detalle.setId(ref.getId());
+                                callback.onSuccess(detalle);
+                            })
+                            .addOnFailureListener(callback::onError);
+                });
     }
 
     public void actualizarDetalleMes(DetalleMes detalle, Callback<Void> callback) {

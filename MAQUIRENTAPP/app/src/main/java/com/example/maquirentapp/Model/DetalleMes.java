@@ -16,6 +16,7 @@ public class DetalleMes {
     private String fechaConfirmacionPagoMes;
     private String fechaConfirmacionPagoHE;
     private double montoMes;
+    private int horasMinimas;
 
     public DetalleMes() {
         this.pagoMesConfirmado = false;
@@ -25,6 +26,7 @@ public class DetalleMes {
         this.horasExtras = 0;
         this.precioHorasExtras = 0;
         this.montoMes = 0;
+        this.horasMinimas = 0;
     }
 
     public String getId() {
@@ -145,5 +147,13 @@ public class DetalleMes {
 
     public void setMontoMes(double montoMes) {
         this.montoMes = montoMes;
+    }
+
+    public int getHorasMinimas() {
+        return horasMinimas;
+    }
+
+    public void setHorasMinimas(int horasMinimas) {
+        this.horasMinimas = horasMinimas;
     }
 }
