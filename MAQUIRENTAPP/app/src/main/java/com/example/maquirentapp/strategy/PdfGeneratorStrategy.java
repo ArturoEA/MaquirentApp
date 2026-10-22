@@ -48,4 +48,9 @@ public interface PdfGeneratorStrategy {
      * Obtiene la nota del titular o beneficiario de las cuentas.
      */
     String getTitularCuentas();
+
+    /**
+     * Obtiene la lista de condiciones comerciales por defecto según la modalidad y parámetros.
+     */
+    List<String> obtenerCondicionesPorDefecto(String tipoAlquiler, int horasMinimas, int diasAlquiler, int horasPorDia);
 }

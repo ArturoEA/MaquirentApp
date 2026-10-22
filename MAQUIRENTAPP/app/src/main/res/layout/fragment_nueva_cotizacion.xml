@@ -17,6 +17,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:fontFamily="@font/anta_font"
+            android:text="Modalidad de cotización"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupModalidad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioModalidadMensual"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:fontFamily="@font/anta_font"
+                android:text="Por Mes"
+                android:textColor="@color/black"
+                app:buttonTint="@color/black" />
+
+            <RadioButton
+                android:id="@+id/radioModalidadDiario"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:fontFamily="@font/anta_font"
+                android:text="Por Día"
+                android:textColor="@color/black"
+                app:buttonTint="@color/black" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/anta_font"
             android:text="Datos del cliente"
             android:textColor="@color/black"
             android:textSize="16sp"
@@ -36,10 +75,51 @@
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/CustomTextInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:hint="RUC">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputRuc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Parámetros Mensual -->
+        <LinearLayout
+            android:id="@+id/layoutParametrosMensual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/CustomTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Horas Mínimas Mensuales">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputHorasMinimas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:text="200"
+                    android:textColor="@color/black" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Parámetros Diario -->
+        <LinearLayout
+            android:id="@+id/layoutParametrosDiario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
@@ -47,32 +127,32 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:hint="RUC">
+                android:hint="Días de Alquiler">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputRuc"
+                    android:id="@+id/inputDiasAlquiler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number"
+                    android:text="1"
                     android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/CustomTextInputLayout"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Horas Mínimas">
+                android:layout_weight="1"
+                android:hint="Horas máx./día">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputHorasMinimas"
+                    android:id="@+id/inputHorasDia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number"
-                    android:textColor="@color/black"
-                    android:text="200" />
+                    android:text="8"
+                    android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
-
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -104,7 +184,6 @@
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -116,6 +195,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="12dp"
+                android:fontFamily="@font/anta_font"
                 android:text="Moneda:"
                 android:textColor="@color/black" />
 
@@ -130,18 +210,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
+                    android:fontFamily="@font/anta_font"
                     android:text="Soles (S/.)"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
 
                 <RadioButton
                     android:id="@+id/radioUsd"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
+                    android:fontFamily="@font/anta_font"
                     android:text="Dólares ($)"
-                    app:buttonTint="@color/black"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    app:buttonTint="@color/black" />
             </RadioGroup>
         </LinearLayout>
 
@@ -161,6 +243,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:fontFamily="@font/anta_font"
                 android:text="Equipos a cotizar"
                 android:textColor="@color/black"
                 android:textSize="16sp"
@@ -171,6 +254,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/selection_indicator"
+                android:fontFamily="@font/anta_font"
                 android:minHeight="40dp"
                 android:text="+ Agregar"
                 android:textColor="@color/white" />
@@ -201,6 +285,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="@font/anta_font"
                     android:text="Subtotal:"
                     android:textColor="@color/text_secondary" />
 
@@ -208,6 +293,7 @@
                     android:id="@+id/tvSubtotalGlobal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta_font"
                     android:text="0.00"
                     android:textColor="@color/black"
                     android:textStyle="bold" />
@@ -223,6 +309,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="@font/anta_font"
                     android:text="IGV (18%):"
                     android:textColor="@color/text_secondary" />
 
@@ -230,6 +317,7 @@
                     android:id="@+id/tvIgvGlobal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta_font"
                     android:text="0.00"
                     android:textColor="@color/black"
                     android:textStyle="bold" />
@@ -245,6 +333,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="@font/anta_font"
                     android:text="TOTAL:"
                     android:textColor="@color/black"
                     android:textSize="16sp"
@@ -254,6 +343,7 @@
                     android:id="@+id/tvTotalGlobal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta_font"
                     android:text="0.00"
                     android:textColor="@color/black"
                     android:textSize="18sp"
@@ -261,6 +351,69 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Sección Condiciones Comerciales -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"
+            android:background="#CCCCCC" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/anta_font"
+                android:text="Condiciones Comerciales"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnRestablecerCondiciones"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/anta_font"
+                android:minHeight="36dp"
+                android:text="Restablecer"
+                android:textColor="@color/azul_100"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnAgregarCondicion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@color/selection_indicator"
+                android:fontFamily="@font/anta_font"
+                android:minHeight="40dp"
+                android:text="+ Condición"
+                android:textColor="@color/white" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/anta_font"
+            android:text="Puedes editar, marcar/desmarcar o eliminar condiciones según este contrato."
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerCondiciones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <!-- Sección Ficha Técnica -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -271,30 +424,31 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/anta_font"
             android:text="Opcional: Adjuntar Ficha Técnica al PDF"
             android:textColor="@color/black"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
+            android:hint="Seleccione una ficha técnica"
+            android:textColorHint="@color/colorHints"
+            app:boxBackgroundColor="@color/background_light"
             app:boxBackgroundMode="outline"
-            app:boxStrokeWidth="2dp"
             app:boxCornerRadiusBottomEnd="22dp"
             app:boxCornerRadiusBottomStart="22dp"
             app:boxCornerRadiusTopEnd="22dp"
             app:boxCornerRadiusTopStart="22dp"
             app:boxStrokeColor="@color/input_stroke_color"
-            android:textColorHint="@color/colorHints"
+            app:boxStrokeWidth="2dp"
             app:cursorColor="@color/black"
-            app:boxBackgroundColor="@color/background_light"
             app:endIconTint="@color/black"
-            app:hintTextColor="@color/black"
-            android:hint="Seleccione una ficha técnica">
+            app:hintTextColor="@color/black">
 
             <AutoCompleteTextView
                 android:id="@+id/autoCompleteFichas"
@@ -308,27 +462,30 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <Button
                 android:id="@+id/btnGenerarCotizacion"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="55dp"
                 android:layout_marginTop="24dp"
+                android:layout_marginEnd="15dp"
                 android:layout_marginBottom="32dp"
+                android:layout_weight="1"
                 android:backgroundTint="@color/selection_indicator"
+                android:fontFamily="@font/anta_font"
                 android:text="Word"
                 android:textColor="@color/white"
-                android:layout_marginEnd="15dp"
                 android:textSize="16sp" />
 
             <Button
                 android:id="@+id/btnGenerarPdf"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="55dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="32dp"
+                android:layout_weight="1"
                 android:backgroundTint="@color/selection_indicator"
+                android:fontFamily="@font/anta_font"
                 android:text="PDF"
                 android:textColor="@color/white"
                 android:textSize="16sp" />

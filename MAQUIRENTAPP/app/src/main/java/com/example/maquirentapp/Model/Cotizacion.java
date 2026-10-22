@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cotizacion implements Serializable {
+    public static final String TIPO_MENSUAL = "MENSUAL";
+    public static final String TIPO_DIARIO = "DIARIO";
+
     private String id;
     private String numeroCotizacion;
     private String clienteNombre;
@@ -13,6 +16,14 @@ public class Cotizacion implements Serializable {
     private String fechaEmision;
     private String moneda;
     private int horasMinimas;
+
+    // Modalidad Diario / Mensual
+    private String tipoAlquiler = TIPO_MENSUAL;
+    private int diasAlquiler = 1;
+    private int horasPorDia = 8;
+
+    // Condiciones comerciales dinámicas
+    private List<String> condicionesComerciales;
 
     private List<ItemCotizacion> items;
     private double subtotalGlobal;
@@ -25,15 +36,31 @@ public class Cotizacion implements Serializable {
     public Cotizacion() {
         this.items = new ArrayList<>();
         this.horasMinimas = 200;
+        this.tipoAlquiler = TIPO_MENSUAL;
+        this.diasAlquiler = 1;
+        this.horasPorDia = 8;
+        this.condicionesComerciales = new ArrayList<>();
     }
 
     public void calcularTotales() {
         this.subtotalGlobal = 0;
-        for (ItemCotizacion item : items) {
-            this.subtotalGlobal += item.getPrecioMensual();
+        boolean esDiario = isDiario();
+        int dias = this.diasAlquiler > 0 ? this.diasAlquiler : 1;
+
+        if (this.items != null) {
+            for (ItemCotizacion item : items) {
+                double precio = item.getPrecioUnitario();
+                double subtotalItem = esDiario ? (precio * dias) : precio;
+                this.subtotalGlobal += subtotalItem;
+            }
         }
+
         this.igvGlobal = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularImpuesto(this.subtotalGlobal);
         this.totalGlobal = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularTotalConImpuesto(this.subtotalGlobal);
+    }
+
+    public boolean isDiario() {
+        return TIPO_DIARIO.equalsIgnoreCase(this.tipoAlquiler);
     }
 
     public String getId() {
@@ -100,7 +127,45 @@ public class Cotizacion implements Serializable {
         this.horasMinimas = horasMinimas;
     }
 
+    public String getTipoAlquiler() {
+        return tipoAlquiler != null ? tipoAlquiler : TIPO_MENSUAL;
+    }
+
+    public void setTipoAlquiler(String tipoAlquiler) {
+        this.tipoAlquiler = tipoAlquiler;
+    }
+
+    public int getDiasAlquiler() {
+        return diasAlquiler > 0 ? diasAlquiler : 1;
+    }
+
+    public void setDiasAlquiler(int diasAlquiler) {
+        this.diasAlquiler = diasAlquiler;
+    }
+
+    public int getHorasPorDia() {
+        return horasPorDia > 0 ? horasPorDia : 8;
+    }
+
+    public void setHorasPorDia(int horasPorDia) {
+        this.horasPorDia = horasPorDia;
+    }
+
+    public List<String> getCondicionesComerciales() {
+        if (condicionesComerciales == null) {
+            condicionesComerciales = new ArrayList<>();
+        }
+        return condicionesComerciales;
+    }
+
+    public void setCondicionesComerciales(List<String> condicionesComerciales) {
+        this.condicionesComerciales = condicionesComerciales;
+    }
+
     public List<ItemCotizacion> getItems() {
+        if (items == null) {
+            items = new ArrayList<>();
+        }
         return items;
     }
 

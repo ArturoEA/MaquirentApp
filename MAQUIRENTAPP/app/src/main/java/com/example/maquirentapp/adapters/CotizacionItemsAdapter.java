@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
 
@@ -19,10 +20,11 @@ import java.util.Locale;
 public class CotizacionItemsAdapter extends ListAdapter<ItemCotizacion, CotizacionItemsAdapter.ViewHolder> {
 
     private final OnItemActionListener listener;
+    private String tipoAlquiler = Cotizacion.TIPO_MENSUAL;
+    private int diasAlquiler = 1;
 
     public interface OnItemActionListener {
         void onEliminar(ItemCotizacion item);
-
         void onEditar(ItemCotizacion item);
     }
 
@@ -35,13 +37,20 @@ public class CotizacionItemsAdapter extends ListAdapter<ItemCotizacion, Cotizaci
         @Override
         public boolean areContentsTheSame(@NonNull ItemCotizacion oldItem, @NonNull ItemCotizacion newItem) {
             return oldItem.getDescripcionEquipo().equals(newItem.getDescripcionEquipo()) &&
-                    oldItem.getPrecioMensual() == newItem.getPrecioMensual();
+                    oldItem.getPrecioUnitario() == newItem.getPrecioUnitario() &&
+                    oldItem.getPrecioHoraExtra() == newItem.getPrecioHoraExtra();
         }
     };
 
     public CotizacionItemsAdapter(OnItemActionListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
+    }
+
+    public void setParametrosModalidad(String tipoAlquiler, int diasAlquiler) {
+        this.tipoAlquiler = tipoAlquiler != null ? tipoAlquiler : Cotizacion.TIPO_MENSUAL;
+        this.diasAlquiler = diasAlquiler > 0 ? diasAlquiler : 1;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -53,7 +62,7 @@ public class CotizacionItemsAdapter extends ListAdapter<ItemCotizacion, Cotizaci
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(getItem(position), listener);
+        holder.bind(getItem(position), listener, tipoAlquiler, diasAlquiler);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -68,11 +77,19 @@ public class CotizacionItemsAdapter extends ListAdapter<ItemCotizacion, Cotizaci
             btnEliminar = itemView.findViewById(R.id.btnEliminarItem);
         }
 
-        public void bind(ItemCotizacion item, OnItemActionListener listener) {
+        public void bind(ItemCotizacion item, OnItemActionListener listener, String tipoAlquiler, int diasAlquiler) {
             tvEquipo.setText(item.getDescripcionEquipo());
 
-            tvPrecio.setText(String.format(Locale.US, "%.2f", item.getPrecioMensual()));
-            tvTotal.setText(String.format(Locale.US, "Inc. IGV: %.2f", item.getTotalConIgv()));
+            double subtotal = item.getSubtotal(tipoAlquiler, diasAlquiler);
+            double totalConIgv = item.getTotalConIgv(tipoAlquiler, diasAlquiler);
+
+            if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
+                tvPrecio.setText(String.format(Locale.US, "Tarifa día: %.2f x %d d = %.2f", item.getPrecioUnitario(), diasAlquiler, subtotal));
+            } else {
+                tvPrecio.setText(String.format(Locale.US, "Tarifa mes: %.2f", item.getPrecioUnitario()));
+            }
+
+            tvTotal.setText(String.format(Locale.US, "Inc. IGV: %.2f", totalConIgv));
 
             btnEliminar.setOnClickListener(v -> listener.onEliminar(item));
             itemView.setOnClickListener(v -> listener.onEditar(item));

@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,17 +19,20 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.maquirentapp.Model.CondicionComercialItem;
 import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
+import com.example.maquirentapp.adapters.CondicionesCotizacionAdapter;
 import com.example.maquirentapp.adapters.CotizacionItemsAdapter;
 import com.example.maquirentapp.Utils.HtmlGenerator;
 import com.example.maquirentapp.Utils.PdfGenerator;
 import com.example.maquirentapp.databinding.FragmentNuevaCotizacionBinding;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,6 +54,7 @@ public class NuevaCotizacionFragment extends Fragment {
     private FragmentNuevaCotizacionBinding binding;
     private CotizacionesRepository repository;
     private CotizacionItemsAdapter adapter;
+    private CondicionesCotizacionAdapter condicionesAdapter;
     private Cotizacion cotizacionActual;
     private List<GrupoElectrogeno> listaGruposInventario = new ArrayList<>();
     private ArrayAdapter<String> autoCompleteAdapter;
@@ -80,7 +85,6 @@ public class NuevaCotizacionFragment extends Fragment {
 
         cargarFichasTecnicas();
 
-        actualizarFechaInput(Calendar.getInstance());
         cargarGruposParaAutocompletado();
         if (getArguments() != null && getArguments().containsKey("cotizacion_a_editar")) {
             cotizacionActual = (Cotizacion) getArguments().getSerializable("cotizacion_a_editar");
@@ -91,19 +95,46 @@ public class NuevaCotizacionFragment extends Fragment {
         } else {
             cotizacionActual = new Cotizacion();
             actualizarFechaInput(Calendar.getInstance());
+            cargarCondicionesPorDefecto(Cotizacion.TIPO_MENSUAL);
         }
     }
+
     private void rellenarDatosEnPantalla() {
         binding.inputCliente.setText(cotizacionActual.getClienteNombre());
         binding.inputRuc.setText(cotizacionActual.getClienteRuc());
         binding.inputLugar.setText(cotizacionActual.getLugarTrabajo());
         binding.inputFecha.setText(cotizacionActual.getFechaEmision());
-        binding.inputHorasMinimas.setText(String.valueOf(cotizacionActual.getHorasMinimas()));
+
+        boolean esDiario = cotizacionActual.isDiario();
+        if (esDiario) {
+            binding.radioModalidadDiario.setChecked(true);
+            binding.layoutParametrosMensual.setVisibility(View.GONE);
+            binding.layoutParametrosDiario.setVisibility(View.VISIBLE);
+            binding.inputDiasAlquiler.setText(String.valueOf(cotizacionActual.getDiasAlquiler()));
+            binding.inputHorasDia.setText(String.valueOf(cotizacionActual.getHorasPorDia()));
+        } else {
+            binding.radioModalidadMensual.setChecked(true);
+            binding.layoutParametrosMensual.setVisibility(View.VISIBLE);
+            binding.layoutParametrosDiario.setVisibility(View.GONE);
+            binding.inputHorasMinimas.setText(String.valueOf(cotizacionActual.getHorasMinimas()));
+        }
 
         if ("USD".equals(cotizacionActual.getMoneda())) {
             binding.radioUsd.setChecked(true);
         } else {
             binding.radioSol.setChecked(true);
+        }
+
+        adapter.setParametrosModalidad(cotizacionActual.getTipoAlquiler(), cotizacionActual.getDiasAlquiler());
+
+        if (cotizacionActual.getCondicionesComerciales() != null && !cotizacionActual.getCondicionesComerciales().isEmpty()) {
+            List<CondicionComercialItem> items = new ArrayList<>();
+            for (String c : cotizacionActual.getCondicionesComerciales()) {
+                items.add(new CondicionComercialItem(c, true));
+            }
+            condicionesAdapter.setItems(items);
+        } else {
+            cargarCondicionesPorDefecto(cotizacionActual.getTipoAlquiler());
         }
 
         actualizarListaYTotales();
@@ -134,8 +165,8 @@ public class NuevaCotizacionFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
+        // Recycler de Equipos
         binding.recyclerItems.setLayoutManager(new LinearLayoutManager(getContext()));
-
         adapter = new CotizacionItemsAdapter(new CotizacionItemsAdapter.OnItemActionListener() {
             @Override
             public void onEliminar(ItemCotizacion item) {
@@ -148,8 +179,27 @@ public class NuevaCotizacionFragment extends Fragment {
                 mostrarDialogoAgregarItem(item);
             }
         });
-
         binding.recyclerItems.setAdapter(adapter);
+
+        // Recycler de Condiciones Comerciales
+        binding.recyclerCondiciones.setLayoutManager(new LinearLayoutManager(getContext()));
+        condicionesAdapter = new CondicionesCotizacionAdapter(new CondicionesCotizacionAdapter.OnCondicionActionListener() {
+            @Override
+            public void onEditar(int position, CondicionComercialItem item) {
+                mostrarDialogoEditarCondicion(position, item);
+            }
+
+            @Override
+            public void onEliminar(int position, CondicionComercialItem item) {
+                condicionesAdapter.eliminarItem(position);
+            }
+
+            @Override
+            public void onToggle(int position, CondicionComercialItem item, boolean activo) {
+                // Estado persistido en memoria del item
+            }
+        });
+        binding.recyclerCondiciones.setAdapter(condicionesAdapter);
     }
 
     private void setupListeners() {
@@ -158,29 +208,152 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.btnGenerarCotizacion.setOnClickListener(v -> guardarYGenerar("WORD"));
         binding.btnGenerarPdf.setOnClickListener(v -> guardarYGenerar("PDF"));
 
-        binding.inputHorasMinimas.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        // Modalidad Mensual vs Diario
+        binding.radioGroupModalidad.setOnCheckedChangeListener((group, checkedId) -> {
+            boolean esDiario = (checkedId == R.id.radioModalidadDiario);
+            cotizacionActual.setTipoAlquiler(esDiario ? Cotizacion.TIPO_DIARIO : Cotizacion.TIPO_MENSUAL);
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            if (esDiario) {
+                binding.layoutParametrosMensual.setVisibility(View.GONE);
+                binding.layoutParametrosDiario.setVisibility(View.VISIBLE);
+            } else {
+                binding.layoutParametrosMensual.setVisibility(View.VISIBLE);
+                binding.layoutParametrosDiario.setVisibility(View.GONE);
+            }
 
+            cotizacionActual.setDiasAlquiler(getDiasAlquilerActuales());
+            cotizacionActual.setHorasPorDia(getHorasDiaActuales());
+            cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+
+            adapter.setParametrosModalidad(cotizacionActual.getTipoAlquiler(), cotizacionActual.getDiasAlquiler());
+
+            // Recargar condiciones por defecto para la nueva modalidad
+            cargarCondicionesPorDefecto(cotizacionActual.getTipoAlquiler());
+
+            recalcularPreciosHoraExtraGlobal();
+            actualizarListaYTotales();
+        });
+
+        // Escucha de Días de Alquiler
+        binding.inputDiasAlquiler.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(android.text.Editable s) {
-                recalcularPreciosHoraExtraGlobal();
+                cotizacionActual.setDiasAlquiler(getDiasAlquilerActuales());
+                adapter.setParametrosModalidad(cotizacionActual.getTipoAlquiler(), cotizacionActual.getDiasAlquiler());
+                actualizarListaYTotales();
             }
         });
-    }
-    private void recalcularPreciosHoraExtraGlobal() {
-        int horasMinimas = getHorasMinimasActuales();
 
-        if (horasMinimas <= 0) return;
+        // Escucha de Horas por Día
+        binding.inputHorasDia.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                cotizacionActual.setHorasPorDia(getHorasDiaActuales());
+                if (cotizacionActual.isDiario()) {
+                    recalcularPreciosHoraExtraGlobal();
+                }
+            }
+        });
+
+        // Escucha de Horas Mínimas Mensuales
+        binding.inputHorasMinimas.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+                if (!cotizacionActual.isDiario()) {
+                    recalcularPreciosHoraExtraGlobal();
+                }
+            }
+        });
+
+        // Botones de Condiciones Comerciales
+        binding.btnAgregarCondicion.setOnClickListener(v -> mostrarDialogoEditarCondicion(-1, null));
+        binding.btnRestablecerCondiciones.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Restablecer condiciones")
+                    .setMessage("¿Deseas restablecer las condiciones comerciales por defecto para esta modalidad?")
+                    .setPositiveButton("Sí, restablecer", (dialog, which) -> {
+                        cargarCondicionesPorDefecto(cotizacionActual.getTipoAlquiler());
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+    }
+
+    private void cargarCondicionesPorDefecto(String tipoAlquiler) {
+        int horasMin = getHorasMinimasActuales();
+        int dias = getDiasAlquilerActuales();
+        int horasDia = getHorasDiaActuales();
+
+        List<String> defaults = com.example.maquirentapp.strategy.StrategyProvider.getPdfStrategy()
+                .obtenerCondicionesPorDefecto(tipoAlquiler, horasMin, dias, horasDia);
+
+        List<CondicionComercialItem> items = new ArrayList<>();
+        for (String s : defaults) {
+            items.add(new CondicionComercialItem(s, true));
+        }
+        condicionesAdapter.setItems(items);
+    }
+
+    private void mostrarDialogoEditarCondicion(int position, CondicionComercialItem itemExistente) {
+        if (getContext() == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_editar_condicion, null);
+        builder.setView(view);
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvTitulo = view.findViewById(R.id.tvTituloDialogoCondicion);
+        TextInputEditText inputTexto = view.findViewById(R.id.inputTextoCondicion);
+        Button btnCancelar = view.findViewById(R.id.btnCancelarCondicion);
+        Button btnGuardar = view.findViewById(R.id.btnGuardarCondicion);
+
+        if (itemExistente != null) {
+            tvTitulo.setText("Editar Condición Comercial");
+            inputTexto.setText(itemExistente.getTexto());
+            btnGuardar.setText("Actualizar");
+        } else {
+            tvTitulo.setText("Nueva Condición Comercial");
+            btnGuardar.setText("Agregar");
+        }
+
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+
+        btnGuardar.setOnClickListener(v -> {
+            String texto = inputTexto.getText() != null ? inputTexto.getText().toString().trim() : "";
+            if (texto.isEmpty()) {
+                inputTexto.setError("El texto de la condición no puede estar vacío");
+                return;
+            }
+
+            if (itemExistente != null && position >= 0) {
+                condicionesAdapter.actualizarItem(position, texto);
+            } else {
+                condicionesAdapter.agregarItem(texto);
+            }
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void recalcularPreciosHoraExtraGlobal() {
+        int horas = cotizacionActual.isDiario() ? getHorasDiaActuales() : getHorasMinimasActuales();
+        if (horas <= 0) return;
 
         boolean huboCambios = false;
-
         if (cotizacionActual != null && cotizacionActual.getItems() != null) {
             for (ItemCotizacion item : cotizacionActual.getItems()) {
-                double nuevoPrecioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularPrecioHoraExtra(item.getPrecioMensual(), horasMinimas);
+                double nuevoPrecioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy()
+                        .calcularPrecioHoraExtra(item.getPrecioUnitario(), horas);
 
                 if (Math.abs(item.getPrecioHoraExtra() - nuevoPrecioHE) > 0.01) {
                     item.setPrecioHoraExtra(nuevoPrecioHE);
@@ -192,6 +365,7 @@ public class NuevaCotizacionFragment extends Fragment {
             actualizarListaYTotales();
         }
     }
+
     private void mostrarDialogoAgregarItem(ItemCotizacion itemExistente) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_agregar_item_cotizacion, null);
@@ -205,9 +379,14 @@ public class NuevaCotizacionFragment extends Fragment {
         TextInputEditText inputMarca = view.findViewById(R.id.inputMarca);
         TextInputEditText inputModo = view.findViewById(R.id.inputModo);
         TextInputEditText inputIncluye = view.findViewById(R.id.inputIncluye);
+        TextInputLayout tilPrecio = view.findViewById(R.id.tilPrecio);
         TextInputEditText inputPrecio = view.findViewById(R.id.inputPrecio);
         TextInputEditText inputPrecioHE = view.findViewById(R.id.inputPrecioHE);
         Button btnGuardar = view.findViewById(R.id.btnGuardarItem);
+
+        if (tilPrecio != null) {
+            tilPrecio.setHint(cotizacionActual.isDiario() ? "Tarifa por Día (Sin IGV)" : "Tarifa Mensual (Sin IGV)");
+        }
 
         if (autoCompleteAdapter != null) {
             autoDesc.setAdapter(autoCompleteAdapter);
@@ -241,7 +420,7 @@ public class NuevaCotizacionFragment extends Fragment {
             inputMarca.setText(itemExistente.getMarca());
             inputModo.setText(itemExistente.getModoTrabajo());
             inputIncluye.setText(itemExistente.getIncluye());
-            inputPrecio.setText(String.valueOf(itemExistente.getPrecioMensual()));
+            inputPrecio.setText(String.valueOf(itemExistente.getPrecioUnitario()));
             inputPrecioHE.setText(String.valueOf(itemExistente.getPrecioHoraExtra()));
             btnGuardar.setText("Actualizar");
         } else {
@@ -273,6 +452,8 @@ public class NuevaCotizacionFragment extends Fragment {
             }
 
             cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+            cotizacionActual.setDiasAlquiler(getDiasAlquilerActuales());
+            cotizacionActual.setHorasPorDia(getHorasDiaActuales());
 
             if (itemExistente != null) {
                 int index = cotizacionActual.getItems().indexOf(itemExistente);
@@ -301,11 +482,12 @@ public class NuevaCotizacionFragment extends Fragment {
                 return;
             }
 
-            double precioMensual = Double.parseDouble(precioStr);
-            int horas = getHorasMinimasActuales();
+            double precioBase = Double.parseDouble(precioStr);
+            int horas = cotizacionActual.isDiario() ? getHorasDiaActuales() : getHorasMinimasActuales();
 
             if (horas > 0) {
-                double precioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularPrecioHoraExtra(precioMensual, horas);
+                double precioHE = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy()
+                        .calcularPrecioHoraExtra(precioBase, horas);
 
                 inputHE.setText(String.format(Locale.US, "%.2f", precioHE));
             }
@@ -316,6 +498,7 @@ public class NuevaCotizacionFragment extends Fragment {
     }
 
     private void actualizarListaYTotales() {
+        adapter.setParametrosModalidad(cotizacionActual.getTipoAlquiler(), cotizacionActual.getDiasAlquiler());
         adapter.submitList(new ArrayList<>(cotizacionActual.getItems()));
 
         cotizacionActual.calcularTotales();
@@ -324,6 +507,7 @@ public class NuevaCotizacionFragment extends Fragment {
         binding.tvIgvGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getIgvGlobal()));
         binding.tvTotalGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getTotalGlobal()));
     }
+
     private void guardarYGenerar(String tipoDocumento) {
         if (binding.inputCliente.getText().toString().isEmpty()) {
             binding.inputCliente.setError("Requerido");
@@ -342,7 +526,6 @@ public class NuevaCotizacionFragment extends Fragment {
         } else {
             cotizacionActual.setFichaTecnicaNombre(seleccionVisual);
 
-            // Emparejamos el texto con el objeto real para tener su URL de descarga
             boolean fichaEncontrada = false;
             for (FichaTecnica f : listaFichas) {
                 if (f.getNombreArchivo().equals(seleccionVisual)) {
@@ -352,28 +535,30 @@ public class NuevaCotizacionFragment extends Fragment {
                 }
             }
 
-            // Si hay texto pero el objeto no está, Firebase sigue descargando la lista.
             if (!fichaEncontrada) {
                 Toast.makeText(getContext(), "Sincronizando ficha técnica, por favor intenta en un segundo...", Toast.LENGTH_LONG).show();
                 return;
             }
         }
 
+        cotizacionActual.setTipoAlquiler(binding.radioModalidadDiario.isChecked() ? Cotizacion.TIPO_DIARIO : Cotizacion.TIPO_MENSUAL);
+        cotizacionActual.setDiasAlquiler(getDiasAlquilerActuales());
+        cotizacionActual.setHorasPorDia(getHorasDiaActuales());
+        cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
+        cotizacionActual.setCondicionesComerciales(condicionesAdapter.getCondicionesActivas());
+
         cotizacionActual.setClienteNombre(binding.inputCliente.getText().toString());
         cotizacionActual.setClienteRuc(binding.inputRuc.getText().toString());
         cotizacionActual.setLugarTrabajo(binding.inputLugar.getText().toString());
         cotizacionActual.setFechaEmision(binding.inputFecha.getText().toString());
         cotizacionActual.setMoneda(binding.radioSol.isChecked() ? "SOL" : "USD");
-        cotizacionActual.setHorasMinimas(getHorasMinimasActuales());
 
-        // Guardar el nombre de la ficha seleccionada (o null si eligió "Ninguna")
         if (fichaSeleccionada != null) {
             cotizacionActual.setFichaTecnicaNombre(fichaSeleccionada.getNombreArchivo());
         } else {
             cotizacionActual.setFichaTecnicaNombre(null);
         }
 
-        // Deshabilitar ambos botones para evitar doble envío
         binding.btnGenerarCotizacion.setEnabled(false);
         binding.btnGenerarPdf.setEnabled(false);
 
@@ -382,7 +567,6 @@ public class NuevaCotizacionFragment extends Fragment {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(getContext(), "Cotización actualizada", Toast.LENGTH_SHORT).show();
-                    // Derivar a la función correcta
                     if (tipoDocumento.equals("WORD")) generarDocumentoWord();
                     else generarDocumentoPdf();
                 }
@@ -400,7 +584,6 @@ public class NuevaCotizacionFragment extends Fragment {
                     if (getContext() == null) return;
                     Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " guardada.", Toast.LENGTH_SHORT).show();
 
-                    // Derivar a la función correcta
                     if (tipoDocumento.equals("WORD")) generarDocumentoWord();
                     else generarDocumentoPdf();
                 }
@@ -413,12 +596,13 @@ public class NuevaCotizacionFragment extends Fragment {
             });
         }
     }
+
     private void habilitarBotones() {
         binding.btnGenerarCotizacion.setEnabled(true);
         binding.btnGenerarPdf.setEnabled(true);
     }
+
     private void generarDocumentoWord() {
-        // Redirigido a formato nativo PDF por arquitectura limpia
         generarDocumentoPdf();
     }
 
@@ -454,31 +638,14 @@ public class NuevaCotizacionFragment extends Fragment {
             }
         });
     }
+
     private void abrirEnVisorInterno(File pdfFile) {
         Intent intent = new Intent(getContext(), PdfViewerActivity.class);
         intent.putExtra("PDF_URL", pdfFile.getAbsolutePath());
         intent.putExtra("NOMBRE_ARCHIVO", "Cotizacion_" + cotizacionActual.getNumeroCotizacion());
         startActivity(intent);
     }
-    private void abrirOCompartirDocumento(File archivo) {
-        try {
-            Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".provider",
-                    archivo
-            );
 
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            startActivity(Intent.createChooser(intent, "Abrir Cotización con..."));
-
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "No tienes una app para abrir Word instalada.", Toast.LENGTH_LONG).show();
-        }
-    }
     private void cargarFichasTecnicas() {
         listaFichas.clear();
 
@@ -494,7 +661,6 @@ public class NuevaCotizacionFragment extends Fragment {
             binding.autoCompleteFichas.setText("Ninguna (No adjuntar)", false);
         }
 
-        // Buscar en Firebase Storage
         FirebaseStorage.getInstance().getReference().child("fichas_tecnicas/").listAll()
                 .addOnSuccessListener(listResult -> {
                     for (StorageReference item : listResult.getItems()) {
@@ -508,11 +674,9 @@ public class NuevaCotizacionFragment extends Fragment {
                             fichasAdapter.notifyDataSetChanged();
                         });
                     }
-                    // Si estamos en modo edición y la cotización tenía una ficha guardada, la pre-seleccionamos
                     if (esEdicion && cotizacionActual.getFichaTecnicaNombre() != null) {
                         binding.autoCompleteFichas.setText(cotizacionActual.getFichaTecnicaNombre(), false);
 
-                        // Buscar la ficha en la lista para asignarla a la variable global
                         for (FichaTecnica f : listaFichas) {
                             if (f.getNombreArchivo().equals(cotizacionActual.getFichaTecnicaNombre())) {
                                 fichaSeleccionada = f;
@@ -521,7 +685,6 @@ public class NuevaCotizacionFragment extends Fragment {
                         }
                     }
 
-                    // Escuchar qué elige el usuario
                     binding.autoCompleteFichas.setOnItemClickListener((parent, view, position, id) -> {
                         String seleccion = fichasAdapter.getItem(position);
                         if (seleccion.equals("Ninguna (No adjuntar)")) {
@@ -537,6 +700,7 @@ public class NuevaCotizacionFragment extends Fragment {
                     });
                 });
     }
+
     private void fusionarConFichaTecnica(File pdfCotizacion, FichaTecnica ficha) {
         requireActivity().runOnUiThread(() -> {
             binding.btnGenerarPdf.setText("Adjuntando Ficha...");
@@ -544,7 +708,6 @@ public class NuevaCotizacionFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                // 1. Descargar el PDF de Firebase a la caché del celular
                 File tempFicha = new File(requireContext().getCacheDir(), "temp_ficha_tecnica.pdf");
                 URL url = new URL(ficha.getUrlPdf());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -562,11 +725,9 @@ public class NuevaCotizacionFragment extends Fragment {
                 output.close();
                 input.close();
 
-                // 2. Fusionar los PDFs con APIs nativas de Android (PdfRenderer + PdfDocument)
                 File mergedPdf = new File(requireContext().getCacheDir(), "Cotizacion_" + cotizacionActual.getNumeroCotizacion() + ".pdf");
                 PdfGenerator.unirPdfs(pdfCotizacion, tempFicha, mergedPdf);
 
-                // 3. Abrir el PDF final consolidado
                 requireActivity().runOnUiThread(() -> {
                     binding.btnGenerarPdf.setText("PDF");
                     habilitarBotones();
@@ -584,12 +745,31 @@ public class NuevaCotizacionFragment extends Fragment {
             }
         }).start();
     }
+
     private int getHorasMinimasActuales() {
         try {
-            String val = binding.inputHorasMinimas.getText().toString();
+            String val = binding.inputHorasMinimas.getText() != null ? binding.inputHorasMinimas.getText().toString().trim() : "";
             return val.isEmpty() ? 200 : Integer.parseInt(val);
         } catch (NumberFormatException e) {
             return 200;
+        }
+    }
+
+    private int getDiasAlquilerActuales() {
+        try {
+            String val = binding.inputDiasAlquiler.getText() != null ? binding.inputDiasAlquiler.getText().toString().trim() : "";
+            return val.isEmpty() ? 1 : Math.max(1, Integer.parseInt(val));
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    private int getHorasDiaActuales() {
+        try {
+            String val = binding.inputHorasDia.getText() != null ? binding.inputHorasDia.getText().toString().trim() : "";
+            return val.isEmpty() ? 8 : Math.max(1, Integer.parseInt(val));
+        } catch (NumberFormatException e) {
+            return 8;
         }
     }
 

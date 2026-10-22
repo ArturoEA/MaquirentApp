@@ -30,20 +30,29 @@ public class VolkerPdfStrategy extends BasePdfGeneratorStrategy {
     }
 
     @Override
-    public String generarCondicionesComercialesHtml(Cotizacion cotizacion) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<div style='margin-top: 20px; text-align: left;'>");
-        sb.append("<h3 style='text-decoration: underline; font-size: 11pt;'>CONDICIONES COMERCIALES VOLKER</h3>");
-        sb.append("<ul style='padding-left: 20px; list-style-type: disc;'>");
-        sb.append("<li>LOS EQUIPOS SE ALQUILAN EN CONDICIONES OPERATIVAS Y CON MANTENIMIENTO AL DÍA.</li>");
-        sb.append("<li>FORMA DE PAGO: CRÉDITO A 30 DÍAS TRAS EMISIÓN DE LA VALORIZACIÓN.</li>");
-        sb.append("<li>TARIFA BASE SUJETA A HORAS MÍNIMAS PACTADAS (<b>").append(cotizacion.getHorasMinimas()).append(" HORAS MENSUALES</b>). EXCESOS FACTURADOS SEGÚN REGISTRO DE HORÓMETRO.</li>");
-        sb.append("<li>EL CLIENTE ASUME LA INSPECCIÓN DIARIA DE NIVELES DE ACEITE, AGUA Y COMBUSTIBLE.</li>");
-        sb.append("<li>MANTENIMIENTO PREVENTIVO A CARGO DE ").append(getNombreEmpresa()).append(" CADA ").append(BuildConfig.DEFAULT_MAINTENANCE_HOURS).append(" HORAS.</li>");
-        sb.append("<li>VALIDEZ DE LA OFERTA: 15 DÍAS CALENDARIO.</li>");
-        sb.append("</ul>");
-        sb.append("</div>");
-        return sb.toString();
+    public String getTituloCondicionesComerciales() {
+        return "CONDICIONES COMERCIALES VOLKER";
+    }
+
+    @Override
+    public List<String> obtenerCondicionesPorDefecto(String tipoAlquiler, int horasMinimas, int diasAlquiler, int horasPorDia) {
+        List<String> condiciones = new ArrayList<>();
+        if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN EN CONDICIONES OPERATIVAS Y CON MANTENIMIENTO AL DÍA.");
+            condiciones.add("FORMA DE PAGO: CONTADO O CRÉDITO CONFORME A EVALUACIÓN PREVIA.");
+            condiciones.add("TARIFA DIARIA BASADA EN UNA JORNADA DE <b>" + (horasPorDia > 0 ? horasPorDia : 8) + " HORAS DIARIAS</b> POR <b>" + (diasAlquiler > 0 ? diasAlquiler : 1) + " DÍA(S)</b>. HORAS EXCEDENTES FACTURADAS SEGÚN TARIFA HE.");
+            condiciones.add("FLETE DE MOVILIZACIÓN Y DESMOVILIZACIÓN A CARGO DEL CLIENTE.");
+            condiciones.add("EL CLIENTE ASUME LA INSPECCIÓN DIARIA DE NIVELES DE ACEITE, AGUA Y COMBUSTIBLE.");
+            condiciones.add("VALIDEZ DE LA OFERTA: 15 DÍAS CALENDARIO.");
+        } else {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN EN CONDICIONES OPERATIVAS Y CON MANTENIMIENTO AL DÍA.");
+            condiciones.add("FORMA DE PAGO: CRÉDITO A 30 DÍAS TRAS EMISIÓN DE LA VALORIZACIÓN.");
+            condiciones.add("TARIFA BASE SUJETA A HORAS MÍNIMAS PACTADAS (<b>" + (horasMinimas > 0 ? horasMinimas : 200) + " HORAS MENSUALES</b>). EXCESOS FACTURADOS SEGÚN REGISTRO DE HORÓMETRO.");
+            condiciones.add("EL CLIENTE ASUME LA INSPECCIÓN DIARIA DE NIVELES DE ACEITE, AGUA Y COMBUSTIBLE.");
+            condiciones.add("MANTENIMIENTO PREVENTIVO A CARGO DE " + getNombreEmpresa() + " CADA " + BuildConfig.DEFAULT_MAINTENANCE_HOURS + " HORAS.");
+            condiciones.add("VALIDEZ DE LA OFERTA: 15 DÍAS CALENDARIO.");
+        }
+        return condiciones;
     }
 
     @Override
@@ -58,6 +67,6 @@ public class VolkerPdfStrategy extends BasePdfGeneratorStrategy {
 
     @Override
     public String getTitularCuentas() {
-        return "NOTA: A favor de " + BuildConfig.COMPANY_NAME;
+        return "NOTA: A favor de " + BuildConfig.COMPANY_OWNER;
     }
 }

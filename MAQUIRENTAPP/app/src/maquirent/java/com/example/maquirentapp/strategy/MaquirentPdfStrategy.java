@@ -3,6 +3,9 @@ package com.example.maquirentapp.strategy;
 import android.content.Context;
 import com.example.maquirentapp.Model.Cotizacion;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MaquirentPdfStrategy extends BasePdfGeneratorStrategy {
 
     @Override
@@ -24,23 +27,30 @@ public class MaquirentPdfStrategy extends BasePdfGeneratorStrategy {
     }
 
     @Override
-    public String generarCondicionesComercialesHtml(Cotizacion cotizacion) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<div style='margin-top: 20px; text-align: left;'>");
-        sb.append("<h3 style='text-decoration: underline; font-size: 11pt;'>CONDICIONES COMERCIALES</h3>");
-        sb.append("<ul style='padding-left: 20px; list-style-type: disc;'>");
-        sb.append("<li>LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.</li>");
-        sb.append("<li>EL PAGO DEL ALQUILER SE REALIZARÁ A 30 DÍAS DE LA FACTURACIÓN.</li>");
-        sb.append("<li>TARIFA SE APLICA CON HORAS MÍNIMAS DE <b>").append(cotizacion.getHorasMinimas()).append(" HORAS MENSUALES</b>, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.</li>");
-        sb.append("<li>LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL. EN CASO DE PRESENTARSE CUALQUIER DAÑO, EL CLIENTE SE HARÁ RESPONSABLE DE LAS REPARACIONES, SEGÚN LOS CARGOS POR DAÑOS VIGENTES A LA DEVOLUCIÓN.</li>");
-        sb.append("<li>EN CASO DE PÉRDIDA DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA DEVOLUCIÓN DEL MISMO, YA SEA COMO EQUIPO O EN EFECTIVO, TENIENDO EN CUENTA LA FACTURA DE COMPRA.</li>");
-        sb.append("<li>LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (AGUA Y ACEITE DE MOTOR).</li>");
-        sb.append("<li>LOS ADITAMENTOS DEL EQUIPO INCLUIDOS SON BANDEJA Y KIT ANTIDERRAME, EXTINTOR, BARRA PUESTA A TIERRA.</li>");
-        sb.append("<li>EL EQUIPO SE ENTREGA CON ACEITE DE MOTOR Y FILTROS NUEVOS.</li>");
-        sb.append("<li>PARA LOS MANTENIMIENTOS DE LOS GENERADORES EN MINA, SE PUEDE CAPACITAR A UN PERSONAL DE LA EMPRESA CONTRATISTA Y SE LE OTORGARÁ TODOS LOS INSUMOS PARA QUE PUEDA REALIZAR EL MANTENIMIENTO PREVENTIVO CADA 250 HORAS.</li>");
-        sb.append("<li>LA PRESENTE COTIZACIÓN TIENE UNA VALIDEZ DE 15 DÍAS DESDE SU CREACIÓN.</li>");
-        sb.append("</ul>");
-        sb.append("</div>");
-        return sb.toString();
+    public List<String> obtenerCondicionesPorDefecto(String tipoAlquiler, int horasMinimas, int diasAlquiler, int horasPorDia) {
+        List<String> condiciones = new ArrayList<>();
+        if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
+            condiciones.add("EL PAGO DEL ALQUILER SE REALIZARÁ AL CONTADO O PREVIO ACUERDO COMERCIAL ANTES DE LA ENTREGA.");
+            condiciones.add("TARIFA SE APLICA POR JORNADA DE HASTA <b>" + (horasPorDia > 0 ? horasPorDia : 8) + " HORAS DIARIAS</b> POR <b>" + (diasAlquiler > 0 ? diasAlquiler : 1) + " DÍA(S)</b>, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.");
+            condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL. EN CASO DE PRESENTARSE CUALQUIER DAÑO, EL CLIENTE SE HARÁ RESPONSABLE DE LAS REPARACIONES, SEGÚN LOS CARGOS POR DAÑOS VIGENTES A LA DEVOLUCIÓN.");
+            condiciones.add("EN CASO DE PÉRDIDA DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA DEVOLUCIÓN DEL MISMO, YA SEA COMO EQUIPO O EN EFECTIVO, TENIENDO EN CUENTA LA FACTURA DE COMPRA.");
+            condiciones.add("LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (AGUA Y ACEITE DE MOTOR).");
+            condiciones.add("LOS ADITAMENTOS DEL EQUIPO INCLUIDOS SON BANDEJA Y KIT ANTIDERRAME, EXTINTOR, BARRA PUESTA A TIERRA.");
+            condiciones.add("EL EQUIPO SE ENTREGA CON ACEITE DE MOTOR Y FILTROS NUEVOS.");
+            condiciones.add("LA PRESENTE COTIZACIÓN TIENE UNA VALIDEZ DE 15 DÍAS DESDE SU CREACIÓN.");
+        } else {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
+            condiciones.add("EL PAGO DEL ALQUILER SE REALIZARÁ A 30 DÍAS DE LA FACTURACIÓN.");
+            condiciones.add("TARIFA SE APLICA CON HORAS MÍNIMAS DE <b>" + (horasMinimas > 0 ? horasMinimas : 200) + " HORAS MENSUALES</b>, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.");
+            condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL. EN CASO DE PRESENTARSE CUALQUIER DAÑO, EL CLIENTE SE HARÁ RESPONSABLE DE LAS REPARACIONES, SEGÚN LOS CARGOS POR DAÑOS VIGENTES A LA DEVOLUCIÓN.");
+            condiciones.add("EN CASO DE PÉRDIDA DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA DEVOLUCIÓN DEL MISMO, YA SEA COMO EQUIPO O EN EFECTIVO, TENIENDO EN CUENTA LA FACTURA DE COMPRA.");
+            condiciones.add("LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (AGUA Y ACEITE DE MOTOR).");
+            condiciones.add("LOS ADITAMENTOS DEL EQUIPO INCLUIDOS SON BANDEJA Y KIT ANTIDERRAME, EXTINTOR, BARRA PUESTA A TIERRA.");
+            condiciones.add("EL EQUIPO SE ENTREGA CON ACEITE DE MOTOR Y FILTROS NUEVOS.");
+            condiciones.add("PARA LOS MANTENIMIENTOS DE LOS GENERADORES EN MINA, SE PUEDE CAPACITAR A UN PERSONAL DE LA EMPRESA CONTRATISTA Y SE LE OTORGARÁ TODOS LOS INSUMOS PARA QUE PUEDA REALIZAR EL MANTENIMIENTO PREVENTIVO CADA 250 HORAS.");
+            condiciones.add("LA PRESENTE COTIZACIÓN TIENE UNA VALIDEZ DE 15 DÍAS DESDE SU CREACIÓN.");
+        }
+        return condiciones;
     }
 }

@@ -95,7 +95,60 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
 
     public abstract String generarEncabezadoHtml(Context context);
 
-    public abstract String generarCondicionesComercialesHtml(Cotizacion cotizacion);
+    public String getTituloCondicionesComerciales() {
+        return "CONDICIONES COMERCIALES";
+    }
+
+    @Override
+    public List<String> obtenerCondicionesPorDefecto(String tipoAlquiler, int horasMinimas, int diasAlquiler, int horasPorDia) {
+        List<String> condiciones = new ArrayList<>();
+        if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
+            condiciones.add("FORMA DE PAGO: AL CONTADO / PREVIO ACUERDO COMERCIAL ANTES DE LA ENTREGA.");
+            condiciones.add("TARIFA DIARIA POR JORNADA DE HASTA <b>" + (horasPorDia > 0 ? horasPorDia : 8) + " HORAS DIARIAS</b> POR <b>" + (diasAlquiler > 0 ? diasAlquiler : 1) + " DÍA(S)</b>. EXCESOS SE FACTURARÁN COMO HORA EXTRA.");
+            condiciones.add("TRANSPORTE Y TRASLADO DE EQUIPOS A CARGO DEL CLIENTE.");
+            condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL.");
+            condiciones.add("EN CASO DE PÉRDIDA O DAÑOS DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA REPARACIÓN O REPOSICIÓN DEL MISMO.");
+            condiciones.add("LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (NIVELES DE AGUA Y ACEITE DE MOTOR).");
+            condiciones.add("LOS ADITAMENTOS DEL EQUIPO INCLUIDOS SON BANDEJA Y KIT ANTIDERRAME, EXTINTOR, BARRA PUESTA A TIERRA.");
+            condiciones.add("LA PRESENTE COTIZACIÓN TIENE UNA VALIDEZ DE 15 DÍAS DESDE SU CREACIÓN.");
+        } else {
+            condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
+            condiciones.add("EL PAGO DEL ALQUILER SE REALIZARÁ A 30 DÍAS DE LA FACTURACIÓN.");
+            condiciones.add("TARIFA SE APLICA CON HORAS MÍNIMAS DE <b>" + (horasMinimas > 0 ? horasMinimas : 200) + " HORAS MENSUALES</b>, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.");
+            condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL. EN CASO DE PRESENTARSE CUALQUIER DAÑO, EL CLIENTE SE HARÁ RESPONSABLE DE LAS REPARACIONES, SEGÚN LOS CARGOS POR DAÑOS VIGENTES A LA DEVOLUCIÓN.");
+            condiciones.add("EN CASO DE PÉRDIDA DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA DEVOLUCIÓN DEL MISMO, YA SEA COMO EQUIPO O EN EFECTIVO, TENIENDO EN CUENTA LA FACTURA DE COMPRA.");
+            condiciones.add("LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (AGUA Y ACEITE DE MOTOR).");
+            condiciones.add("LOS ADITAMENTOS DEL EQUIPO INCLUIDOS SON BANDEJA Y KIT ANTIDERRAME, EXTINTOR, BARRA PUESTA A TIERRA.");
+            condiciones.add("EL EQUIPO SE ENTREGA CON ACEITE DE MOTOR Y FILTROS NUEVOS.");
+            condiciones.add("PARA LOS MANTENIMIENTOS DE LOS GENERADORES EN MINA, SE PUEDE CAPACITAR A UN PERSONAL DE LA EMPRESA CONTRATISTA Y SE LE OTORGARÁ TODOS LOS INSUMOS PARA QUE PUEDA REALIZAR EL MANTENIMIENTO PREVENTIVO CADA 250 HORAS.");
+            condiciones.add("LA PRESENTE COTIZACIÓN TIENE UNA VALIDEZ DE 15 DÍAS DESDE SU CREACIÓN.");
+        }
+        return condiciones;
+    }
+
+    public String generarCondicionesComercialesHtml(Cotizacion cotizacion) {
+        List<String> condiciones = cotizacion.getCondicionesComerciales();
+        if (condiciones == null || condiciones.isEmpty()) {
+            condiciones = obtenerCondicionesPorDefecto(
+                    cotizacion.getTipoAlquiler(),
+                    cotizacion.getHorasMinimas(),
+                    cotizacion.getDiasAlquiler(),
+                    cotizacion.getHorasPorDia()
+            );
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style='margin-top: 20px; text-align: left;'>");
+        sb.append("<h3 style='text-decoration: underline; font-size: 11pt;'>").append(getTituloCondicionesComerciales()).append("</h3>");
+        sb.append("<ul style='padding-left: 20px; list-style-type: disc;'>");
+        for (String cond : condiciones) {
+            sb.append("<li>").append(cond).append("</li>");
+        }
+        sb.append("</ul>");
+        sb.append("</div>");
+        return sb.toString();
+    }
 
     @Override
     public String generarHtmlCotizacion(Context context, Cotizacion cotizacion) {
@@ -105,6 +158,9 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         } catch (Exception e) {
             firmaBase64 = "";
         }
+
+        boolean esDiario = cotizacion.isDiario();
+        int dias = cotizacion.getDiasAlquiler();
 
         StringBuilder html = new StringBuilder();
         html.append("<html><head><style>");
@@ -141,32 +197,45 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         html.append("<p>Estimados Señores:<br>Por medio de la presente nos es muy grato hacerles llegar nuestra cotización comercial de alquiler según el siguiente detalle:</p>");
 
         html.append("<table><thead><tr>");
-        html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>POTENCIA</th><th>TARIFA MES</th><th>HORAS MÍN.</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
+        if (esDiario) {
+            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>POTENCIA</th><th>TARIFA DÍA</th><th>CANT. DÍAS</th><th>HORAS/DÍA</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
+        } else {
+            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>POTENCIA</th><th>TARIFA MES</th><th>HORAS MÍN.</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
+        }
         html.append("</tr></thead><tbody>");
 
         int index = 1;
         for (ItemCotizacion item : cotizacion.getItems()) {
+            double subtotalItem = item.getSubtotal(cotizacion.getTipoAlquiler(), dias);
             html.append("<tr>");
             html.append("<td>").append(index++).append("</td>");
             html.append("<td class='td-left'>").append(item.getDescripcionEquipo() != null ? item.getDescripcionEquipo() : "").append("</td>");
             html.append("<td>").append(item.getPotencia() != null ? item.getPotencia() : "-").append("</td>");
-            html.append("<td>").append(String.format(Locale.US, "%.2f", item.getPrecioMensual())).append("</td>");
-            html.append("<td>").append(cotizacion.getHorasMinimas()).append("</td>");
+            html.append("<td>").append(String.format(Locale.US, "%.2f", item.getPrecioUnitario())).append("</td>");
+
+            if (esDiario) {
+                html.append("<td>").append(dias).append("</td>");
+                html.append("<td>").append(cotizacion.getHorasPorDia()).append(" hrs</td>");
+            } else {
+                html.append("<td>").append(cotizacion.getHorasMinimas()).append("</td>");
+            }
+
             html.append("<td>").append(String.format(Locale.US, "%.2f", item.getPrecioHoraExtra())).append("</td>");
-            html.append("<td>").append(String.format(Locale.US, "%.2f", item.getPrecioMensual())).append("</td>");
+            html.append("<td>").append(String.format(Locale.US, "%.2f", subtotalItem)).append("</td>");
             html.append("</tr>");
         }
 
+        int colspan = esDiario ? 7 : 6;
         html.append("<tr>");
-        html.append("<td colspan='6' class='td-left no-border'><b>SUBTOTAL (").append(cotizacion.getMoneda()).append(")</b></td>");
+        html.append("<td colspan='").append(colspan).append("' class='td-left no-border'><b>SUBTOTAL (").append(cotizacion.getMoneda()).append(")</b></td>");
         html.append("<td><b>").append(String.format(Locale.US, "%.2f", cotizacion.getSubtotalGlobal())).append("</b></td>");
         html.append("</tr>");
         html.append("<tr>");
-        html.append("<td colspan='6' class='td-left no-border'><b>").append(getEtiquetaImpuesto()).append("</b></td>");
+        html.append("<td colspan='").append(colspan).append("' class='td-left no-border'><b>").append(getEtiquetaImpuesto()).append("</b></td>");
         html.append("<td><b>").append(String.format(Locale.US, "%.2f", cotizacion.getIgvGlobal())).append("</b></td>");
         html.append("</tr>");
         html.append("<tr>");
-        html.append("<td colspan='6' class='td-left no-border'><b>TOTAL GENERAL (").append(cotizacion.getMoneda()).append(")</b></td>");
+        html.append("<td colspan='").append(colspan).append("' class='td-left no-border'><b>TOTAL GENERAL (").append(cotizacion.getMoneda()).append(")</b></td>");
         html.append("<td><b>").append(String.format(Locale.US, "%.2f", cotizacion.getTotalGlobal())).append("</b></td>");
         html.append("</tr>");
         html.append("</tbody></table>");

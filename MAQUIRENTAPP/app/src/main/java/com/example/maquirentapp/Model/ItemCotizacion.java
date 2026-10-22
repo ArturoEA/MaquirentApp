@@ -8,6 +8,7 @@ public class ItemCotizacion implements Serializable {
     private String modoTrabajo;
     private String marca;
     private String incluye;
+    private double precioUnitario;
     private double precioMensual;
     private double precioHoraExtra;
 
@@ -15,12 +16,13 @@ public class ItemCotizacion implements Serializable {
         this.incluye = "Bandeja y kit antiderrame, extintor, varilla puesta a tierra y certificado de operatividad";
     }
 
-    public ItemCotizacion(String descripcionEquipo, String potencia, String modoTrabajo, String marca, double precioMensual, double precioHoraExtra) {
+    public ItemCotizacion(String descripcionEquipo, String potencia, String modoTrabajo, String marca, double precioUnitario, double precioHoraExtra) {
         this.descripcionEquipo = descripcionEquipo;
         this.potencia = potencia;
         this.modoTrabajo = modoTrabajo;
         this.marca = marca;
-        this.precioMensual = precioMensual;
+        this.precioUnitario = precioUnitario;
+        this.precioMensual = precioUnitario;
         this.precioHoraExtra = precioHoraExtra;
         this.incluye = "Bandeja y kit anti derrame, extintor, varilla puesta a tierra y certificado de operatividad";
     }
@@ -65,12 +67,24 @@ public class ItemCotizacion implements Serializable {
         this.incluye = incluye;
     }
 
+    public double getPrecioUnitario() {
+        return precioUnitario > 0 ? precioUnitario : precioMensual;
+    }
+
+    public void setPrecioUnitario(double precioUnitario) {
+        this.precioUnitario = precioUnitario;
+        this.precioMensual = precioUnitario;
+    }
+
     public double getPrecioMensual() {
-        return precioMensual;
+        return precioMensual > 0 ? precioMensual : precioUnitario;
     }
 
     public void setPrecioMensual(double precioMensual) {
         this.precioMensual = precioMensual;
+        if (this.precioUnitario == 0) {
+            this.precioUnitario = precioMensual;
+        }
     }
 
     public double getPrecioHoraExtra() {
@@ -80,11 +94,27 @@ public class ItemCotizacion implements Serializable {
     public void setPrecioHoraExtra(double precioHoraExtra) {
         this.precioHoraExtra = precioHoraExtra;
     }
+
+    public double getSubtotal(String tipoAlquiler, int diasAlquiler) {
+        if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
+            return getPrecioUnitario() * (diasAlquiler > 0 ? diasAlquiler : 1);
+        }
+        return getPrecioUnitario();
+    }
+
+    public double getIgv(String tipoAlquiler, int diasAlquiler) {
+        return getSubtotal(tipoAlquiler, diasAlquiler) * 0.18;
+    }
+
+    public double getTotalConIgv(String tipoAlquiler, int diasAlquiler) {
+        return getSubtotal(tipoAlquiler, diasAlquiler) * 1.18;
+    }
+
     public double getIgv() {
-        return precioMensual * 0.18;
+        return getPrecioUnitario() * 0.18;
     }
 
     public double getTotalConIgv() {
-        return precioMensual * 1.18;
+        return getPrecioUnitario() * 1.18;
     }
 }

@@ -927,9 +927,11 @@ exports.procesarFacturacionMensual = onSchedule({
 
         const nombreMesInicio = mesesNombres[nuevaFechaInicio.getMonth()];
         const nombreMesFin = mesesNombres[nuevaFechaFin.getMonth()];
-        const tituloPeriodo = `${nombreMesInicio} - ${nombreMesFin}`;
-
         const nuevoNumeroMes = (ultimoDetalle.numeroMes || 1) + 1;
+        const anioInicio = nuevaFechaInicio.getFullYear();
+        const anioFin = nuevaFechaFin.getFullYear();
+        const textoAnio = anioInicio === anioFin ? `${anioFin}` : `${anioInicio} - ${anioFin}`;
+        const tituloPeriodo = `Mes ${nuevoNumeroMes} • ${nombreMesInicio} - ${nombreMesFin} ${textoAnio}`;
 
         const nuevoDetalle = {
           idAlquilerMensual: alquilerId,
