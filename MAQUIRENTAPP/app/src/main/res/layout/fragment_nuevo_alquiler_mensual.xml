@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginBottom="50dp"
-    android:paddingBottom="30dp"
-    android:clipToPadding="true"
+    android:layout_marginBottom="0dp"
+    android:paddingBottom="90dp"
+    android:clipToPadding="false"
     android:fillViewport="true"
     android:focusable="true"
     android:focusableInTouchMode="true"
@@ -119,23 +119,25 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="7dp"
-            android:layout_weight="1"
+            android:layout_height="56dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/input_border"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
-            android:paddingEnd="12dp">
+            android:paddingTop="0dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="0dp">
 
             <TextView
                 android:id="@+id/tvSimboloMoneda"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingEnd="8dp"
+                android:paddingEnd="6dp"
                 android:text="S/."
                 android:textColor="@color/black"
-                android:textSize="16sp" />
+                android:textSize="15sp"
+                android:fontFamily="@font/anta_font" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
@@ -156,14 +158,19 @@
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
                     android:inputType="numberDecimal"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
                     android:textAlignment="center"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:fontFamily="@font/anta_font" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <Spinner
                 android:id="@+id/spinnerMoneda"
-                android:layout_width="70dp"
+                android:layout_width="65dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:backgroundTint="@color/black"
                 android:spinnerMode="dropdown" />
         </LinearLayout>
@@ -279,6 +286,41 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:visibility="gone" />
+
+        <!-- Selector de Años para contratos de larga duración -->
+        <LinearLayout
+            android:id="@+id/layoutSelectorAnios"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="6dp"
+                android:fontFamily="@font/anta_font"
+                android:text="Períodos por año:"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:clipToPadding="false"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <LinearLayout
+                    android:id="@+id/containerChipsAnios"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerDetallesMes"

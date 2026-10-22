@@ -2,10 +2,12 @@ package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -51,6 +54,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class NuevoAlquilerMensualFragment extends Fragment {
     private static final String TAG = "NuevoAlquilerMensual";
@@ -67,6 +72,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private RecyclerView recyclerAccesorios, recyclerDetallesMes;
     private com.facebook.shimmer.ShimmerFrameLayout shimmerDetallesMes;
     private Button btnGenerarSiguienteMesManual, btnFinalizarAlquiler;
+    private LinearLayout layoutSelectorAnios;
+    private LinearLayout containerChipsAnios;
+    private List<DetalleMes> listaTodosDetallesMes = new ArrayList<>();
+    private String anioSeleccionado = null;
 
     private AccesorioSeleccionAdapter adapterAccesorios;
     private DetalleMesAdapter adapterDetallesMes;
@@ -152,6 +161,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         recyclerDetallesMes = view.findViewById(R.id.recyclerDetallesMes);
         shimmerDetallesMes = view.findViewById(R.id.shimmerDetallesMes);
+        layoutSelectorAnios = view.findViewById(R.id.layoutSelectorAnios);
+        containerChipsAnios = view.findViewById(R.id.containerChipsAnios);
         recyclerDetallesMes.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerDetallesMes.setNestedScrollingEnabled(false);
         adapterDetallesMes = new DetalleMesAdapter();
@@ -184,10 +195,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
-                R.layout.spinner_item_white,
+                R.layout.spinner_item_moneda,
                 monedas
         );
-        adapter.setDropDownViewResource(R.layout.spinner_item_white);
+        adapter.setDropDownViewResource(R.layout.spinner_item_moneda_dropdown);
         spinnerMoneda.setAdapter(adapter);
 
         spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -452,7 +463,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     }
 
     private double obtenerHorometroMesAnterior(int numeroMesAnterior) {
-        for (DetalleMes detalle : adapterDetallesMes.getItems()) {
+        List<DetalleMes> fuente = !listaTodosDetallesMes.isEmpty() ? listaTodosDetallesMes : adapterDetallesMes.getItems();
+        for (DetalleMes detalle : fuente) {
             if (detalle.getNumeroMes() == numeroMesAnterior) {
                 return detalle.getHorometro();
             }
@@ -578,6 +590,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             shimmerDetallesMes.startShimmer();
         }
         recyclerDetallesMes.setVisibility(View.GONE);
+        if (layoutSelectorAnios != null) {
+            layoutSelectorAnios.setVisibility(View.GONE);
+        }
 
         alquilerRepository.getDetallesMesPorAlquiler(alquilerId, new Callback<List<DetalleMes>>() {
             @Override
@@ -587,8 +602,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                     shimmerDetallesMes.setVisibility(View.GONE);
                 }
                 recyclerDetallesMes.setVisibility(View.VISIBLE);
-                adapterDetallesMes.setItems(detalles);
-                adapterDetallesMes.setModoSoloLectura(modoSoloLectura && !editandoActualmente);
+                listaTodosDetallesMes = new ArrayList<>(detalles);
+                configurarSelectorAnios();
             }
 
             @Override
@@ -603,6 +618,133 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void configurarSelectorAnios() {
+        if (layoutSelectorAnios == null || containerChipsAnios == null || getContext() == null) return;
+
+        Set<String> aniosSet = new TreeSet<>();
+        for (DetalleMes d : listaTodosDetallesMes) {
+            String a = extraerAnio(d);
+            if (!a.isEmpty()) {
+                aniosSet.add(a);
+            }
+        }
+
+        if (aniosSet.size() <= 1) {
+            layoutSelectorAnios.setVisibility(View.GONE);
+            adapterDetallesMes.setItems(listaTodosDetallesMes);
+            adapterDetallesMes.setModoSoloLectura(modoSoloLectura && !editandoActualmente);
+            return;
+        }
+
+        layoutSelectorAnios.setVisibility(View.VISIBLE);
+        containerChipsAnios.removeAllViews();
+
+        List<String> listaAnios = new ArrayList<>(aniosSet);
+        if (anioSeleccionado == null || (!anioSeleccionado.equals("TODOS") && !aniosSet.contains(anioSeleccionado))) {
+            anioSeleccionado = listaAnios.get(listaAnios.size() - 1);
+        }
+
+        for (String anio : listaAnios) {
+            long count = 0;
+            for (DetalleMes d : listaTodosDetallesMes) {
+                if (extraerAnio(d).equals(anio)) count++;
+            }
+            agregarChipAnio(anio, anio + " (" + count + ")", anio.equals(anioSeleccionado));
+        }
+
+        agregarChipAnio("TODOS", "Todos (" + listaTodosDetallesMes.size() + ")", "TODOS".equals(anioSeleccionado));
+
+        aplicarFiltroAnio(anioSeleccionado);
+    }
+
+    private String extraerAnio(DetalleMes d) {
+        String f = d.getFechaFin();
+        if (f == null || f.isEmpty()) f = d.getFechaInicio();
+        if (f != null && f.contains("/")) {
+            String[] partes = f.split("/");
+            if (partes.length == 3) {
+                return partes[2].trim();
+            }
+        }
+        return "";
+    }
+
+    private void agregarChipAnio(String idAnio, String texto, boolean isSelected) {
+        if (getContext() == null) return;
+        TextView chip = new TextView(getContext());
+        chip.setText(texto);
+        chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        chip.setPadding(36, 16, 36, 16);
+
+        Typeface typefaceAnta = null;
+        try {
+            typefaceAnta = ResourcesCompat.getFont(getContext(), R.font.anta_font);
+        } catch (Exception ignored) {}
+        if (typefaceAnta != null) {
+            chip.setTypeface(typefaceAnta);
+        }
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMarginEnd(16);
+        chip.setLayoutParams(params);
+
+        actualizarEstiloChip(chip, isSelected);
+
+        chip.setOnClickListener(v -> {
+            anioSeleccionado = idAnio;
+            for (int i = 0; i < containerChipsAnios.getChildCount(); i++) {
+                View child = containerChipsAnios.getChildAt(i);
+                if (child instanceof TextView) {
+                    TextView tv = (TextView) child;
+                    Object tag = tv.getTag();
+                    actualizarEstiloChip(tv, idAnio.equals(tag));
+                }
+            }
+            aplicarFiltroAnio(idAnio);
+        });
+
+        chip.setTag(idAnio);
+        containerChipsAnios.addView(chip);
+    }
+
+    private void actualizarEstiloChip(TextView chip, boolean isSelected) {
+        if (getContext() == null) return;
+
+        Typeface typefaceAnta = null;
+        try {
+            typefaceAnta = ResourcesCompat.getFont(getContext(), R.font.anta_font);
+        } catch (Exception ignored) {}
+        if (typefaceAnta != null) {
+            chip.setTypeface(typefaceAnta);
+        }
+
+        if (isSelected) {
+            chip.setBackgroundResource(R.drawable.bg_chip_anio_selected);
+            chip.setTextColor(Color.WHITE);
+        } else {
+            chip.setBackgroundResource(R.drawable.bg_chip_anio_unselected);
+            chip.setTextColor(Color.parseColor("#B0B0B0"));
+        }
+    }
+
+    private void aplicarFiltroAnio(String anio) {
+        List<DetalleMes> filtrados = new ArrayList<>();
+        if ("TODOS".equals(anio)) {
+            filtrados.addAll(listaTodosDetallesMes);
+        } else {
+            for (DetalleMes d : listaTodosDetallesMes) {
+                if (extraerAnio(d).equals(anio)) {
+                    filtrados.add(d);
+                }
+            }
+        }
+        adapterDetallesMes.setItems(filtrados);
+        adapterDetallesMes.setModoSoloLectura(modoSoloLectura && !editandoActualmente);
     }
 
     private String formatearFecha(String fechaOriginal) {
@@ -973,7 +1115,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             return;
         }
 
-        List<DetalleMes> listaActual = adapterDetallesMes.getItems();
+        List<DetalleMes> listaActual = !listaTodosDetallesMes.isEmpty() ? listaTodosDetallesMes : adapterDetallesMes.getItems();
         if (listaActual.isEmpty()) return;
 
         DetalleMes ultimoMes = listaActual.get(listaActual.size() - 1);
@@ -1041,7 +1183,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private void mostrarDialogoGenerarSiguienteMesManual() {
         if (alquilerActual == null || getContext() == null) return;
 
-        List<DetalleMes> listaActual = adapterDetallesMes.getItems();
+        List<DetalleMes> listaActual = !listaTodosDetallesMes.isEmpty() ? listaTodosDetallesMes : adapterDetallesMes.getItems();
         int nuevoNumero = 1;
         String fechaInicioSugerida = "";
 

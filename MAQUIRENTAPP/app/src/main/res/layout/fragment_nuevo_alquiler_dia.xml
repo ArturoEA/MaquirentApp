@@ -139,23 +139,27 @@
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:layout_marginEnd="7dp"
+                    android:layout_marginBottom="10dp"
                     android:layout_weight="1"
                     android:background="@drawable/input_border"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingStart="12dp"
-                    android:paddingEnd="12dp">
+                    android:paddingTop="0dp"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="0dp">
 
                     <TextView
                         android:id="@+id/tvSimboloMoneda"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingEnd="8dp"
+                        android:paddingEnd="6dp"
                         android:text="S/."
                         android:textColor="@color/black"
-                        android:textSize="16sp" />
+                        android:textSize="15sp"
+                        android:fontFamily="@font/anta_font" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
@@ -176,14 +180,19 @@
                             android:layout_height="wrap_content"
                             android:background="@android:color/transparent"
                             android:inputType="numberDecimal"
+                            android:paddingTop="2dp"
+                            android:paddingBottom="2dp"
                             android:textAlignment="center"
-                            android:textColor="@color/black" />
+                            android:textColor="@color/black"
+                            android:textSize="15sp"
+                            android:fontFamily="@font/anta_font" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <Spinner
                         android:id="@+id/spinnerMoneda"
-                        android:layout_width="70dp"
+                        android:layout_width="65dp"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:backgroundTint="@color/black"
                         android:spinnerMode="dropdown" />
                 </LinearLayout>

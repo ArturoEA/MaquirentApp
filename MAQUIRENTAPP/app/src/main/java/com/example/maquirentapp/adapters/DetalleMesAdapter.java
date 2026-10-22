@@ -100,7 +100,16 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         holder.inputHorometro.setOnFocusChangeListener(null);
         holder.inputHorometro.setOnEditorActionListener(null);
 
-        holder.tvTituloPeriodo.setText(detalle.getTituloPeriodo());
+        holder.tvTituloPeriodo.setText(generarTituloPeriodo(detalle));
+        if (holder.tvSubtituloFechas != null) {
+            String subtitulo = generarSubtituloFechas(detalle);
+            if (subtitulo.isEmpty()) {
+                holder.tvSubtituloFechas.setVisibility(View.GONE);
+            } else {
+                holder.tvSubtituloFechas.setText(subtitulo);
+                holder.tvSubtituloFechas.setVisibility(View.VISIBLE);
+            }
+        }
         double montoAMostrar = detalle.getMontoMes() > 0 ? detalle.getMontoMes() : precioMensualBase;
         holder.tvMontoMes.setText(String.format(Locale.US, "Monto: %s %.2f", simboloMoneda, montoAMostrar));
 
@@ -561,25 +570,43 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     private void actualizarEstadoBotones(ViewHolder holder, DetalleMes detalle) {
         boolean habilitarBotones = !modoSoloLectura;
 
+        // Botón Mes
+        if (detalle.isPagoMesConfirmado()) {
+            holder.btnConfirmarPagoMes.setText("Mes pagado");
+            holder.btnConfirmarPagoMes.setEnabled(false);
+            holder.btnConfirmarPagoMes.setAlpha(0.6f);
+        } else {
+            holder.btnConfirmarPagoMes.setText("Pago de mes");
+            holder.btnConfirmarPagoMes.setEnabled(habilitarBotones);
+            holder.btnConfirmarPagoMes.setAlpha(1f);
+        }
+
         // Botón HE
         boolean hayHE = detalle.getHorasExtras() > 0;
-        holder.btnConfirmarPagoHE.setEnabled(habilitarBotones && hayHE && !detalle.isPagoHEConfirmado());
-        holder.btnConfirmarPagoHE.setAlpha((hayHE && !detalle.isPagoHEConfirmado()) ? 1f : 0.5f);
-
-        // Botón Mes
-        holder.btnConfirmarPagoMes.setEnabled(habilitarBotones && !detalle.isPagoMesConfirmado());
-        holder.btnConfirmarPagoMes.setAlpha(!detalle.isPagoMesConfirmado() ? 1f : 0.5f);
+        if (!hayHE) {
+            holder.btnConfirmarPagoHE.setText("Sin horas extras");
+            holder.btnConfirmarPagoHE.setEnabled(false);
+            holder.btnConfirmarPagoHE.setAlpha(0.45f);
+        } else if (detalle.isPagoHEConfirmado()) {
+            holder.btnConfirmarPagoHE.setText("HE pagadas");
+            holder.btnConfirmarPagoHE.setEnabled(false);
+            holder.btnConfirmarPagoHE.setAlpha(0.6f);
+        } else {
+            holder.btnConfirmarPagoHE.setText("Pago de HE");
+            holder.btnConfirmarPagoHE.setEnabled(habilitarBotones);
+            holder.btnConfirmarPagoHE.setAlpha(1f);
+        }
 
         // Textos de confirmación
-        if (detalle.isPagoMesConfirmado()) {
-            holder.tvConfirmacionPagoMes.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoMes());
+        if (detalle.isPagoMesConfirmado() && detalle.getFechaConfirmacionPagoMes() != null && !detalle.getFechaConfirmacionPagoMes().isEmpty()) {
+            holder.tvConfirmacionPagoMes.setText("Pagado el " + detalle.getFechaConfirmacionPagoMes());
             holder.tvConfirmacionPagoMes.setVisibility(View.VISIBLE);
         } else {
             holder.tvConfirmacionPagoMes.setVisibility(View.GONE);
         }
 
-        if (detalle.isPagoHEConfirmado()) {
-            holder.tvConfirmacionPagoHE.setText("Pago realizado el " + detalle.getFechaConfirmacionPagoHE());
+        if (hayHE && detalle.isPagoHEConfirmado() && detalle.getFechaConfirmacionPagoHE() != null && !detalle.getFechaConfirmacionPagoHE().isEmpty()) {
+            holder.tvConfirmacionPagoHE.setText("Pagado el " + detalle.getFechaConfirmacionPagoHE());
             holder.tvConfirmacionPagoHE.setVisibility(View.VISIBLE);
         } else {
             holder.tvConfirmacionPagoHE.setVisibility(View.GONE);
@@ -612,7 +639,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTituloPeriodo, tvMontoMes;
+        TextView tvTituloPeriodo, tvSubtituloFechas, tvMontoMes;
         ImageView btnExpandir, btnEditarFechaFin;
         LinearLayout headerLayout, layoutContenido;
         View franjaColor;
@@ -626,6 +653,7 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             super(itemView);
             headerLayout = itemView.findViewById(R.id.headerLayout);
             tvTituloPeriodo = itemView.findViewById(R.id.tvTituloPeriodo);
+            tvSubtituloFechas = itemView.findViewById(R.id.tvSubtituloFechas);
             tvMontoMes = itemView.findViewById(R.id.tvMontoMes);
 
             btnExpandir = itemView.findViewById(R.id.btnExpandir);
@@ -643,5 +671,66 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
             tvConfirmacionPagoMes = itemView.findViewById(R.id.tvConfirmacionPagoMes);
             tvConfirmacionPagoHE = itemView.findViewById(R.id.tvConfirmacionPagoHE);
         }
+    }
+
+    private String generarTituloPeriodo(DetalleMes detalle) {
+        int num = detalle.getNumeroMes();
+        String prefix = num > 0 ? "Mes " + num + " • " : "";
+
+        String fInicio = detalle.getFechaInicio();
+        String fFin = detalle.getFechaFin();
+
+        if (fInicio != null && !fInicio.isEmpty() && fFin != null && !fFin.isEmpty()) {
+            SimpleDateFormat sdfIn = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            SimpleDateFormat sdfMes = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
+            SimpleDateFormat sdfAnio = new SimpleDateFormat("yyyy", Locale.US);
+            try {
+                Date d1 = sdfIn.parse(fInicio);
+                Date d2 = sdfIn.parse(fFin);
+                if (d1 != null && d2 != null) {
+                    String mes1 = capitalizar(sdfMes.format(d1));
+                    String mes2 = capitalizar(sdfMes.format(d2));
+                    String anio1 = sdfAnio.format(d1);
+                    String anio2 = sdfAnio.format(d2);
+
+                    String nombrePeriodo;
+                    if (mes1.equalsIgnoreCase(mes2) && anio1.equals(anio2)) {
+                        nombrePeriodo = mes1 + " " + anio1;
+                    } else if (anio1.equals(anio2)) {
+                        nombrePeriodo = mes1 + " - " + mes2 + " " + anio1;
+                    } else {
+                        nombrePeriodo = mes1 + " " + anio1 + " - " + mes2 + " " + anio2;
+                    }
+                    return prefix + nombrePeriodo;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        String guardado = detalle.getTituloPeriodo();
+        if (guardado != null && !guardado.isEmpty()) {
+            if (guardado.startsWith("Mes ")) {
+                return guardado;
+            }
+            return prefix + guardado;
+        }
+        return prefix + "Período";
+    }
+
+    private String generarSubtituloFechas(DetalleMes detalle) {
+        String fInicio = detalle.getFechaInicio();
+        String fFin = detalle.getFechaFin();
+        if (fInicio != null && !fInicio.isEmpty() && fFin != null && !fFin.isEmpty()) {
+            long dias = calcularDiferenciaDias(fInicio, fFin);
+            if (dias > 0 && dias < 28) {
+                return fInicio + " al " + fFin + " (" + dias + " días)";
+            }
+            return fInicio + " al " + fFin;
+        }
+        return "";
+    }
+
+    private String capitalizar(String str) {
+        if (str == null || str.isEmpty()) return "";
+        return str.substring(0, 1).toUpperCase(new Locale("es", "ES")) + str.substring(1).toLowerCase(new Locale("es", "ES"));
     }
 }

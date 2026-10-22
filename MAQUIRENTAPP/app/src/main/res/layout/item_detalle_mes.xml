@@ -50,14 +50,25 @@
                         android:id="@+id/tvTituloPeriodo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Mes 1 (15/04 - 15/05)"
+                        android:text="Mes 1 • Septiembre - Octubre"
                         android:textColor="@color/white"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSubtituloFechas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="21/09/2026 al 20/10/2026"
+                        android:textColor="#CCCCCC"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/tvMontoMes"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
                         android:text="Monto: S/. 3000.00"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
@@ -147,54 +158,87 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnConfirmarPagoMes"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:backgroundTint="@color/selection_indicator"
-                    android:text="Confirmar pago de mes"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white" />
-                <TextView
-                    android:id="@+id/tvConfirmacionPagoMes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="25dp"
-                    android:layout_marginBottom="5dp"
-                    android:textColor="@color/white"
-                    android:text="Pago realizado el 25/12/2025"
-                    android:visibility="gone"/>
+                    android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/btnConfirmarPagoHE"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="@color/selection_indicator"
-                    android:text="Confirmar pago de HE"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white" />
-                <TextView
-                    android:id="@+id/tvConfirmacionPagoHE"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="25dp"
-                    android:layout_marginBottom="5dp"
-                    android:textColor="@color/white"
-                    android:text="Pago realizado el 25/12/2025"
-                    android:visibility="gone"/>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/btnConfirmarPagoMes"
+                            android:layout_width="match_parent"
+                            android:layout_height="46dp"
+                            android:backgroundTint="@color/selection_indicator"
+                            android:paddingLeft="4dp"
+                            android:paddingRight="4dp"
+                            android:text="Pago de mes"
+                            android:textSize="13sp"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tvConfirmacionPagoMes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:layout_gravity="center_horizontal"
+                            android:gravity="center"
+                            android:textColor="#A0A0A0"
+                            android:textSize="10sp"
+                            android:text="Pagado el 25/12/2025"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/btnConfirmarPagoHE"
+                            android:layout_width="match_parent"
+                            android:layout_height="46dp"
+                            android:backgroundTint="@color/selection_indicator"
+                            android:paddingLeft="4dp"
+                            android:paddingRight="4dp"
+                            android:text="Pago de HE"
+                            android:textSize="13sp"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white" />
+
+                        <TextView
+                            android:id="@+id/tvConfirmacionPagoHE"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:layout_gravity="center_horizontal"
+                            android:gravity="center"
+                            android:textColor="#A0A0A0"
+                            android:textSize="10sp"
+                            android:text="Pagado el 25/12/2025"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <Button
                     android:id="@+id/btnGenerarValorizacionMes"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="46dp"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/azul_100"
                     android:text="Generar Valorización"
+                    android:textSize="14sp"
                     android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textStyle="bold" />
+                    android:textColor="@color/white" />
 
             </LinearLayout>
         </LinearLayout>

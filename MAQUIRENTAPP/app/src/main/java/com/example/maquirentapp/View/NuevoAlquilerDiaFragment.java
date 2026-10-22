@@ -183,8 +183,8 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         List<String> monedas = new ArrayList<>();
         monedas.add("SOL");
         monedas.add("USD");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_white, monedas);
-        adapter.setDropDownViewResource(R.layout.spinner_item_white);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_moneda, monedas);
+        adapter.setDropDownViewResource(R.layout.spinner_item_moneda_dropdown);
         spinnerMoneda.setAdapter(adapter);
         spinnerMoneda.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
