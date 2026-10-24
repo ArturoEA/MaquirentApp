@@ -436,7 +436,13 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderTitle("Nuevo mantenimiento\n" + codigo);
                 } else if (dest.getId() == R.id.listaClientesValorizaciones) {
                     setHeaderIcon(R.drawable.icon_valorizacion_blanco);
-                    setHeaderTitle("Lista de clientes");
+                    setHeaderTitle("Valorizaciones");
+                } else if (dest.getId() == R.id.historialValorizacionesClienteFragment) {
+                    setHeaderIcon(R.drawable.icon_valorizacion_blanco);
+                    setHeaderTitle("Valorizaciones");
+                } else if (dest.getId() == R.id.nuevaValorizacionFragment) {
+                    setHeaderIcon(R.drawable.icon_valorizacion_blanco);
+                    setHeaderTitle("Nueva valorización");
                 } else if (dest.getId() == R.id.historialAlquilerDiarioFragment) {
                     String codigo = args != null
                             ? args.getString("codigo", "GEP")

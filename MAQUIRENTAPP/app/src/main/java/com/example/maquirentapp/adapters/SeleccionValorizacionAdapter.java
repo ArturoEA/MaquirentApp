@@ -3,14 +3,15 @@ package com.example.maquirentapp.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.maquirentapp.Model.ItemValorizacion;
 import com.example.maquirentapp.R;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,28 +63,37 @@ public class SeleccionValorizacionAdapter extends RecyclerView.Adapter<Seleccion
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ItemValorizacion item = items.get(position);
+        boolean isSelected = seleccionados.contains(item);
 
         holder.tvEquipo.setText(item.getDescripcionEquipo());
         holder.tvPeriodo.setText("Período: " + item.getFechaInicio() + " al " + item.getFechaFin());
-
         holder.tvMonto.setText(String.format(Locale.US, "%.2f", item.getTotalItem()));
 
-        holder.checkBox.setOnCheckedChangeListener(null);
-        holder.checkBox.setChecked(seleccionados.contains(item));
+        holder.checkBox.setChecked(isSelected);
 
-        holder.checkBox.setOnCheckedChangeListener((v, isChecked) -> {
-            if (isChecked) {
-                if (!seleccionados.contains(item)) seleccionados.add(item);
-            } else {
-                seleccionados.remove(item);
-            }
-        });
+        // Congruente con accesorios: cambiar color según selección
+        if (isSelected) {
+            holder.cardView.setCardBackgroundColor(holder.itemView.getContext().getColor(R.color.background_dark));
+            holder.tvEquipo.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+            holder.tvPeriodo.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+            holder.tvMonto.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+        } else {
+            holder.cardView.setCardBackgroundColor(holder.itemView.getContext().getColor(R.color.noseleccionado_accesorio));
+            holder.tvEquipo.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+            holder.tvPeriodo.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+            holder.tvMonto.setTextColor(holder.itemView.getContext().getColor(R.color.white));
+        }
 
         holder.itemView.setOnClickListener(v -> {
+            if (seleccionados.contains(item)) {
+                seleccionados.remove(item);
+            } else {
+                seleccionados.add(item);
+            }
+            notifyItemChanged(position);
+
             if (itemClickListener != null) {
                 itemClickListener.onItemClick(item, position);
-            } else {
-                holder.checkBox.toggle();
             }
         });
     }
@@ -94,11 +104,13 @@ public class SeleccionValorizacionAdapter extends RecyclerView.Adapter<Seleccion
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+        CardView cardView;
         TextView tvEquipo, tvPeriodo, tvMonto;
-        CheckBox checkBox;
+        MaterialCheckBox checkBox;
 
         ViewHolder(View itemView) {
             super(itemView);
+            cardView = (CardView) itemView;
             tvEquipo = itemView.findViewById(R.id.tvEquipo);
             tvPeriodo = itemView.findViewById(R.id.tvPeriodo);
             tvMonto = itemView.findViewById(R.id.tvMonto);

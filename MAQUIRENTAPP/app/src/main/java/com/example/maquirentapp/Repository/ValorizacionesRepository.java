@@ -232,4 +232,20 @@ public class ValorizacionesRepository {
                     if (callback != null) callback.onError(e);
                 });
     }
+
+    public void getTodasLasValorizaciones(Callback<List<Valorizacion>> callback) {
+        db.collection(COL_VALORIZACIONES)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Valorizacion> lista = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        Valorizacion v = doc.toObject(Valorizacion.class);
+                        v.setId(doc.getId());
+                        lista.add(v);
+                    }
+                    java.util.Collections.sort(lista, (a, b) -> Long.compare(b.getTimestampCreacion(), a.getTimestampCreacion()));
+                    callback.onSuccess(lista);
+                })
+                .addOnFailureListener(callback::onError);
+    }
 }

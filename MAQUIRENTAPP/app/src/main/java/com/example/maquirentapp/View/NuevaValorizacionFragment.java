@@ -89,7 +89,6 @@ public class NuevaValorizacionFragment extends Fragment {
     private void setupRecyclerView() {
         recyclerItems.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new SeleccionValorizacionAdapter();
-        adapter.setOnItemClickListener((item, pos) -> abrirDialogoParaItem(item));
         recyclerItems.setAdapter(adapter);
     }
 

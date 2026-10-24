@@ -5,9 +5,9 @@
     android:orientation="vertical"
     android:theme="@style/Theme.TextMain"
     android:background="@color/background_light"
-    android:padding="16dp"
-    android:paddingBottom="90dp"
-    android:clipToPadding="true">
+    android:paddingStart="16dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp">
 
     <TextView
         android:id="@+id/tvTituloNuevaVal"
@@ -16,6 +16,7 @@
         android:text="Nueva Valorización"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:fontFamily="@font/anta_font"
         android:textColor="@color/black"
         android:layout_marginBottom="8dp"/>
 
@@ -24,6 +25,7 @@
         android:layout_height="wrap_content"
         android:text="Selecciona el periodo o equipo a valorizar:"
         android:textColor="#555555"
+        android:fontFamily="@font/anta_font"
         android:textSize="13sp"
         android:layout_marginBottom="12dp"/>
 
@@ -40,6 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipToPadding="false"
         android:layout_marginBottom="16dp"/>
 
     <Button
@@ -51,6 +54,8 @@
         android:textSize="14sp"
         android:textStyle="bold"
         android:textAllCaps="false"
+        android:fontFamily="@font/anta_font"
+        android:layout_marginBottom="105dp"
         android:backgroundTint="@color/azul_100"/>
 
 </LinearLayout>
