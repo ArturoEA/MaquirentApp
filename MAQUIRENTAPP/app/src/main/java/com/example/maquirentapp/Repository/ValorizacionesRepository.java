@@ -218,4 +218,18 @@ public class ValorizacionesRepository {
                 .addOnSuccessListener(aVoid -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
     }
+
+    public void eliminarClienteValorizacion(String idCliente, Callback<Void> callback) {
+        if (idCliente == null || idCliente.trim().isEmpty()) {
+            if (callback != null) callback.onError(new Exception("ID de cliente no válido"));
+            return;
+        }
+        db.collection(COL_CLIENTES_VAL).document(idCliente).delete()
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
 }

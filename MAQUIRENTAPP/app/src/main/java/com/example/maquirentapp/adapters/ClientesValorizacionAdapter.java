@@ -3,6 +3,7 @@ package com.example.maquirentapp.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,16 +16,17 @@ import com.example.maquirentapp.R;
 
 public class ClientesValorizacionAdapter extends ListAdapter<ClienteValorizacion, ClientesValorizacionAdapter.ViewHolder> {
 
-    private final OnClienteClickListener listener;
+    private final OnClienteActionListener listener;
 
-    public interface OnClienteClickListener {
+    public interface OnClienteActionListener {
         void onClienteClick(ClienteValorizacion cliente);
+        void onEliminarClick(ClienteValorizacion cliente);
     }
 
     private static final DiffUtil.ItemCallback<ClienteValorizacion> DIFF_CALLBACK = new DiffUtil.ItemCallback<ClienteValorizacion>() {
         @Override
         public boolean areItemsTheSame(@NonNull ClienteValorizacion oldItem, @NonNull ClienteValorizacion newItem) {
-            return oldItem.getId().equals(newItem.getId());
+            return oldItem.getId() != null && oldItem.getId().equals(newItem.getId());
         }
 
         @Override
@@ -34,7 +36,7 @@ public class ClientesValorizacionAdapter extends ListAdapter<ClienteValorizacion
         }
     };
 
-    public ClientesValorizacionAdapter(OnClienteClickListener listener) {
+    public ClientesValorizacionAdapter(OnClienteActionListener listener) {
         super(DIFF_CALLBACK);
         this.listener = listener;
     }
@@ -53,17 +55,32 @@ public class ClientesValorizacionAdapter extends ListAdapter<ClienteValorizacion
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvNombre, tvRuc;
+        ImageView btnEliminar;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvNombre = itemView.findViewById(R.id.tvNombreEmpresa);
             tvRuc = itemView.findViewById(R.id.tvRucEmpresa);
+            btnEliminar = itemView.findViewById(R.id.btnEliminarCliente);
         }
 
-        void bind(ClienteValorizacion cliente, OnClienteClickListener listener) {
+        void bind(ClienteValorizacion cliente, OnClienteActionListener listener) {
             tvNombre.setText(cliente.getNombreEmpresa());
             tvRuc.setText("RUC: " + cliente.getRuc());
-            itemView.setOnClickListener(v -> listener.onClienteClick(cliente));
+
+            if (btnEliminar != null) {
+                btnEliminar.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onEliminarClick(cliente);
+                    }
+                });
+            }
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onClienteClick(cliente);
+                }
+            });
         }
     }
 }

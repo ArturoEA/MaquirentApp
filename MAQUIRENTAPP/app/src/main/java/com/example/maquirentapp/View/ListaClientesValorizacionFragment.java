@@ -80,12 +80,46 @@ public class ListaClientesValorizacionFragment extends Fragment {
 
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ClientesValorizacionAdapter(cliente -> {
-            Bundle args = new Bundle();
-            args.putSerializable("cliente", cliente);
-            Navigation.findNavController(getView()).navigate(R.id.action_listaClientes_to_historialValorizacionesCliente, args);
+        adapter = new ClientesValorizacionAdapter(new ClientesValorizacionAdapter.OnClienteActionListener() {
+            @Override
+            public void onClienteClick(ClienteValorizacion cliente) {
+                if (getView() != null) {
+                    Bundle args = new Bundle();
+                    args.putSerializable("cliente", cliente);
+                    Navigation.findNavController(getView()).navigate(R.id.action_listaClientes_to_historialValorizacionesCliente, args);
+                }
+            }
+
+            @Override
+            public void onEliminarClick(ClienteValorizacion cliente) {
+                confirmarEliminacionCliente(cliente);
+            }
         });
         recyclerView.setAdapter(adapter);
+    }
+
+    private void confirmarEliminacionCliente(ClienteValorizacion cliente) {
+        if (getContext() == null || cliente == null) return;
+
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                .setTitle("Eliminar cliente")
+                .setMessage("¿Estás seguro de eliminar a \"" + cliente.getNombreEmpresa() + "\" de la lista de valorizaciones del año " + anioSeleccionado + "?\n\nNota: Esta acción solo elimina este registro del directorio de valorizaciones. Tus alquileres y los detalles de cada mes de tus equipos se mantendrán intactos.")
+                .setPositiveButton("Eliminar", (dialog, which) -> {
+                    repository.eliminarClienteValorizacion(cliente.getId(), new Callback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Toast.makeText(getContext(), "Cliente eliminado", Toast.LENGTH_SHORT).show();
+                            cargarClientes();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Toast.makeText(getContext(), "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     private void cargarClientes() {
