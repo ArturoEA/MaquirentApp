@@ -164,12 +164,27 @@ public class PdfGenerator {
         setText(view, R.id.tvPdfCliente, cert.getCliente());
         setText(view, R.id.tvPdfFecha, cert.getFechaEmision());
 
+        boolean esCompresora = (cert.getTipoEquipo() != null && "Compresora de aire".equalsIgnoreCase(cert.getTipoEquipo()))
+                || (cert.getMarcaCompresor() != null && !cert.getMarcaCompresor().isEmpty())
+                || (codigo != null && (codigo.toUpperCase().startsWith("CAP") || codigo.toUpperCase().startsWith("COM")));
+
         TextView tvParrafo = view.findViewById(R.id.tvPdfParrafo);
         if (tvParrafo != null) {
             String texto = tvParrafo.getText().toString();
             texto = texto.replace("{{POT_SB}}", cert.getPotencia() != null ? cert.getPotencia() : "");
             texto = texto.replace("{{COD_GRUPO}}", codigo != null ? codigo : "");
+            if (esCompresora) {
+                texto = texto.replace("del grupo electrógeno", "de la compresora de aire");
+            }
             tvParrafo.setText(texto);
+        }
+
+        if (esCompresora) {
+            setText(view, R.id.tvPdfHeaderEquipo, "COMPRESORA DE AIRE");
+            setText(view, R.id.tvPdfHeaderComponente, "COMPRESOR");
+        } else {
+            setText(view, R.id.tvPdfHeaderEquipo, "GRUPO ELECTRÓGENO");
+            setText(view, R.id.tvPdfHeaderComponente, "GENERADOR");
         }
 
         setText(view, R.id.tvPdfMarcaGrupo, cert.getMarcaGrupo());
@@ -180,9 +195,15 @@ public class PdfGenerator {
         setText(view, R.id.tvPdfModMotor, cert.getModeloMotor());
         setText(view, R.id.tvPdfSerieMotor, cert.getSerieMotor());
 
-        setText(view, R.id.tvPdfMarcaGen, cert.getMarcaGenerador());
-        setText(view, R.id.tvPdfModGen, cert.getModeloGenerador());
-        setText(view, R.id.tvPdfSerieGen, cert.getSerieGenerador());
+        String marcaCompOgen = esCompresora && cert.getMarcaCompresor() != null && !cert.getMarcaCompresor().isEmpty()
+                ? cert.getMarcaCompresor() : cert.getMarcaGenerador();
+        setText(view, R.id.tvPdfMarcaGen, marcaCompOgen);
+        String modeloCompOgen = esCompresora && cert.getModeloCompresor() != null && !cert.getModeloCompresor().isEmpty()
+                ? cert.getModeloCompresor() : cert.getModeloGenerador();
+        setText(view, R.id.tvPdfModGen, modeloCompOgen);
+        String serieCompOgen = esCompresora && cert.getSerieCompresor() != null && !cert.getSerieCompresor().isEmpty()
+                ? cert.getSerieCompresor() : cert.getSerieGenerador();
+        setText(view, R.id.tvPdfSerieGen, serieCompOgen);
     }
 
     private void setText(View parent, int id, String text) {

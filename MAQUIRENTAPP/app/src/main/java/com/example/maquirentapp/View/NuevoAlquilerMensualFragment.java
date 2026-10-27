@@ -1,6 +1,7 @@
 package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -27,8 +28,11 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 import com.example.maquirentapp.adapters.AccesorioSeleccionAdapter;
 import com.example.maquirentapp.adapters.DetalleMesAdapter;
@@ -167,6 +171,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         recyclerDetallesMes.setNestedScrollingEnabled(false);
         adapterDetallesMes = new DetalleMesAdapter();
         recyclerDetallesMes.setAdapter(adapterDetallesMes);
+        configurarSwipeToDelete();
 
         llAccesoriosHeader = view.findViewById(R.id.llAccesoriosHeader);
         ivAccChevron = view.findViewById(R.id.ivAccChevron);
@@ -745,6 +750,136 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         }
         adapterDetallesMes.setItems(filtrados);
         adapterDetallesMes.setModoSoloLectura(modoSoloLectura && !editandoActualmente);
+    }
+
+    private void configurarSwipeToDelete() {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public int getSwipeDirs(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                if ((modoSoloLectura && !editandoActualmente) || (alquilerActual != null && alquilerActual.isFinalizado())) {
+                    return 0;
+                }
+                return super.getSwipeDirs(recyclerView, viewHolder);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView r, @NonNull RecyclerView.ViewHolder v, @NonNull RecyclerView.ViewHolder t) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                if (position == RecyclerView.NO_POSITION) return;
+
+                if (getContext() == null) {
+                    adapterDetallesMes.notifyItemChanged(position);
+                    return;
+                }
+
+                DetalleMes detalleAEliminar = adapterDetallesMes.getItem(position);
+                if (detalleAEliminar == null) {
+                    adapterDetallesMes.notifyItemChanged(position);
+                    return;
+                }
+
+                // 1. No permitir eliminar si es el único mes existente
+                if (listaTodosDetallesMes.size() <= 1) {
+                    Toast.makeText(getContext(),
+                            "No se puede eliminar el único mes del alquiler. Si deseas cancelar el alquiler completo, hazlo desde el Historial.",
+                            Toast.LENGTH_LONG).show();
+                    adapterDetallesMes.notifyItemChanged(position);
+                    return;
+                }
+
+                // 2. Solo se permite eliminar el último período registrado para mantener correlatividad
+                DetalleMes ultimoMes = listaTodosDetallesMes.get(listaTodosDetallesMes.size() - 1);
+                if (detalleAEliminar.getId() != null && !detalleAEliminar.getId().equals(ultimoMes.getId())) {
+                    Toast.makeText(getContext(),
+                            "Solo se puede eliminar el último período registrado (Mes " + ultimoMes.getNumeroMes() + ") para mantener la correlatividad de fechas y horómetros.",
+                            Toast.LENGTH_LONG).show();
+                    adapterDetallesMes.notifyItemChanged(position);
+                    return;
+                }
+
+                // 3. Preparar mensaje de confirmación
+                String periodoStr = "Mes " + detalleAEliminar.getNumeroMes();
+                if (detalleAEliminar.getFechaInicio() != null && detalleAEliminar.getFechaFin() != null) {
+                    periodoStr += " (" + detalleAEliminar.getFechaInicio() + " al " + detalleAEliminar.getFechaFin() + ")";
+                }
+
+                StringBuilder mensaje = new StringBuilder();
+                if (detalleAEliminar.isPagoMesConfirmado() || detalleAEliminar.isPagoHEConfirmado()) {
+                    mensaje.append("⚠️ Advertencia: Este período ya tiene pagos confirmados (Mes o Horas Extras).\n\n");
+                }
+                mensaje.append("¿Estás seguro de que deseas eliminar este período: ").append(periodoStr).append("?\n\nEsta acción no se puede deshacer.");
+
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Eliminar período")
+                        .setMessage(mensaje.toString())
+                        .setCancelable(false)
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            eliminarDetalleMesFirebase(detalleAEliminar, position);
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> {
+                            adapterDetallesMes.notifyItemChanged(position);
+                        })
+                        .setOnCancelListener(dialog -> adapterDetallesMes.notifyItemChanged(position))
+                        .show();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 16)
+                        .create()
+                        .decorate();
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerDetallesMes);
+    }
+
+    private void eliminarDetalleMesFirebase(DetalleMes detalle, int position) {
+        if (detalle.getId() == null || detalle.getId().isEmpty()) {
+            removerDetalleMesLocal(detalle);
+            return;
+        }
+
+        alquilerRepository.eliminarDetalleMes(detalle.getId(), new Callback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if (getContext() == null) return;
+                Toast.makeText(getContext(), "Período eliminado correctamente", Toast.LENGTH_SHORT).show();
+                removerDetalleMesLocal(detalle);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() == null) return;
+                Toast.makeText(getContext(), "Error al eliminar: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                adapterDetallesMes.notifyItemChanged(position);
+            }
+        });
+    }
+
+    private void removerDetalleMesLocal(DetalleMes detalle) {
+        for (int i = 0; i < listaTodosDetallesMes.size(); i++) {
+            DetalleMes d = listaTodosDetallesMes.get(i);
+            if ((d.getId() != null && d.getId().equals(detalle.getId())) ||
+                    (d.getNumeroMes() == detalle.getNumeroMes())) {
+                listaTodosDetallesMes.remove(i);
+                break;
+            }
+        }
+        configurarSelectorAnios();
     }
 
     private String formatearFecha(String fechaOriginal) {

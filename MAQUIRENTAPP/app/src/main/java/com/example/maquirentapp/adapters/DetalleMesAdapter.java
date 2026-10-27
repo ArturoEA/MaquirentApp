@@ -567,6 +567,13 @@ public class DetalleMesAdapter extends RecyclerView.Adapter<DetalleMesAdapter.Vi
         return new ArrayList<>(items);
     }
 
+    public DetalleMes getItem(int position) {
+        if (position >= 0 && position < items.size()) {
+            return items.get(position);
+        }
+        return null;
+    }
+
     private void actualizarEstadoBotones(ViewHolder holder, DetalleMes detalle) {
         boolean habilitarBotones = !modoSoloLectura;
 

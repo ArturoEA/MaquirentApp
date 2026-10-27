@@ -142,21 +142,30 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.textfield.TextInputLayout
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:id="@+id/layoutTipoEquipo"
+                            style="@style/CustomExposedDropdownMenu"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
+                            app:boxBackgroundColor="@color/white"
                             android:hint="Tipo de Equipo / Maquinaria">
 
-                            <AutoCompleteTextView
+                            <com.google.android.material.textfield.MaterialAutoCompleteTextView
                                 android:id="@+id/spinnerTipoEquipo"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="textCapSentences"
+                                android:inputType="none"
+                                android:background="@null"
+                                android:paddingStart="20dp"
+                                android:paddingEnd="20dp"
+                                android:paddingTop="16dp"
+                                android:paddingBottom="16dp"
+                                android:fontFamily="@font/anta_font"
                                 android:textColor="@color/black" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <LinearLayout
+                            android:id="@+id/layoutPotencias"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
@@ -195,9 +204,11 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvTituloEquipoPrincipal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Grupo Electrógeno"
+                            android:fontFamily="@font/anta_font"
                             android:textColor="@color/black"
                             android:textStyle="bold" />
 
@@ -257,6 +268,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Motor"
+                            android:fontFamily="@font/anta_font"
                             android:textColor="@color/black"
                             android:textStyle="bold" />
 
@@ -312,63 +324,141 @@
                             </com.google.android.material.textfield.TextInputLayout>
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Generador"
-                            android:textColor="@color/black"
-                            android:textStyle="bold" />
-
+                        <!-- Sección Generador (Visible cuando es Grupo electrógeno) -->
                         <LinearLayout
+                            android:id="@+id/layoutDatosGenerador"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+                            android:orientation="vertical">
 
-                            <com.google.android.material.textfield.TextInputLayout
-                                style="@style/CustomTextInputLayout"
-                                android:layout_width="0dp"
+                            <TextView
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:hint="Marca">
+                                android:text="Generador"
+                                android:fontFamily="@font/anta_font"
+                                android:textColor="@color/black"
+                                android:textStyle="bold" />
 
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/inputMarcaGen"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:inputType="textCapSentences"
-                                    android:textColor="@color/black" />
-                            </com.google.android.material.textfield.TextInputLayout>
-
-                            <com.google.android.material.textfield.TextInputLayout
-                                style="@style/CustomTextInputLayout"
-                                android:layout_width="0dp"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginHorizontal="4dp"
-                                android:layout_weight="1"
-                                android:hint="Modelo">
+                                android:orientation="horizontal">
 
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/inputModeloGen"
-                                    android:layout_width="match_parent"
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:inputType="textCapSentences"
-                                    android:textColor="@color/black" />
-                            </com.google.android.material.textfield.TextInputLayout>
+                                    android:layout_weight="1"
+                                    android:hint="Marca">
 
-                            <com.google.android.material.textfield.TextInputLayout
-                                style="@style/CustomTextInputLayout"
-                                android:layout_width="0dp"
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputMarcaGen"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginHorizontal="4dp"
+                                    android:layout_weight="1"
+                                    android:hint="Modelo">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputModeloGen"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:hint="Serie">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputSerieGen"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Sección Compresor (Visible cuando es Compresora de aire) -->
+                        <LinearLayout
+                            android:id="@+id/layoutDatosCompresor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:hint="Serie">
+                                android:text="Compresor"
+                                android:fontFamily="@font/anta_font"
+                                android:textColor="@color/black"
+                                android:textStyle="bold" />
 
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/inputSerieGen"
-                                    android:layout_width="match_parent"
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:inputType="textCapSentences"
-                                    android:textColor="@color/black" />
-                            </com.google.android.material.textfield.TextInputLayout>
+                                    android:layout_weight="1"
+                                    android:hint="Marca">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputMarcaCompresor"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginHorizontal="4dp"
+                                    android:layout_weight="1"
+                                    android:hint="Modelo">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputModeloCompresor"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+
+                                <com.google.android.material.textfield.TextInputLayout
+                                    style="@style/CustomTextInputLayout"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:hint="Serie">
+
+                                    <com.google.android.material.textfield.TextInputEditText
+                                        android:id="@+id/inputSerieCompresor"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:inputType="textCapSentences"
+                                        android:textColor="@color/black" />
+                                </com.google.android.material.textfield.TextInputLayout>
+                            </LinearLayout>
                         </LinearLayout>
 
                         <Button
@@ -377,6 +467,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:backgroundTint="@color/selection_indicator"
+                            android:fontFamily="@font/anta_font"
                             android:text="Guardar datos técnicos"
                             android:textColor="@color/white" />
 

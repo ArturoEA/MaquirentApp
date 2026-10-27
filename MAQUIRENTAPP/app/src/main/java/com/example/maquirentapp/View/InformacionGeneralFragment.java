@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -77,9 +78,13 @@ public class InformacionGeneralFragment extends Fragment {
     private FotosSimpleAdapter fotosAdapter;
     private SpecsPlacaAdapter specsAdapter;
     private AutoCompleteTextView spinnerTipoEquipo;
+    private TextView tvTituloEquipoPrincipal;
+    private LinearLayout layoutPotencias;
+    private LinearLayout layoutDatosGenerador, layoutDatosCompresor;
     private TextInputEditText inputPotenciaSB, inputPotenciaC, inputMarcaG, inputModeloG, inputSerieG;
     private TextInputEditText inputMarcaM, inputModeloM, inputSerieM;
     private TextInputEditText inputMarcaGen, inputModeloGen, inputSerieGen;
+    private TextInputEditText inputMarcaCompresor, inputModeloCompresor, inputSerieCompresor;
     private Button btnGuardarTecnicos;
     private com.facebook.shimmer.ShimmerFrameLayout shimmerInfoGeneral;
     private LinearLayout llContenidoCards;
@@ -127,10 +132,19 @@ public class InformacionGeneralFragment extends Fragment {
 
         spinnerTipoEquipo = view.findViewById(R.id.spinnerTipoEquipo);
         if (spinnerTipoEquipo != null) {
-            String[] tiposEquipo = new String[]{"Grupo electrógeno", "Compresora de aire", "Torre de iluminación", "Motobomba"};
-            ArrayAdapter<String> adapterTipos = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, tiposEquipo);
+            String[] tiposEquipo = new String[]{"Grupo electrógeno", "Compresora de aire"};
+            ArrayAdapter<String> adapterTipos = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_black, tiposEquipo);
             spinnerTipoEquipo.setAdapter(adapterTipos);
+            spinnerTipoEquipo.setOnItemClickListener((parent, v, position, id) -> {
+                String tipoSeleccionado = (String) parent.getItemAtPosition(position);
+                actualizarVistasSegunTipoEquipo(tipoSeleccionado);
+            });
         }
+
+        tvTituloEquipoPrincipal = view.findViewById(R.id.tvTituloEquipoPrincipal);
+        layoutPotencias = view.findViewById(R.id.layoutPotencias);
+        layoutDatosGenerador = view.findViewById(R.id.layoutDatosGenerador);
+        layoutDatosCompresor = view.findViewById(R.id.layoutDatosCompresor);
 
         inputPotenciaSB = view.findViewById(R.id.inputPotenciaStandBy);
         inputPotenciaC = view.findViewById(R.id.inputPotenciaContinua);
@@ -145,6 +159,10 @@ public class InformacionGeneralFragment extends Fragment {
         inputMarcaGen = view.findViewById(R.id.inputMarcaGen);
         inputModeloGen = view.findViewById(R.id.inputModeloGen);
         inputSerieGen = view.findViewById(R.id.inputSerieGen);
+
+        inputMarcaCompresor = view.findViewById(R.id.inputMarcaCompresor);
+        inputModeloCompresor = view.findViewById(R.id.inputModeloCompresor);
+        inputSerieCompresor = view.findViewById(R.id.inputSerieCompresor);
 
         btnGuardarTecnicos = view.findViewById(R.id.btnGuardarDatosTecnicos);
         shimmerInfoGeneral = view.findViewById(R.id.shimmerInfoGeneral);
@@ -381,6 +399,7 @@ public class InformacionGeneralFragment extends Fragment {
         if (spinnerTipoEquipo != null) {
             String tipo = infoPlacaActual.getTipoEquipoOrDefault(codigoGrupo);
             spinnerTipoEquipo.setText(tipo, false);
+            actualizarVistasSegunTipoEquipo(tipo);
         }
 
         inputPotenciaSB.setText(infoPlacaActual.getPotenciaStandBy());
@@ -397,6 +416,10 @@ public class InformacionGeneralFragment extends Fragment {
         inputMarcaGen.setText(infoPlacaActual.getMarcaGenerador());
         inputModeloGen.setText(infoPlacaActual.getModeloGenerador());
         inputSerieGen.setText(infoPlacaActual.getSerieGenerador());
+
+        if (inputMarcaCompresor != null) inputMarcaCompresor.setText(infoPlacaActual.getMarcaCompresor());
+        if (inputModeloCompresor != null) inputModeloCompresor.setText(infoPlacaActual.getModeloCompresor());
+        if (inputSerieCompresor != null) inputSerieCompresor.setText(infoPlacaActual.getSerieCompresor());
 
         fotosAdapter = new FotosSimpleAdapter(infoPlacaActual.getImagenesUrls(), new FotosSimpleAdapter.OnFotoActionListener() {
             @Override
@@ -690,7 +713,33 @@ public class InformacionGeneralFragment extends Fragment {
         infoPlacaActual.setModeloGenerador(inputModeloGen.getText().toString().trim());
         infoPlacaActual.setSerieGenerador(inputSerieGen.getText().toString().trim());
 
+        if (inputMarcaCompresor != null) {
+            infoPlacaActual.setMarcaCompresor(inputMarcaCompresor.getText().toString().trim());
+        }
+        if (inputModeloCompresor != null) {
+            infoPlacaActual.setModeloCompresor(inputModeloCompresor.getText().toString().trim());
+        }
+        if (inputSerieCompresor != null) {
+            infoPlacaActual.setSerieCompresor(inputSerieCompresor.getText().toString().trim());
+        }
+
         Toast.makeText(getContext(), "Guardando...", Toast.LENGTH_SHORT).show();
         guardarPlacaSinRecargar();
+    }
+
+    private void actualizarVistasSegunTipoEquipo(String tipo) {
+        boolean esCompresora = "Compresora de aire".equalsIgnoreCase(tipo);
+        if (tvTituloEquipoPrincipal != null) {
+            tvTituloEquipoPrincipal.setText(esCompresora ? "Compresora de aire" : "Grupo Electrógeno");
+        }
+        if (layoutPotencias != null) {
+            layoutPotencias.setVisibility(esCompresora ? View.GONE : View.VISIBLE);
+        }
+        if (layoutDatosGenerador != null) {
+            layoutDatosGenerador.setVisibility(esCompresora ? View.GONE : View.VISIBLE);
+        }
+        if (layoutDatosCompresor != null) {
+            layoutDatosCompresor.setVisibility(esCompresora ? View.VISIBLE : View.GONE);
+        }
     }
 }

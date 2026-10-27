@@ -116,6 +116,7 @@
             <TableRow>
 
                 <TextView
+                    android:id="@+id/tvPdfHeaderEquipo"
                     style="@style/PdfCellBold"
                     android:text="GRUPO ELECTRÓGENO" />
 
@@ -160,6 +161,7 @@
             <TableRow>
 
                 <TextView
+                    android:id="@+id/tvPdfHeaderComponente"
                     style="@style/PdfCellBold"
                     android:text="GENERADOR" />
 

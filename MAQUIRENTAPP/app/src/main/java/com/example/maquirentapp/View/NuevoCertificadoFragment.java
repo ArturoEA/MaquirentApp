@@ -136,21 +136,27 @@ public class NuevoCertificadoFragment extends Fragment {
                 datosTecnicosCargados = result;
 
                 if (result == null) {
-                    binding.tvResumenTecnico.setText("Este grupo no tiene Información General registrada.");
+                    binding.tvResumenTecnico.setText("Este equipo no tiene Información General registrada.");
                     mostrarAlertaFaltanDatos();
                 } else {
+                    boolean esCompresora = "Compresora de aire".equalsIgnoreCase(result.getTipoEquipoOrDefault(codigoGrupoSeleccionado));
                     if (!camposTecnicosValidos(result)) {
-                        binding.tvResumenTecnico.setText("Datos técnicos incompletos (Motor, Generador o Grupo vacíos).");
+                        String faltante = esCompresora ? "Motor, Compresor o Equipo" : "Motor, Generador o Grupo";
+                        binding.tvResumenTecnico.setText("Datos técnicos incompletos (" + faltante + " vacíos).");
                         mostrarAlertaFaltanDatos();
                     } else {
                         if (result.getPotenciaStandBy() != null) {
                             binding.inputPotencia.setText(result.getPotenciaStandBy());
                         }
 
+                        String componenteNombre = esCompresora
+                                ? "Compresor: " + result.getMarcaCompresor()
+                                : "Generador: " + result.getMarcaGenerador();
+
                         String resumen = "Datos técnicos listos:\n" +
                                 "Equipo: " + result.getMarcaGrupo() + "\n" +
                                 "Motor: " + result.getMarcaMotor() + "\n" +
-                                "Generador: " + result.getMarcaGenerador();
+                                componenteNombre;
 
                         binding.tvResumenTecnico.setText(resumen);
                         binding.btnGenerarCertificado.setEnabled(true);
@@ -166,9 +172,17 @@ public class NuevoCertificadoFragment extends Fragment {
         });
     }
     private boolean camposTecnicosValidos(InfoPlaca info) {
+        boolean esCompresora = "Compresora de aire".equalsIgnoreCase(info.getTipoEquipoOrDefault(codigoGrupoSeleccionado));
+        boolean componenteValido;
+        if (esCompresora) {
+            componenteValido = esValido(info.getMarcaCompresor()) && esValido(info.getModeloCompresor()) && esValido(info.getSerieCompresor());
+        } else {
+            componenteValido = esValido(info.getMarcaGenerador()) && esValido(info.getModeloGenerador()) && esValido(info.getSerieGenerador());
+        }
+
         return esValido(info.getMarcaGrupo()) && esValido(info.getModeloGrupo()) && esValido(info.getSerieGrupo()) &&
                 esValido(info.getMarcaMotor()) && esValido(info.getModeloMotor()) && esValido(info.getSerieMotor()) &&
-                esValido(info.getMarcaGenerador()) && esValido(info.getModeloGenerador()) && esValido(info.getSerieGenerador());
+                componenteValido;
     }
 
     private boolean esValido(String texto) {
@@ -248,6 +262,9 @@ public class NuevoCertificadoFragment extends Fragment {
         cert.setFechaEmision(fecha);
         cert.setPotencia(potencia);
 
+        boolean esCompresora = "Compresora de aire".equalsIgnoreCase(datosTecnicosCargados.getTipoEquipoOrDefault(codigoGrupoSeleccionado));
+        cert.setTipoEquipo(datosTecnicosCargados.getTipoEquipoOrDefault(codigoGrupoSeleccionado));
+
         cert.setMarcaGrupo(datosTecnicosCargados.getMarcaGrupo());
         cert.setModeloGrupo(datosTecnicosCargados.getModeloGrupo());
         cert.setSerieGrupo(datosTecnicosCargados.getSerieGrupo());
@@ -256,9 +273,19 @@ public class NuevoCertificadoFragment extends Fragment {
         cert.setModeloMotor(datosTecnicosCargados.getModeloMotor());
         cert.setSerieMotor(datosTecnicosCargados.getSerieMotor());
 
-        cert.setMarcaGenerador(datosTecnicosCargados.getMarcaGenerador());
-        cert.setModeloGenerador(datosTecnicosCargados.getModeloGenerador());
-        cert.setSerieGenerador(datosTecnicosCargados.getSerieGenerador());
+        if (esCompresora) {
+            cert.setMarcaCompresor(datosTecnicosCargados.getMarcaCompresor());
+            cert.setModeloCompresor(datosTecnicosCargados.getModeloCompresor());
+            cert.setSerieCompresor(datosTecnicosCargados.getSerieCompresor());
+            // Compatibilidad
+            cert.setMarcaGenerador(datosTecnicosCargados.getMarcaCompresor());
+            cert.setModeloGenerador(datosTecnicosCargados.getModeloCompresor());
+            cert.setSerieGenerador(datosTecnicosCargados.getSerieCompresor());
+        } else {
+            cert.setMarcaGenerador(datosTecnicosCargados.getMarcaGenerador());
+            cert.setModeloGenerador(datosTecnicosCargados.getModeloGenerador());
+            cert.setSerieGenerador(datosTecnicosCargados.getSerieGenerador());
+        }
 
         // UI Feedback
         binding.btnGenerarCertificado.setText("Generando...");

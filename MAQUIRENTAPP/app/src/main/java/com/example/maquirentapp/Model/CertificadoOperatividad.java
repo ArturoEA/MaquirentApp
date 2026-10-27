@@ -16,6 +16,10 @@ public class CertificadoOperatividad {
     private String marcaGenerador;
     private String modeloGenerador;
     private String serieGenerador;
+    private String tipoEquipo;
+    private String marcaCompresor;
+    private String modeloCompresor;
+    private String serieCompresor;
 
     public CertificadoOperatividad() {
     }
@@ -138,5 +142,37 @@ public class CertificadoOperatividad {
 
     public void setSerieGenerador(String serieGenerador) {
         this.serieGenerador = serieGenerador;
+    }
+
+    public String getTipoEquipo() {
+        return tipoEquipo;
+    }
+
+    public void setTipoEquipo(String tipoEquipo) {
+        this.tipoEquipo = tipoEquipo;
+    }
+
+    public String getMarcaCompresor() {
+        return marcaCompresor;
+    }
+
+    public void setMarcaCompresor(String marcaCompresor) {
+        this.marcaCompresor = marcaCompresor;
+    }
+
+    public String getModeloCompresor() {
+        return modeloCompresor;
+    }
+
+    public void setModeloCompresor(String modeloCompresor) {
+        this.modeloCompresor = modeloCompresor;
+    }
+
+    public String getSerieCompresor() {
+        return serieCompresor;
+    }
+
+    public void setSerieCompresor(String serieCompresor) {
+        this.serieCompresor = serieCompresor;
     }
 }

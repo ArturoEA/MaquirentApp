@@ -19,6 +19,9 @@ public class InfoPlaca {
     private String marcaGenerador = "";
     private String modeloGenerador = "";
     private String serieGenerador = "";
+    private String marcaCompresor = "";
+    private String modeloCompresor = "";
+    private String serieCompresor = "";
 
     private String potenciaStandBy = "";
     private String potenciaContinua= "";
@@ -131,6 +134,30 @@ public class InfoPlaca {
 
     public void setSerieGenerador(String serieGenerador) {
         this.serieGenerador = serieGenerador;
+    }
+
+    public String getMarcaCompresor() {
+        return (marcaCompresor != null && !marcaCompresor.isEmpty()) ? marcaCompresor : "";
+    }
+
+    public void setMarcaCompresor(String marcaCompresor) {
+        this.marcaCompresor = marcaCompresor != null ? marcaCompresor : "";
+    }
+
+    public String getModeloCompresor() {
+        return (modeloCompresor != null && !modeloCompresor.isEmpty()) ? modeloCompresor : "";
+    }
+
+    public void setModeloCompresor(String modeloCompresor) {
+        this.modeloCompresor = modeloCompresor != null ? modeloCompresor : "";
+    }
+
+    public String getSerieCompresor() {
+        return (serieCompresor != null && !serieCompresor.isEmpty()) ? serieCompresor : "";
+    }
+
+    public void setSerieCompresor(String serieCompresor) {
+        this.serieCompresor = serieCompresor != null ? serieCompresor : "";
     }
 
     public String getPotenciaStandBy() {
