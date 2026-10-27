@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView navHomeText, navRentText, navConfiguracionText;
     private TextView headerTitle;
     private ImageView headerIcon;
+    private ImageButton headerActionButton;
     private NestedScrollView contentScrollView;
     private final Map<String, Integer> scrollPositions = new HashMap<>();
     private UsuarioRepository usuarioRepository;
@@ -283,6 +285,7 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         headerTitle = findViewById(R.id.header_title);
         headerIcon = findViewById(R.id.header_icon);
+        headerActionButton = findViewById(R.id.header_action_button);
         contentScrollView = findViewById(R.id.content_scroll_view);
 
         navHome = findViewById(R.id.nav_home);
@@ -317,6 +320,9 @@ public class MainActivity extends AppCompatActivity {
             // Listener para cambios de destino
             navController.addOnDestinationChangedListener((ctrl, dest, args) -> {
                 saveScrollPositionForDestination(previousDestinationId);
+                if (dest.getId() != R.id.cgeFragment) {
+                    hideHeaderActionButton();
+                }
                 if (dest.getId() == R.id.authFragment) {
                     configurarUIParaAuth();
                 } else if (dest.getId() == R.id.tareasFragment) {
@@ -672,6 +678,36 @@ public class MainActivity extends AppCompatActivity {
     private void setHeaderTitle(String title) {
         if (headerTitle != null) {
             headerTitle.setText(title);
+        }
+    }
+
+    public void setHeaderActionButton(int iconResId, View.OnClickListener listener) {
+        if (headerActionButton == null) {
+            headerActionButton = findViewById(R.id.header_action_button);
+        }
+        if (headerActionButton != null) {
+            headerActionButton.setImageResource(iconResId);
+            headerActionButton.setVisibility(View.VISIBLE);
+            headerActionButton.setOnClickListener(listener);
+        }
+    }
+
+    public void updateHeaderActionIcon(int iconResId) {
+        if (headerActionButton == null) {
+            headerActionButton = findViewById(R.id.header_action_button);
+        }
+        if (headerActionButton != null) {
+            headerActionButton.setImageResource(iconResId);
+        }
+    }
+
+    public void hideHeaderActionButton() {
+        if (headerActionButton == null) {
+            headerActionButton = findViewById(R.id.header_action_button);
+        }
+        if (headerActionButton != null) {
+            headerActionButton.setVisibility(View.GONE);
+            headerActionButton.setOnClickListener(null);
         }
     }
 

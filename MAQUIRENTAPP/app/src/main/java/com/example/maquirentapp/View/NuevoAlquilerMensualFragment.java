@@ -1085,7 +1085,14 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             primerMes.setFechaInicio(strFechaInicio);
             primerMes.setFechaFin(strFechaFin);
             primerMes.setMontoMes(alquiler.getPrecioAlquiler());
-            primerMes.setTituloPeriodo("Mes 1: " + strFechaInicio + " - " + strFechaFin);
+
+            SimpleDateFormat sdfMes = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
+            String m1 = sdfMes.format(fechaInicioDate);
+            String m2 = sdfMes.format(fechaFinDate);
+            m1 = m1.substring(0, 1).toUpperCase(new Locale("es", "ES")) + m1.substring(1).toLowerCase(new Locale("es", "ES"));
+            m2 = m2.substring(0, 1).toUpperCase(new Locale("es", "ES")) + m2.substring(1).toLowerCase(new Locale("es", "ES"));
+            String periodoNombre = m1.equalsIgnoreCase(m2) ? m1 : (m1 + " - " + m2);
+            primerMes.setTituloPeriodo(periodoNombre);
             return primerMes;
         } catch (ParseException e) {
             Log.e("NuevoAlquiler", "Error al procesar fechas para primer mes", e);
@@ -1494,14 +1501,18 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
             String mesNombre = dInicio != null ? monthFormat.format(dInicio) : "";
             if (!mesNombre.isEmpty()) {
-                mesNombre = mesNombre.substring(0, 1).toUpperCase() + mesNombre.substring(1);
+                mesNombre = mesNombre.substring(0, 1).toUpperCase(new Locale("es", "ES")) + mesNombre.substring(1).toLowerCase(new Locale("es", "ES"));
             }
-
-            String titulo = "Mes " + numeroMes + ": " + mesNombre + " (" + strFechaInicio + " - " + strFechaFin + ")";
-            if (dias < 30) {
-                titulo += " [" + dias + " días]";
+            Date dFin = null;
+            try {
+                dFin = sdf.parse(strFechaFin);
+            } catch (Exception ignored) {}
+            String mFin = dFin != null ? monthFormat.format(dFin) : "";
+            if (!mFin.isEmpty()) {
+                mFin = mFin.substring(0, 1).toUpperCase(new Locale("es", "ES")) + mFin.substring(1).toLowerCase(new Locale("es", "ES"));
             }
-            nuevoMes.setTituloPeriodo(titulo);
+            String tituloPeriodo = (!mFin.isEmpty() && !mFin.equalsIgnoreCase(mesNombre)) ? (mesNombre + " - " + mFin) : mesNombre;
+            nuevoMes.setTituloPeriodo(tituloPeriodo);
 
             if (getContext() != null) {
                 Toast.makeText(getContext(), "Generando Mes " + numeroMes + "...", Toast.LENGTH_SHORT).show();

@@ -143,10 +143,10 @@ public class GrupoElectrogenoFragment extends Fragment {
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
-                android.R.layout.simple_spinner_item,
+                R.layout.spinner_item_mes,
                 meses
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapter.setDropDownViewResource(R.layout.spinner_item_black);
         spinnerMeses.setAdapter(adapter);
 
         // Seleccionar el mes actual por defecto
@@ -168,7 +168,8 @@ public class GrupoElectrogenoFragment extends Fragment {
         });
     }
     private void cargarTotalesMes(int mes) {
-        if (idGrupo == null) return;
+        String grupoTarget = (idGrupo != null && !idGrupo.isEmpty()) ? idGrupo : codigo;
+        if (grupoTarget == null) return;
         idCargaActual++;
         final int idDeEstaCarga = idCargaActual;
 
@@ -177,7 +178,8 @@ public class GrupoElectrogenoFragment extends Fragment {
         actualizarTotal(tvTotalSOL, 0, "SOL");
         actualizarTotal(tvTotalUSD, 0, "USD");
 
-        alquilerRepository.getIngresosPorGrupoYMes(idGrupo, mes, anioActual,
+        int mesFirestore = mes + 1; // Convertir 0-11 del Spinner a 1-12 de Firestore
+        alquilerRepository.getIngresosPorGrupoYMes(grupoTarget, mesFirestore, anioActual,
                 new Callback<List<Ingreso>>() {
                     @Override
                     public void onSuccess(List<Ingreso> ingresos) {

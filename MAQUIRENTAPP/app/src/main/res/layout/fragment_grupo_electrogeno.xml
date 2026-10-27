@@ -18,93 +18,113 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@color/background_dark"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="8dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="12dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:text="Totales del mes"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <Spinner
-                    android:id="@+id/spinnerMeses"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:background="@drawable/input_border"
-                    android:padding="12dp" />
-
+                <!-- Header: Título y Selector de Mes en horizontal -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/anta_font"
+                        android:text="Totales del mes"
+                        android:textColor="@color/white"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <Spinner
+                        android:id="@+id/spinnerMeses"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minHeight="34dp"
+                        android:background="@drawable/bg_spinner_totales"
+                        android:popupBackground="@color/background_dark" />
+                </LinearLayout>
+
+                <!-- Totales SOL y USD en horizontal -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
+                    <!-- Caja Total SOL -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="8dp">
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_total_item"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="8dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="Total SOL"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp" />
+                            android:fontFamily="@font/anta_font"
+                            android:text="SOL"
+                            android:textColor="#CCCCCC"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvTotalSOL"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/anta_font"
+                            android:gravity="end"
                             android:text="S/. 0.00"
                             android:textColor="#4CAF50"
-                            android:textSize="20sp"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:alpha="0.3"
-                        android:background="#FFFFFF" />
-
+                    <!-- Caja Total USD -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="8dp">
+                        android:layout_marginStart="6dp"
+                        android:background="@drawable/bg_total_item"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="8dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="4dp"
-                            android:text="Total USD"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp" />
+                            android:fontFamily="@font/anta_font"
+                            android:text="USD"
+                            android:textColor="#CCCCCC"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvTotalUSD"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="@font/anta_font"
+                            android:gravity="end"
                             android:text="$ 0.00"
                             android:textColor="#4CAF50"
-                            android:textSize="20sp"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>

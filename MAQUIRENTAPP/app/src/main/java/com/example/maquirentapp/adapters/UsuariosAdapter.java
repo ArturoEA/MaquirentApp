@@ -1,19 +1,23 @@
 package com.example.maquirentapp.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.maquirentapp.Model.Usuario;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.Callback;
@@ -63,8 +67,10 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
 
     public class UsuarioViewHolder extends RecyclerView.ViewHolder {
         private TextView tvNombre, tvEmail, tvRol, tvEstado;
-        private MaterialButton btnCambiarRol, btnCambiarEstado, btnEliminar;
+        private MaterialButton btnCambiarRol, btnCambiarEstado;
+        private ImageView btnEliminar;
         private ImageView iconEstado;
+        private ImageView imgFotoPerfil;
 
         public UsuarioViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -76,32 +82,49 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             btnCambiarEstado = itemView.findViewById(R.id.btnCambiarEstado);
             btnEliminar = itemView.findViewById(R.id.btnEliminar);
             iconEstado = itemView.findViewById(R.id.iconEstado);
+            imgFotoPerfil = itemView.findViewById(R.id.imgFotoPerfilUsuario);
         }
 
         public void bind(Usuario usuario) {
             tvNombre.setText(usuario.getNombre());
             tvEmail.setText(usuario.getEmail());
 
+            if (usuario.getFotoPerfil() != null && !usuario.getFotoPerfil().trim().isEmpty()) {
+                imgFotoPerfil.setPadding(0, 0, 0, 0);
+                imgFotoPerfil.setColorFilter(null);
+                androidx.core.widget.ImageViewCompat.setImageTintList(imgFotoPerfil, null);
+                Glide.with(context)
+                        .load(usuario.getFotoPerfil())
+                        .circleCrop()
+                        .placeholder(R.drawable.selection_indicator_background)
+                        .error(R.drawable.icon_perfil_blanco)
+                        .into(imgFotoPerfil);
+            } else {
+                Glide.with(context).clear(imgFotoPerfil);
+                int pad = (int) (8 * context.getResources().getDisplayMetrics().density);
+                imgFotoPerfil.setPadding(pad, pad, pad, pad);
+                imgFotoPerfil.setImageResource(R.drawable.icon_perfil_blanco);
+                imgFotoPerfil.setColorFilter(ContextCompat.getColor(context, R.color.white));
+                androidx.core.widget.ImageViewCompat.setImageTintList(imgFotoPerfil, null);
+            }
+
             String rolTexto = "admin".equals(usuario.getRol()) ? "Administrador" : "Empleado";
             tvRol.setText("Rol: " + rolTexto);
 
             String estadoTexto = "pendiente".equals(usuario.getEstado()) ? "Pendiente" :
                     "inactivo".equals(usuario.getEstado()) ? "Inactivo" : "Activo";
-            tvEstado.setText("Estado: " + estadoTexto);
+            tvEstado.setText(estadoTexto);
 
-            int colorEstado = "pendiente".equals(usuario.getEstado()) ?
-                    context.getColor(android.R.color.holo_orange_dark) :
-                    "inactivo".equals(usuario.getEstado()) ?
-                            context.getColor(android.R.color.holo_red_dark) :
-                            context.getColor(android.R.color.holo_green_dark);
+            int colorEstado;
+            if ("pendiente".equals(usuario.getEstado())) {
+                colorEstado = Color.parseColor("#FFA000"); // Ámbar
+            } else if ("inactivo".equals(usuario.getEstado())) {
+                colorEstado = Color.parseColor("#E53935"); // Rojo
+            } else {
+                colorEstado = Color.parseColor("#4CAF50"); // Verde
+            }
             tvEstado.setTextColor(colorEstado);
-
-            int iconoEstado = "pendiente".equals(usuario.getEstado()) ?
-                    R.drawable.icon_aceite_blanco :
-                    "inactivo".equals(usuario.getEstado()) ?
-                            R.drawable.icon_contrato_blanco :
-                            R.drawable.icon_voltaje_blanco;
-            iconEstado.setImageResource(iconoEstado);
+            iconEstado.setColorFilter(colorEstado);
 
             btnCambiarRol.setOnClickListener(v -> mostrarDialogoRol(usuario));
             btnCambiarEstado.setOnClickListener(v -> mostrarDialogoEstado(usuario));
@@ -177,10 +200,24 @@ public class UsuariosAdapter extends RecyclerView.Adapter<UsuariosAdapter.Usuari
             final EditText input = new EditText(context);
             input.setHint("Código de 6 dígitos");
             input.setInputType(InputType.TYPE_CLASS_NUMBER);
+            input.setTextColor(Color.WHITE);
+            input.setHintTextColor(Color.parseColor("#888888"));
+            input.setBackgroundResource(R.drawable.input_border);
+            input.setPadding(40, 30, 40, 30);
+
+            FrameLayout container = new FrameLayout(context);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.leftMargin = 50;
+            params.rightMargin = 50;
+            params.topMargin = 20;
+            params.bottomMargin = 10;
+            input.setLayoutParams(params);
+            container.addView(input);
 
             new MaterialAlertDialogBuilder(context, R.style.DialogoConFuenteAnta)
                     .setTitle("Ingrese código de verificación")
-                    .setView(input)
+                    .setView(container)
                     .setPositiveButton("Confirmar", (dialog, which) -> {
                         String codigoIngresado = input.getText() != null ? input.getText().toString().trim() : "";
                         if (codigoIngresado.isEmpty()) {

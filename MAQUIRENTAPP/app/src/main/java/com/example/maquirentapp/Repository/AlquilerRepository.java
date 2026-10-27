@@ -306,10 +306,51 @@ public class AlquilerRepository {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<AlquilerMensual> lista = new ArrayList<>();
+                    Calendar cStart = Calendar.getInstance();
+                    cStart.set(anio, mes, 1, 0, 0, 0);
+                    cStart.set(Calendar.MILLISECOND, 0);
+                    Date mesInicioDate = cStart.getTime();
+
+                    Calendar cEnd = Calendar.getInstance();
+                    cEnd.set(anio, mes, cStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+                    cEnd.set(Calendar.MILLISECOND, 999);
+                    Date mesFinDate = cEnd.getTime();
+
                     for (QueryDocumentSnapshot doc : snapshot) {
                         AlquilerMensual alq = doc.toObject(AlquilerMensual.class);
                         alq.setId(doc.getId());
-                        lista.add(alq);
+
+                        if (mes < 0 || anio <= 0) {
+                            lista.add(alq);
+                            continue;
+                        }
+
+                        Date dInicio = parsearFechaGeneral(alq.getFechaInicial());
+                        Date dFin = parsearFechaGeneral(alq.getFechaFinal());
+
+                        if (dInicio != null && dFin != null) {
+                            if (!dInicio.after(mesFinDate) && !dFin.before(mesInicioDate)) {
+                                lista.add(alq);
+                            }
+                        } else if (dInicio != null) {
+                            if (!alq.isFinalizado()) {
+                                if (!dInicio.after(mesFinDate)) {
+                                    lista.add(alq);
+                                }
+                            } else {
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(dInicio);
+                                if (c.get(Calendar.MONTH) == mes && c.get(Calendar.YEAR) == anio) {
+                                    lista.add(alq);
+                                }
+                            }
+                        } else if (alq.getTimestampCreacion() > 0) {
+                            Calendar c = Calendar.getInstance();
+                            c.setTimeInMillis(alq.getTimestampCreacion());
+                            if (c.get(Calendar.MONTH) == mes && c.get(Calendar.YEAR) == anio) {
+                                lista.add(alq);
+                            }
+                        }
                     }
                     callback.onSuccess(lista);
                 })
@@ -485,14 +526,84 @@ public class AlquilerRepository {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     List<AlquilerDia> lista = new ArrayList<>();
+                    Calendar cStart = Calendar.getInstance();
+                    cStart.set(anio, mes, 1, 0, 0, 0);
+                    cStart.set(Calendar.MILLISECOND, 0);
+                    Date mesInicioDate = cStart.getTime();
+
+                    Calendar cEnd = Calendar.getInstance();
+                    cEnd.set(anio, mes, cStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+                    cEnd.set(Calendar.MILLISECOND, 999);
+                    Date mesFinDate = cEnd.getTime();
+
                     for (QueryDocumentSnapshot doc : snapshot) {
                         AlquilerDia alq = doc.toObject(AlquilerDia.class);
                         alq.setId(doc.getId());
-                        lista.add(alq);
+
+                        if (mes < 0 || anio <= 0) {
+                            lista.add(alq);
+                            continue;
+                        }
+
+                        Date dInicio = parsearFechaGeneral(alq.getFechaInicial());
+                        Date dFin = parsearFechaGeneral(alq.getFechaFinal());
+
+                        if (dInicio != null && dFin != null) {
+                            if (!dInicio.after(mesFinDate) && !dFin.before(mesInicioDate)) {
+                                lista.add(alq);
+                            }
+                        } else if (dInicio != null) {
+                            if (!alq.isFinalizado()) {
+                                if (!dInicio.after(mesFinDate)) {
+                                    lista.add(alq);
+                                }
+                            } else {
+                                Calendar c = Calendar.getInstance();
+                                c.setTime(dInicio);
+                                if (c.get(Calendar.MONTH) == mes && c.get(Calendar.YEAR) == anio) {
+                                    lista.add(alq);
+                                }
+                            }
+                        } else if (alq.getTimestampCreacion() > 0) {
+                            Calendar c = Calendar.getInstance();
+                            c.setTimeInMillis(alq.getTimestampCreacion());
+                            if (c.get(Calendar.MONTH) == mes && c.get(Calendar.YEAR) == anio) {
+                                lista.add(alq);
+                            }
+                        }
                     }
                     callback.onSuccess(lista);
                 })
                 .addOnFailureListener(callback::onError);
+    }
+
+    private Date parsearFechaGeneral(String fechaStr) {
+        if (fechaStr == null || fechaStr.trim().isEmpty()) return null;
+        String[] formatos = {
+                "dd/MM/yyyy",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd",
+                "dd-MM-yyyy"
+        };
+        for (String fmt : formatos) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.US);
+                sdf.setLenient(false);
+                return sdf.parse(fechaStr.trim());
+            } catch (Exception ignored) {}
+        }
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2})[/.-](\\d{1,2})[/.-](\\d{4})").matcher(fechaStr);
+            if (m.find()) {
+                int d = Integer.parseInt(m.group(1));
+                int mth = Integer.parseInt(m.group(2)) - 1;
+                int y = Integer.parseInt(m.group(3));
+                Calendar c = Calendar.getInstance();
+                c.set(y, mth, d, 0, 0, 0);
+                return c.getTime();
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     // ==========================================
@@ -595,7 +706,11 @@ public class AlquilerRepository {
                     for (QueryDocumentSnapshot doc : snapshot) {
                         Ingreso ing = doc.toObject(Ingreso.class);
                         ing.setId(doc.getId());
-                        lista.add(ing);
+                        boolean coincideMes = (mes <= 0 || ing.getMes() == mes);
+                        boolean coincideAnio = (anio <= 0 || ing.getAnio() == 0 || ing.getAnio() == anio);
+                        if (coincideMes && coincideAnio) {
+                            lista.add(ing);
+                        }
                     }
                     callback.onSuccess(lista);
                 })

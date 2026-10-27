@@ -30,10 +30,13 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.R;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -330,13 +333,23 @@ public class HomeFragment extends Fragment {
 
                 pago.setNombreCliente(alquiler.getNombreCliente());
                 pago.setCodigoGrupo(codigo);
-                pago.setTituloPeriodo(detalle.getTituloPeriodo());
-                pago.setMontoPendienteMes(mesPendiente ? alquiler.getPrecioAlquiler() : 0);
+                pago.setTituloPeriodo(formatearPeriodoTexto(detalle));
+
+                double montoMes = 0;
+                if (detalle.getMontoMes() > 0) {
+                    montoMes = detalle.getMontoMes();
+                } else if (alquiler.getPrecioAlquiler() > 0) {
+                    montoMes = alquiler.getPrecioAlquiler();
+                }
+
+                pago.setMontoPendienteMes(mesPendiente ? montoMes : 0);
                 pago.setMontoPendienteHE(hePendiente ? detalle.getPrecioHorasExtras() : 0);
                 pago.setMoneda(moneda);
                 pago.setAlquilerId(alquiler.getId());
                 pago.setDetalleMesId(detalle.getId());
                 pago.setIdGrupo(alquiler.getIdGrupo());
+                pago.setMesPendiente(mesPendiente);
+                pago.setHePendiente(hePendiente);
 
                 if (mesPendiente) {
                     pago.setEstadoColor(R.color.red_accent);
@@ -347,6 +360,65 @@ public class HomeFragment extends Fragment {
                 destino.add(pago);
             }
         }
+    }
+
+    private String formatearPeriodoTexto(DetalleMes detalle) {
+        if (detalle == null) return "Período";
+
+        String fInicio = detalle.getFechaInicio();
+        String fFin = detalle.getFechaFin();
+
+        // 1. Si no hay fechas explícitas, intentar extraerlas de tituloPeriodo
+        if ((fInicio == null || fInicio.isEmpty()) && detalle.getTituloPeriodo() != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("(\\d{1,2}/\\d{1,2}/\\d{4})")
+                    .matcher(detalle.getTituloPeriodo());
+            if (m.find()) {
+                fInicio = m.group(1);
+                if (m.find()) {
+                    fFin = m.group(1);
+                }
+            }
+        }
+
+        // 2. Si tenemos fechas, convertir a meses en texto
+        if (fInicio != null && !fInicio.isEmpty() && fFin != null && !fFin.isEmpty()) {
+            SimpleDateFormat sdfIn = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
+            SimpleDateFormat sdfMes = new SimpleDateFormat("MMMM", new Locale("es", "ES"));
+            try {
+                Date d1 = sdfIn.parse(fInicio);
+                Date d2 = sdfIn.parse(fFin);
+                if (d1 != null && d2 != null) {
+                    String mes1 = capitalizar(sdfMes.format(d1));
+                    String mes2 = capitalizar(sdfMes.format(d2));
+
+                    if (mes1.equalsIgnoreCase(mes2)) {
+                        return mes1;
+                    } else {
+                        return mes1 + " - " + mes2;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Fallback: limpiar tituloPeriodo si ya contenía texto o números
+        String titulo = detalle.getTituloPeriodo();
+        if (titulo != null && !titulo.isEmpty()) {
+            String limpio = titulo.replaceAll("\\(\\d{1,2}/\\d{1,2}/\\d{4}.*?\\)", "")
+                    .replaceAll("\\[.*?\\]", "")
+                    .replaceAll("(?i)Mes\\s*\\d+\\s*[:•-]?\\s*", "")
+                    .trim();
+            if (!limpio.isEmpty()) {
+                return limpio;
+            }
+        }
+
+        return "Período";
+    }
+
+    private String capitalizar(String str) {
+        if (str == null || str.isEmpty()) return "";
+        return str.substring(0, 1).toUpperCase(new Locale("es", "ES")) + str.substring(1).toLowerCase(new Locale("es", "ES"));
     }
 
     private void actualizarAdaptadorPagos() {

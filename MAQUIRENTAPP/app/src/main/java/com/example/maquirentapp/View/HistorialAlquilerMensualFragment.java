@@ -57,6 +57,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
 
     private Calendar calendarioActual;
     private List<AlquilerMensual> todosLosAlquileres = new ArrayList<>();
+    private String[] nombresMeses;
 
     public HistorialAlquilerMensualFragment() {
     }
@@ -69,6 +70,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
             idGrupo = getArguments().getString("idGrupo");
         }
         calendarioActual = Calendar.getInstance();
+        nombresMeses = getResources().getStringArray(R.array.months_array);
     }
 
     @Override
@@ -95,23 +97,23 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerAlquileres);
         shimmerAlquileres = view.findViewById(R.id.shimmerAlquileres);
 
-        // Configurar año actual
-        actualizarTextoAnio();
+        // Configurar mes y año actual
+        actualizarTextoMesAnio();
 
         // Configurar listeners
         btnAnterior.setOnClickListener(v -> {
-            calendarioActual.add(Calendar.YEAR, -1);
-            actualizarTextoAnio();
-            filtrarAlquileresPorAnio();
+            calendarioActual.add(Calendar.MONTH, -1);
+            actualizarTextoMesAnio();
+            filtrarAlquileresPorMesYAnio();
         });
 
         btnSiguiente.setOnClickListener(v -> {
-            calendarioActual.add(Calendar.YEAR, 1);
-            actualizarTextoAnio();
-            filtrarAlquileresPorAnio();
+            calendarioActual.add(Calendar.MONTH, 1);
+            actualizarTextoMesAnio();
+            filtrarAlquileresPorMesYAnio();
         });
 
-        tvAnio.setOnClickListener(v -> mostrarSelectorDeAnio());
+        tvAnio.setOnClickListener(v -> mostrarDialogoMesAnio());
     }
 
     private void setupRecyclerView() {
@@ -127,33 +129,46 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         configurarSwipeToDelete();
     }
 
-    private void actualizarTextoAnio() {
+    private void actualizarTextoMesAnio() {
+        if (nombresMeses == null && getContext() != null) {
+            nombresMeses = getResources().getStringArray(R.array.months_array);
+        }
+        int mes = calendarioActual.get(Calendar.MONTH);
         int año = calendarioActual.get(Calendar.YEAR);
-        tvAnio.setText(String.valueOf(año));
+        String nombreMes = (nombresMeses != null && mes >= 0 && mes < nombresMeses.length) ? nombresMeses[mes] : "Mes";
+        String texto = String.format(Locale.getDefault(), "%s\n%d", nombreMes, año);
+        tvAnio.setText(texto);
     }
 
-    private void mostrarSelectorDeAnio() {
-        int añoActual = Calendar.getInstance().get(Calendar.YEAR);
-        int añoMin = añoActual - 30;
-        int añoMax = añoActual + 30;
+    private void mostrarDialogoMesAnio() {
+        if (getContext() == null) return;
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_month_year_picker, null);
 
-        NumberPicker yearPicker = new NumberPicker(requireContext());
-        yearPicker.setMinValue(añoMin);
-        yearPicker.setMaxValue(añoMax);
-        yearPicker.setValue(calendarioActual.get(Calendar.YEAR));
+        NumberPicker pickerMes = dialogView.findViewById(R.id.picker_mes);
+        NumberPicker pickerAnio = dialogView.findViewById(R.id.picker_anio);
 
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(yearPicker);
-        layout.setPadding(100, 50, 100, 50);
+        if (nombresMeses == null) {
+            nombresMeses = getResources().getStringArray(R.array.months_array);
+        }
 
-        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
-                .setTitle("Seleccionar año")
-                .setView(layout)
+        pickerMes.setMinValue(0);
+        pickerMes.setMaxValue(11);
+        pickerMes.setDisplayedValues(nombresMeses);
+        pickerMes.setValue(calendarioActual.get(Calendar.MONTH));
+
+        pickerAnio.setMinValue(2020);
+        pickerAnio.setMaxValue(2050);
+        pickerAnio.setValue(calendarioActual.get(Calendar.YEAR));
+
+        new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
+                .setTitle("Seleccionar Mes y Año")
+                .setView(dialogView)
                 .setPositiveButton("Aceptar", (dialog, which) -> {
-                    calendarioActual.set(Calendar.YEAR, yearPicker.getValue());
-                    actualizarTextoAnio();
-                    filtrarAlquileresPorAnio();
+                    calendarioActual.set(Calendar.MONTH, pickerMes.getValue());
+                    calendarioActual.set(Calendar.YEAR, pickerAnio.getValue());
+                    actualizarTextoMesAnio();
+                    filtrarAlquileresPorMesYAnio();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
@@ -229,29 +244,7 @@ public class HistorialAlquilerMensualFragment extends Fragment {
                 }
 
                 todosLosAlquileres = filtradosPorGrupo;
-
-                // Si en el año seleccionado actualmente no hay alquileres pero sí en otro año, sincronizar con el año más relevante
-                int añoActual = calendarioActual.get(Calendar.YEAR);
-                if (!todosLosAlquileres.isEmpty()) {
-                    boolean hayEnAnioActual = false;
-                    int anioMasReciente = -1;
-                    for (AlquilerMensual a : todosLosAlquileres) {
-                        int anioIni = extraerAñoDeFecha(a.getFechaInicial());
-                        if (anioIni == añoActual || (!a.isFinalizado() && añoActual >= anioIni)) {
-                            hayEnAnioActual = true;
-                            break;
-                        }
-                        if (anioIni > anioMasReciente) {
-                            anioMasReciente = anioIni;
-                        }
-                    }
-                    if (!hayEnAnioActual && anioMasReciente != -1) {
-                        calendarioActual.set(Calendar.YEAR, anioMasReciente);
-                        actualizarTextoAnio();
-                    }
-                }
-
-                filtrarAlquileresPorAnio();
+                filtrarAlquileresPorMesYAnio();
             }
 
             @Override
@@ -271,23 +264,48 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         });
     }
 
-    private void filtrarAlquileresPorAnio() {
+    private void filtrarAlquileresPorMesYAnio() {
         List<AlquilerMensual> alquileresFiltrados = new ArrayList<>();
+        int mesSeleccionado = calendarioActual.get(Calendar.MONTH);
         int añoSeleccionado = calendarioActual.get(Calendar.YEAR);
 
+        Calendar cStart = Calendar.getInstance();
+        cStart.set(añoSeleccionado, mesSeleccionado, 1, 0, 0, 0);
+        cStart.set(Calendar.MILLISECOND, 0);
+        Date mesInicioDate = cStart.getTime();
+
+        Calendar cEnd = Calendar.getInstance();
+        cEnd.set(añoSeleccionado, mesSeleccionado, cStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+        cEnd.set(Calendar.MILLISECOND, 999);
+        Date mesFinDate = cEnd.getTime();
+
         for (AlquilerMensual alquiler : todosLosAlquileres) {
-            int añoInicio = extraerAñoDeFecha(alquiler.getFechaInicial());
-            int añoFin = extraerAñoDeFecha(alquiler.getFechaFinal());
-            boolean activo = !alquiler.isFinalizado();
+            Date dInicio = parsearFechaGeneral(alquiler.getFechaInicial());
+            Date dFin = parsearFechaGeneral(alquiler.getFechaFinal());
 
             boolean coincide = false;
-            if (añoInicio == añoSeleccionado) {
-                coincide = true;
-            } else if (añoFin == añoSeleccionado) {
-                coincide = true;
-            } else if (activo && añoInicio != -1 && añoSeleccionado >= añoInicio && (añoFin == -1 || añoSeleccionado <= añoFin)) {
-                // Alquiler activo iniciado en año previo que sigue vigente en el año seleccionado
-                coincide = true;
+            if (dInicio != null && dFin != null) {
+                if (!dInicio.after(mesFinDate) && !dFin.before(mesInicioDate)) {
+                    coincide = true;
+                }
+            } else if (dInicio != null) {
+                if (!alquiler.isFinalizado()) {
+                    if (!dInicio.after(mesFinDate)) {
+                        coincide = true;
+                    }
+                } else {
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(dInicio);
+                    if (c.get(Calendar.MONTH) == mesSeleccionado && c.get(Calendar.YEAR) == añoSeleccionado) {
+                        coincide = true;
+                    }
+                }
+            } else if (alquiler.getTimestampCreacion() > 0) {
+                Calendar c = Calendar.getInstance();
+                c.setTimeInMillis(alquiler.getTimestampCreacion());
+                if (c.get(Calendar.MONTH) == mesSeleccionado && c.get(Calendar.YEAR) == añoSeleccionado) {
+                    coincide = true;
+                }
             }
 
             if (coincide) {
@@ -296,6 +314,35 @@ public class HistorialAlquilerMensualFragment extends Fragment {
         }
 
         actualizarUI(alquileresFiltrados);
+    }
+
+    private Date parsearFechaGeneral(String fechaStr) {
+        if (fechaStr == null || fechaStr.trim().isEmpty()) return null;
+        String[] formatos = {
+                "dd/MM/yyyy",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd",
+                "dd-MM-yyyy"
+        };
+        for (String fmt : formatos) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.US);
+                sdf.setLenient(false);
+                return sdf.parse(fechaStr.trim());
+            } catch (Exception ignored) {}
+        }
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2})[/.-](\\d{1,2})[/.-](\\d{4})").matcher(fechaStr);
+            if (m.find()) {
+                int d = Integer.parseInt(m.group(1));
+                int mth = Integer.parseInt(m.group(2)) - 1;
+                int y = Integer.parseInt(m.group(3));
+                Calendar c = Calendar.getInstance();
+                c.set(y, mth, d, 0, 0, 0);
+                return c.getTime();
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private void actualizarUI(List<AlquilerMensual> alquileres) {

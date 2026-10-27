@@ -3,26 +3,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    android:foreground="?android:attr/selectableItemBackground"
-    app:cardElevation="4dp"
-    android:backgroundTint="@color/white">
+    android:layout_marginBottom="12dp"
+    android:theme="@style/Theme.TextMain"
+    app:cardBackgroundColor="@color/black"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="3dp"
+    app:strokeWidth="0dp"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/black"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="14dp">
 
-        <!-- Header con codigo y estado -->
+        <!-- Header: Avatar, Datos del Usuario y Estado -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:orientation="horizontal">
 
+            <!-- Avatar circular -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgFotoPerfilUsuario"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="12dp"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/CircularImageView"
+                android:background="@drawable/selection_indicator_background"
+                android:src="@drawable/icon_perfil_blanco"
+                android:padding="8dp" />
+
+            <!-- Nombre y Correo -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -33,102 +48,144 @@
                     android:id="@+id/tvNombreUsuario"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/anta_font"
+                    android:maxLines="1"
                     android:text="Nombre Usuario"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvEmailUsuario"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/anta_font"
+                    android:maxLines="1"
                     android:text="email@example.com"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="4dp" />
-
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp" />
             </LinearLayout>
 
-            <!-- Estado con icono -->
+            <!-- Badge de Estado -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_badge_usuario"
                 android:gravity="center_vertical"
-                android:background="@color/black"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp">
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp">
 
                 <ImageView
                     android:id="@+id/iconEstado"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/icon_ojo_negro"
-                    app:tint="@color/white"
-                    android:layout_marginEnd="6dp" />
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/bg_status_dot"
+                    app:tint="#4CAF50" />
 
                 <TextView
                     android:id="@+id/tvEstadoUsuario"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta_font"
                     android:text="Activo"
+                    android:textColor="#4CAF50"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/white" />
-
+                    android:textStyle="bold" />
             </LinearLayout>
-
         </LinearLayout>
 
-        <!-- Rol -->
-        <TextView
-            android:id="@+id/tvRolUsuario"
+        <!-- Rol del usuario -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Rol: Empleado"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_total_item"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp">
 
-        <!-- Botones de acción -->
+            <TextView
+                android:id="@+id/tvRolUsuario"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/anta_font"
+                android:text="Rol: Empleado"
+                android:textColor="#DDDDDD"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Divisor sutil -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="10dp"
+            android:background="#262626" />
+
+        <!-- Botones de Acción -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:spacing="8dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCambiarRol"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:fontFamily="@font/anta_font"
+                android:minHeight="36dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
                 android:text="Rol"
+                android:textColor="@color/white"
                 android:textSize="12sp"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                app:cornerRadius="20dp" />
+                app:backgroundTint="#242424"
+                app:cornerRadius="18dp"
+                app:strokeColor="#444444"
+                app:strokeWidth="1dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCambiarEstado"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Estado"
-                android:textSize="12sp"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                app:cornerRadius="20dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEliminar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Eliminar"
-                android:textSize="12sp"
-                android:backgroundTint="@android:color/holo_red_dark"
+                android:fontFamily="@font/anta_font"
+                android:minHeight="36dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="Estado"
                 android:textColor="@color/white"
-                style="@style/Widget.Material3.Button"
-                app:cornerRadius="20dp" />
+                android:textSize="12sp"
+                app:backgroundTint="#242424"
+                app:cornerRadius="18dp"
+                app:strokeColor="#444444"
+                app:strokeWidth="1dp" />
+
+            <!-- Espacio flexible -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <!-- Botón Eliminar con icono rojo acorde a la app -->
+            <ImageView
+                android:id="@+id/btnEliminar"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="Eliminar usuario"
+                android:padding="6dp"
+                android:src="@drawable/icon_eliminar_rojo" />
 
         </LinearLayout>
-
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

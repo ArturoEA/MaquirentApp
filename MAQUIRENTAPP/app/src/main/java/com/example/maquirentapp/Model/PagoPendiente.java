@@ -12,6 +12,8 @@ public class PagoPendiente {
     private String alquilerId;
     private String detalleMesId;
     private String idGrupo;
+    private boolean mesPendiente;
+    private boolean hePendiente;
 
     public PagoPendiente() {
     }
@@ -93,5 +95,21 @@ public class PagoPendiente {
 
     public void setIdGrupo(String idGrupo) {
         this.idGrupo = idGrupo;
+    }
+
+    public boolean isMesPendiente() {
+        return mesPendiente;
+    }
+
+    public void setMesPendiente(boolean mesPendiente) {
+        this.mesPendiente = mesPendiente;
+    }
+
+    public boolean isHePendiente() {
+        return hePendiente;
+    }
+
+    public void setHePendiente(boolean hePendiente) {
+        this.hePendiente = hePendiente;
     }
 }
