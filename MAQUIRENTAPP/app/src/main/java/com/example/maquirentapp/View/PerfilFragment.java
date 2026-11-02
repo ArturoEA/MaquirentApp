@@ -36,6 +36,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
@@ -298,7 +299,11 @@ public class PerfilFragment extends Fragment {
         byte[] dataImagen = ImageUtils.comprimirImagen(requireContext(), uriImagen);
 
         if (dataImagen != null) {
-            ref.putBytes(dataImagen)
+            StorageMetadata metadata = new StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .build();
+
+            ref.putBytes(dataImagen, metadata)
                     .addOnSuccessListener(taskSnapshot -> {
                         ref.getDownloadUrl().addOnSuccessListener(downloadUri -> {
                             updates.put(campoFirestore, downloadUri.toString());

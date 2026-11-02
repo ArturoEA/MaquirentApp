@@ -25,6 +25,7 @@ public class InfoPlaca {
 
     private String potenciaStandBy = "";
     private String potenciaContinua= "";
+    private String caudal = "";
     private String tipoEquipo = "";
 
     public InfoPlaca() {
@@ -172,8 +173,16 @@ public class InfoPlaca {
         return potenciaContinua;
     }
 
-    public void setPotenciaContinua(String PotenciaContinua) {
-        this.potenciaContinua = potenciaContinua;
+    public void setPotenciaContinua(String potenciaContinua) {
+        this.potenciaContinua = potenciaContinua != null ? potenciaContinua : "";
+    }
+
+    public String getCaudal() {
+        return caudal != null ? caudal : "";
+    }
+
+    public void setCaudal(String caudal) {
+        this.caudal = caudal != null ? caudal : "";
     }
 
     public String getTipoEquipo() {

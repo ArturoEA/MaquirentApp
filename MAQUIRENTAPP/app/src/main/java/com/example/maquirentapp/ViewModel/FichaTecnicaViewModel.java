@@ -88,11 +88,34 @@ public class FichaTecnicaViewModel extends ViewModel {
                 });
     }
 
+    public void actualizarNombrePdf(FichaTecnica ficha, String nuevoNombre) {
+        if (ficha == null || nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
+            operacionStatus.setValue("El nombre no puede estar vacío");
+            return;
+        }
+
+        isLoading.setValue(true);
+        repository.actualizarNombrePdf(ficha, nuevoNombre, new Callback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                operacionStatus.setValue("Nombre actualizado correctamente");
+                isLoading.setValue(false);
+                cargarFichasTecnicas();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                operacionStatus.setValue("Error al actualizar nombre: " + (e != null ? e.getMessage() : "Desconocido"));
+                isLoading.setValue(false);
+            }
+        });
+    }
+
     public void eliminarPdf(FichaTecnica ficha) {
         if (ficha == null || ficha.getUrlPdf() == null) return;
         isLoading.setValue(true);
 
-        repository.eliminarPdf(ficha.getUrlPdf(), new Callback<Void>() {
+        repository.eliminarPdf(ficha, new Callback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 operacionStatus.setValue("Archivo eliminado");

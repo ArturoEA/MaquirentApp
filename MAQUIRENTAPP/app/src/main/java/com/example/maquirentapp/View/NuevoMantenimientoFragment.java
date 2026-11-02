@@ -57,12 +57,16 @@ import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.Utils.InformePdfVectorialGenerator;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.example.maquirentapp.Utils.NetworkUtils;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
@@ -91,8 +95,13 @@ public class NuevoMantenimientoFragment extends Fragment {
     // Views
     private TextInputEditText inputEmpresa, inputHorometro, inputFecha, inputComentarios;
     private RecyclerView recyclerItems;
+    private ShimmerFrameLayout shimmerItemsMantenimiento;
     private LinearLayout layoutFotos;
     private ProgressBar progressBar;
+
+    private AlertDialog dialogCargando;
+    private TextView tvMensajeCargando;
+    private boolean isGuardando = false;
 
     private ItemsMantenimientoSeleccionablesAdapter itemsAdapter;
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
@@ -104,6 +113,7 @@ public class NuevoMantenimientoFragment extends Fragment {
     private FirebaseStorage storage;
 
     private ActivityResultLauncher<String> imagePickerLauncher;
+    private ActivityResultLauncher<String> imagePickerMultipleLauncher;
 
     private Mantenimiento mantenimientoActual;
     private InfoPlaca infoPlacaActual = null;
@@ -133,6 +143,26 @@ public class NuevoMantenimientoFragment extends Fragment {
                 uri -> {
                     if (uri != null && !modoLectura) {
                         agregarFoto(uri);
+                    }
+                });
+
+        imagePickerMultipleLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetMultipleContents(),
+                uris -> {
+                    if (uris != null && !modoLectura && !uris.isEmpty()) {
+                        int agregadas = 0;
+                        for (Uri uri : uris) {
+                            if (fotosUriList.size() + fotosUrlList.size() < MAX_FOTOS) {
+                                fotosUriList.add(uri);
+                                agregadas++;
+                            } else {
+                                break;
+                            }
+                        }
+                        if (uris.size() > agregadas) {
+                            Toast.makeText(getContext(), "Se agregaron " + agregadas + " fotos (límite de " + MAX_FOTOS + ")", Toast.LENGTH_SHORT).show();
+                        }
+                        mostrarFotos();
                     }
                 });
     }
@@ -172,6 +202,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         inputFecha = view.findViewById(R.id.inputFecha);
         inputComentarios = view.findViewById(R.id.inputComentarios);
         recyclerItems = view.findViewById(R.id.recyclerItemsMantenimiento);
+        shimmerItemsMantenimiento = view.findViewById(R.id.shimmerItemsMantenimiento);
         layoutFotos = view.findViewById(R.id.layoutFotos);
         progressBar = view.findViewById(R.id.progressBarMantenimiento);
 
@@ -218,30 +249,107 @@ public class NuevoMantenimientoFragment extends Fragment {
         ).show();
     }
 
+    private void mostrarShimmerItems(boolean mostrar) {
+        if (shimmerItemsMantenimiento != null) {
+            if (mostrar) {
+                shimmerItemsMantenimiento.setVisibility(View.VISIBLE);
+                shimmerItemsMantenimiento.startShimmer();
+            } else {
+                shimmerItemsMantenimiento.stopShimmer();
+                shimmerItemsMantenimiento.setVisibility(View.GONE);
+            }
+        }
+        if (recyclerItems != null) {
+            recyclerItems.setVisibility(mostrar ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void aplicarItemsConfiguracion(List<MantenimientoConfiguracion> items) {
+        itemsConfigList.clear();
+        itemsConfigList.addAll(items);
+        itemsAdapter.actualizarLista(itemsConfigList);
+    }
+
     private void cargarItemsConfiguracion() {
+        Context ctx = getContext();
+        if (ctx == null) return;
+
+        // 1. Cargar instantáneamente del backup local en disco (0ms)
+        List<MantenimientoConfiguracion> backupLocal = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerConfiguracionBackup(ctx);
+        if (!backupLocal.isEmpty()) {
+            aplicarItemsConfiguracion(backupLocal);
+            mostrarShimmerItems(false);
+        } else {
+            mostrarShimmerItems(true);
+        }
+
+        // 2. Intentar cargar desde caché de Firestore (sin orderBy para garantizar compatibilidad offline)
         db.collection("mantenimientos_configuracion")
-                .orderBy("fechaCreacion")
-                .get()
+                .get(Source.CACHE)
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    itemsConfigList.clear();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
-                        item.setId(document.getId());
-                        itemsConfigList.add(item);
+                    if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
+                        List<MantenimientoConfiguracion> lista = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
+                            item.setId(document.getId());
+                            lista.add(item);
+                        }
+                        Collections.sort(lista, (a, b) -> Long.compare(a.getFechaCreacion(), b.getFechaCreacion()));
+                        aplicarItemsConfiguracion(lista);
+                        mostrarShimmerItems(false);
+                        com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, lista);
                     }
-                    itemsAdapter.actualizarLista(itemsConfigList);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error cargando items", e);
-                    Toast.makeText(getContext(), "Error al cargar items", Toast.LENGTH_SHORT).show();
+                    if (itemsConfigList.isEmpty()) {
+                        mostrarShimmerItems(true);
+                    }
                 });
+
+        // 3. Si hay conexión a internet, sincronizar con el servidor en segundo plano
+        if (NetworkUtils.isNetworkAvailable(ctx)) {
+            db.collection("mantenimientos_configuracion")
+                    .get(Source.SERVER)
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        mostrarShimmerItems(false);
+                        if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
+                            List<MantenimientoConfiguracion> lista = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                                MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
+                                item.setId(document.getId());
+                                lista.add(item);
+                            }
+                            Collections.sort(lista, (a, b) -> Long.compare(a.getFechaCreacion(), b.getFechaCreacion()));
+                            aplicarItemsConfiguracion(lista);
+                            com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, lista);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        mostrarShimmerItems(false);
+                        Log.e(TAG, "Error sincronizando items", e);
+                    });
+        }
     }
 
     private void cargarMantenimiento() {
         progressBar.setVisibility(View.VISIBLE);
 
+        Context ctx = getContext();
+        if (ctx != null) {
+            Mantenimiento offlineM = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientePorId(ctx, mantenimientoId);
+            if (offlineM != null) {
+                progressBar.setVisibility(GONE);
+                mantenimientoActual = offlineM;
+                mostrarDatosMantenimiento();
+                return;
+            }
+        }
+
+        boolean online = NetworkUtils.isNetworkAvailable(getContext());
+        Source source = online ? Source.DEFAULT : Source.CACHE;
+
         db.collection("mantenimientos").document(mantenimientoId)
-                .get()
+                .get(source)
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         mantenimientoActual = documentSnapshot.toObject(Mantenimiento.class);
@@ -249,11 +357,11 @@ public class NuevoMantenimientoFragment extends Fragment {
                             mantenimientoActual.setId(documentSnapshot.getId());
                             mostrarDatosMantenimiento();
 
-                            db.collection("gruposElectrogenos").whereEqualTo("codigo", codigoGrupo).get()
+                            db.collection("gruposElectrogenos").whereEqualTo("codigo", codigoGrupo).get(source)
                                     .addOnSuccessListener(query -> {
                                         if (!query.isEmpty()) {
                                             String idEquipo = query.getDocuments().get(0).getId();
-                                            db.collection("infoPlacaGrupo").whereEqualTo("idGrupo", idEquipo).get()
+                                            db.collection("infoPlacaGrupo").whereEqualTo("idGrupo", idEquipo).get(source)
                                                     .addOnSuccessListener(query2 -> {
                                                         if (!query2.isEmpty()) {
                                                             infoPlacaActual = query2.getDocuments().get(0).toObject(com.example.maquirentapp.Model.InfoPlaca.class);
@@ -264,6 +372,10 @@ public class NuevoMantenimientoFragment extends Fragment {
                         }
                     }
                     progressBar.setVisibility(GONE);
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(GONE);
+                    Log.e(TAG, "Error cargando mantenimiento", e);
                 });
     }
 
@@ -314,9 +426,12 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     private void mostrarFotos() {
+        if (layoutFotos == null) return;
         layoutFotos.removeAllViews();
 
-        // Mostrar fotos existentes (URLs)
+        List<View> listaVistas = new ArrayList<>();
+
+        // 1. Mostrar fotos existentes (URLs)
         for (int i = 0; i < fotosUrlList.size(); i++) {
             final int index = i;
             String url = fotosUrlList.get(i);
@@ -330,10 +445,10 @@ public class NuevoMantenimientoFragment extends Fragment {
                 fotoView.findViewById(R.id.btnEliminarFoto).setVisibility(GONE);
             }
 
-            layoutFotos.addView(fotoView);
+            listaVistas.add(fotoView);
         }
 
-        // Mostrar fotos nuevas (URIs)
+        // 2. Mostrar fotos nuevas (URIs)
         for (int i = 0; i < fotosUriList.size(); i++) {
             final int index = i;
             Uri uri = fotosUriList.get(i);
@@ -343,15 +458,30 @@ public class NuevoMantenimientoFragment extends Fragment {
                 fotoView.findViewById(R.id.btnEliminarFoto).setOnClickListener(v -> {
                     confirmarEliminarFoto(index, false);
                 });
+            } else {
+                fotoView.findViewById(R.id.btnEliminarFoto).setVisibility(GONE);
             }
 
-            layoutFotos.addView(fotoView);
+            listaVistas.add(fotoView);
         }
 
-        // Botón para agregar foto (solo si no está en modo lectura)
+        // 3. Botón para agregar foto (solo si no está en modo lectura y hay menos de MAX_FOTOS)
         if (!modoLectura && (fotosUriList.size() + fotosUrlList.size() < MAX_FOTOS)) {
             View btnAgregarFoto = crearBotonAgregarFoto();
-            layoutFotos.addView(btnAgregarFoto);
+            listaVistas.add(btnAgregarFoto);
+        }
+
+        // 4. Distribuir en cuadrícula 2x2 (filas de 2 elementos)
+        LinearLayout filaActual = null;
+        for (int i = 0; i < listaVistas.size(); i++) {
+            if (i % 2 == 0) {
+                filaActual = new LinearLayout(getContext());
+                filaActual.setOrientation(LinearLayout.HORIZONTAL);
+                layoutFotos.addView(filaActual);
+            }
+            if (filaActual != null) {
+                filaActual.addView(listaVistas.get(i));
+            }
         }
     }
 
@@ -359,16 +489,18 @@ public class NuevoMantenimientoFragment extends Fragment {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.item_foto_mantenimiento, layoutFotos, false);
         ImageView ivFoto = view.findViewById(R.id.ivFotoMantenimiento);
 
-        if (esUrl) {
-            Glide.with(requireContext())
-                    .load(urlOrUri)
-                    .centerCrop()
-                    .into(ivFoto);
-        } else {
-            Glide.with(requireContext())
-                    .load(Uri.parse(urlOrUri))
-                    .centerCrop()
-                    .into(ivFoto);
+        if (getContext() != null) {
+            if (esUrl) {
+                Glide.with(this)
+                        .load(urlOrUri)
+                        .centerCrop()
+                        .into(ivFoto);
+            } else {
+                Glide.with(this)
+                        .load(Uri.parse(urlOrUri))
+                        .centerCrop()
+                        .into(ivFoto);
+            }
         }
 
         // Click para ver foto en grande
@@ -379,7 +511,14 @@ public class NuevoMantenimientoFragment extends Fragment {
 
     private View crearBotonAgregarFoto() {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.item_agregar_foto, layoutFotos, false);
-        view.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        view.setOnClickListener(v -> {
+            if (modoLectura) return;
+            try {
+                imagePickerMultipleLauncher.launch("image/*");
+            } catch (Exception e) {
+                imagePickerLauncher.launch("image/*");
+            }
+        });
         return view;
     }
 
@@ -563,7 +702,51 @@ public class NuevoMantenimientoFragment extends Fragment {
                 .show();
     }
 
+    private void mostrarDialogoCargando(String mensaje) {
+        if (getContext() == null) return;
+        if (dialogCargando == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+            View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_cargando, null);
+            tvMensajeCargando = dialogView.findViewById(R.id.tvMensajeCargando);
+            builder.setView(dialogView);
+            builder.setCancelable(false);
+            dialogCargando = builder.create();
+            if (dialogCargando.getWindow() != null) {
+                dialogCargando.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+        }
+        if (tvMensajeCargando != null) {
+            tvMensajeCargando.setText(mensaje);
+        }
+        if (!dialogCargando.isShowing()) {
+            dialogCargando.show();
+        }
+    }
+
+    private void actualizarMensajeCargando(String mensaje) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                if (tvMensajeCargando != null) {
+                    tvMensajeCargando.setText(mensaje);
+                }
+            });
+        }
+    }
+
+    private void ocultarDialogoCargando() {
+        if (dialogCargando != null && dialogCargando.isShowing()) {
+            dialogCargando.dismiss();
+        }
+        if (progressBar != null) {
+            progressBar.setVisibility(GONE);
+        }
+    }
+
     private void guardarMantenimiento() {
+        if (isGuardando) {
+            return;
+        }
+
         String empresa = inputEmpresa.getText() != null ? inputEmpresa.getText().toString().trim() : "";
         String horometro = inputHorometro.getText() != null ? inputHorometro.getText().toString().trim() : "";
         String fecha = inputFecha.getText() != null ? inputFecha.getText().toString().trim() : "";
@@ -586,13 +769,56 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         List<String> itemsSeleccionados = itemsAdapter.getItemsSeleccionados();
 
-        progressBar.setVisibility(View.VISIBLE);
+        boolean online = NetworkUtils.isNetworkAvailable(getContext());
 
-        subirFotosNuevas(fotosSubidas -> {
+        // Si no hay conexión, guardar directamente en modo offline (datos + fotos locales)
+        if (!online) {
+            isGuardando = true;
+            hideGlobalFab();
+            guardarMantenimientoOfflineDirecto(empresa, horometro, fecha, itemsSeleccionados, comentarios);
+            return;
+        }
+
+        isGuardando = true;
+        hideGlobalFab();
+        mostrarDialogoCargando(!fotosUriList.isEmpty() ? "Subiendo fotos..." : "Guardando mantenimiento...");
+
+        subirFotosNuevas(empresa, horometro, fecha, itemsSeleccionados, comentarios, fotosSubidas -> {
             List<String> todasLasFotos = new ArrayList<>(fotosUrlList);
             todasLasFotos.addAll(fotosSubidas);
+            actualizarMensajeCargando("Guardando datos...");
+            procederAGuardarMantenimiento(empresa, horometro, fecha, itemsSeleccionados, comentarios, todasLasFotos);
+        });
+    }
 
-            Mantenimiento mantenimiento = new Mantenimiento(
+    private void guardarMantenimientoOfflineDirecto(String empresa, String horometro, String fecha,
+                                                    List<String> itemsSeleccionados, String comentarios) {
+        Context context = getContext();
+        if (context == null) {
+            isGuardando = false;
+            configureGlobalFab();
+            return;
+        }
+
+        mostrarDialogoCargando("Guardando localmente en el dispositivo...");
+
+        new Thread(() -> {
+            List<String> todasLasFotos = new ArrayList<>(fotosUrlList);
+
+            // Guardar localmente cada foto seleccionada en almacenamiento seguro
+            for (Uri uri : fotosUriList) {
+                String localPath = com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarFotoLocal(context, uri);
+                if (localPath != null) {
+                    todasLasFotos.add(localPath);
+                }
+            }
+
+            String id = mantenimientoId;
+            if (id == null || id.trim().isEmpty()) {
+                id = db.collection("mantenimientos").document().getId();
+            }
+
+            Mantenimiento m = new Mantenimiento(
                     codigoGrupo,
                     empresa,
                     horometro,
@@ -601,19 +827,89 @@ public class NuevoMantenimientoFragment extends Fragment {
                     comentarios,
                     todasLasFotos
             );
+            m.setId(id);
+            m.setFechaCreacion(mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis());
 
-            if (mantenimientoId != null) {
-                // Actualizar
-                mantenimiento.setId(mantenimientoId);
-                mantenimiento.setFechaCreacion(mantenimientoActual.getFechaCreacion());
-                actualizarMantenimiento(mantenimiento);
-            } else {
-                crearMantenimiento(mantenimiento);
+            if (mantenimientoActual != null) {
+                m.setProximoHorometro(mantenimientoActual.getProximoHorometro());
+                m.setProximaFecha(mantenimientoActual.getProximaFecha());
+                m.setTieneBandeja(mantenimientoActual.isTieneBandeja());
+                m.setTieneExtintor(mantenimientoActual.isTieneExtintor());
+                m.setTieneKit(mantenimientoActual.isTieneKit());
+                m.setTienePuestaTierra(mantenimientoActual.isTienePuestaTierra());
+                m.setCliente(mantenimientoActual.getCliente());
+                m.setLugar(mantenimientoActual.getLugar());
+                m.setEstadoMaquina(mantenimientoActual.getEstadoMaquina());
+                m.setUbicacionMaquina(mantenimientoActual.getUbicacionMaquina());
+                m.setTipoServicio(mantenimientoActual.getTipoServicio());
+                m.setAceiteUtilizado(mantenimientoActual.getAceiteUtilizado());
+                m.setContactoCliente(mantenimientoActual.getContactoCliente());
+                m.setFallaEncontrada(mantenimientoActual.getFallaEncontrada());
+                m.setCausaFalla(mantenimientoActual.getCausaFalla());
+                m.setTrabajosRealizados(mantenimientoActual.getTrabajosRealizados());
+                m.setTecnicoFirmaId(mantenimientoActual.getTecnicoFirmaId());
+                m.setSupervisorFirmaId(mantenimientoActual.getSupervisorFirmaId());
+                m.setCodigosFiltrosUsados(mantenimientoActual.getCodigosFiltrosUsados());
+                m.setCantidadAceite(mantenimientoActual.getCantidadAceite());
             }
-        });
+
+            // Guardar en almacenamiento offline
+            com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(context, m);
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    isGuardando = false;
+                    ocultarDialogoCargando();
+
+                    int numFotos = fotosUriList.size();
+                    String detalleFotos = numFotos > 0
+                            ? (" y sus " + numFotos + " " + (numFotos == 1 ? "fotografía" : "fotografías") + " se han guardado localmente en tu dispositivo.")
+                            : " se ha guardado localmente en tu dispositivo.";
+
+                    new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                            .setTitle("Guardado sin conexión")
+                            .setMessage("No tienes conexión a internet en este momento.\n\nEl mantenimiento" + detalleFotos
+                                    + "\n\nSe sincronizará automáticamente con la nube cuando recuperes la conexión.")
+                            .setCancelable(false)
+                            .setPositiveButton("Entendido", (dialog, which) -> {
+                                if (isAdded()) {
+                                    requireActivity().getSupportFragmentManager().popBackStack();
+                                }
+                            })
+                            .show();
+                });
+            }
+        }).start();
     }
 
-    private void subirFotosNuevas(OnFotosSubidasListener listener) {
+    private void procederAGuardarMantenimiento(String empresa, String horometro, String fecha,
+                                              List<String> itemsSeleccionados, String comentarios,
+                                              List<String> fotos) {
+        isGuardando = true;
+        hideGlobalFab();
+
+        Mantenimiento mantenimiento = new Mantenimiento(
+                codigoGrupo,
+                empresa,
+                horometro,
+                fecha,
+                itemsSeleccionados,
+                comentarios,
+                fotos
+        );
+
+        if (mantenimientoId != null) {
+            mantenimiento.setId(mantenimientoId);
+            mantenimiento.setFechaCreacion(mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis());
+            actualizarMantenimiento(mantenimiento);
+        } else {
+            crearMantenimiento(mantenimiento);
+        }
+    }
+
+    private void subirFotosNuevas(String empresa, String horometro, String fecha,
+                                  List<String> itemsSeleccionados, String comentarios,
+                                  OnFotosSubidasListener listener) {
         if (fotosUriList.isEmpty()) {
             listener.onFotosSubidas(new ArrayList<>());
             return;
@@ -621,41 +917,77 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         Context context = getContext();
         if (context == null) {
+            isGuardando = false;
+            ocultarDialogoCargando();
+            configureGlobalFab();
             listener.onFotosSubidas(new ArrayList<>());
             return;
         }
 
         List<String> urlsSubidas = Collections.synchronizedList(new ArrayList<>());
         final int[] fotosProcesadas = {0};
+        final boolean[] finalizado = {false};
+        final int total = fotosUriList.size();
+
+        actualizarMensajeCargando("Subiendo foto 1 de " + total + "...");
+
+        Handler handlerTimeout = new Handler(android.os.Looper.getMainLooper());
+        Runnable timeoutRunnable = () -> {
+            synchronized (finalizado) {
+                if (!finalizado[0]) {
+                    finalizado[0] = true;
+                    ocultarDialogoCargando();
+                    Log.w(TAG, "Tiempo agotado en subida online de fotos. Guardando localmente en modo offline.");
+                    guardarMantenimientoOfflineDirecto(empresa, horometro, fecha, itemsSeleccionados, comentarios);
+                }
+            }
+        };
+        // 12 segundos de tiempo límite para la subida
+        handlerTimeout.postDelayed(timeoutRunnable, 12000);
 
         for (Uri uri : fotosUriList) {
             byte[] dataImagen = ImageUtils.comprimirImagen(context, uri);
 
             if (dataImagen != null) {
-                String fileName = "mantenimientos/" + codigoGrupo + "/" + System.currentTimeMillis() + ".jpg";
+                String fileName = "mantenimientos/" + codigoGrupo + "/" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + ".jpg";
                 StorageReference storageRef = storage.getReference().child(fileName);
 
-                storageRef.putBytes(dataImagen)
+                StorageMetadata metadata = new StorageMetadata.Builder()
+                        .setContentType("image/jpeg")
+                        .build();
+
+                storageRef.putBytes(dataImagen, metadata)
                         .addOnSuccessListener(taskSnapshot ->
                                 storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
                                     urlsSubidas.add(downloadUri.toString());
-                                    verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+                                    verificarFinSubidaConTimeout(total, fotosProcesadas, urlsSubidas, finalizado, handlerTimeout, timeoutRunnable, listener);
+                                }).addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error obteniendo URL de descarga", e);
+                                    verificarFinSubidaConTimeout(total, fotosProcesadas, urlsSubidas, finalizado, handlerTimeout, timeoutRunnable, listener);
                                 }))
                         .addOnFailureListener(e -> {
-                            Log.e(TAG, "Error subiendo foto comprimida", e);
-                            verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+                            Log.e(TAG, "Error subiendo foto", e);
+                            verificarFinSubidaConTimeout(total, fotosProcesadas, urlsSubidas, finalizado, handlerTimeout, timeoutRunnable, listener);
                         });
             } else {
                 Log.e(TAG, "Error al comprimir imagen: " + uri.toString());
-                verificarFinSubida(fotosUriList.size(), fotosProcesadas, urlsSubidas, listener);
+                verificarFinSubidaConTimeout(total, fotosProcesadas, urlsSubidas, finalizado, handlerTimeout, timeoutRunnable, listener);
             }
         }
     }
 
-    private void verificarFinSubida(int total, int[] procesadas, List<String> urls, OnFotosSubidasListener listener) {
-        procesadas[0]++;
-        if (procesadas[0] == total) {
-            listener.onFotosSubidas(urls);
+    private void verificarFinSubidaConTimeout(int total, int[] procesadas, List<String> urls,
+                                              boolean[] finalizado, Handler handler,
+                                              Runnable timeoutRunnable, OnFotosSubidasListener listener) {
+        synchronized (finalizado) {
+            if (finalizado[0]) return;
+            procesadas[0]++;
+            actualizarMensajeCargando("Subiendo foto " + Math.min(procesadas[0] + 1, total) + " de " + total + "...");
+            if (procesadas[0] >= total) {
+                finalizado[0] = true;
+                handler.removeCallbacks(timeoutRunnable);
+                listener.onFotosSubidas(urls);
+            }
         }
     }
 
@@ -663,16 +995,20 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos")
                 .add(mantenimiento)
                 .addOnSuccessListener(documentReference -> {
+                    isGuardando = false;
+                    ocultarDialogoCargando();
                     if (getContext() == null) return;
-                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Mantenimiento guardado", Toast.LENGTH_SHORT).show();
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
                 .addOnFailureListener(e -> {
+                    isGuardando = false;
+                    ocultarDialogoCargando();
                     if (getContext() == null) return;
-                    Log.e(TAG, "Error guardando", e);
-                    progressBar.setVisibility(GONE);
-                    Toast.makeText(getContext(), "Error al guardar", Toast.LENGTH_SHORT).show();
+                    Log.w(TAG, "Fallo al guardar en la nube. Guardando en modo offline.", e);
+                    com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(getContext(), mantenimiento);
+                    Toast.makeText(getContext(), "Guardado localmente en tu dispositivo", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
                 });
     }
 
@@ -680,19 +1016,21 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos").document(mantenimientoId)
                 .set(mantenimiento)
                 .addOnSuccessListener(aVoid -> {
+                    isGuardando = false;
+                    ocultarDialogoCargando();
                     if (getContext() == null) return;
-                    progressBar.setVisibility(GONE);
                     Toast.makeText(getContext(), "Mantenimiento actualizado", Toast.LENGTH_SHORT).show();
-
                     eliminarFotosRemovidasDeStorage();
-
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
                 .addOnFailureListener(e -> {
+                    isGuardando = false;
+                    ocultarDialogoCargando();
                     if (getContext() == null) return;
-                    Log.e(TAG, "Error actualizando", e);
-                    progressBar.setVisibility(GONE);
-                    Toast.makeText(getContext(), "Error al actualizar", Toast.LENGTH_SHORT).show();
+                    Log.w(TAG, "Fallo al actualizar en la nube. Guardando en modo offline.", e);
+                    com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(getContext(), mantenimiento);
+                    Toast.makeText(getContext(), "Actualizado localmente en tu dispositivo", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
                 });
     }
 
@@ -812,6 +1150,11 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         btnAgregarRutina.setOnClickListener(v -> agregarFilaRutinaVisual(layoutListaRutinas, "Nueva actividad", true));
 
+        final Map<String, String> codigosGuardadosHolder = new HashMap<>();
+        if (mantenimientoActual != null && mantenimientoActual.getCodigosFiltrosUsados() != null) {
+            codigosGuardadosHolder.putAll(mantenimientoActual.getCodigosFiltrosUsados());
+        }
+
         db.collection("mantenimientos").document(mantenimientoId).get().addOnSuccessListener(doc -> {
             if (doc.contains("datosInforme")) {
                 Map<String, Object> mapGuardado = (Map<String, Object>) doc.get("datosInforme");
@@ -843,6 +1186,49 @@ public class NuevoMantenimientoFragment extends Fragment {
                         chkKit.setChecked((Boolean) mapGuardado.get("chkKit"));
                     if (mapGuardado.containsKey("chkTierra"))
                         chkTierra.setChecked((Boolean) mapGuardado.get("chkTierra"));
+
+                    String estadoGuardado = (String) mapGuardado.get("estado");
+                    if ("Inoperativa".equals(estadoGuardado)) rgEstado.check(R.id.rbInoperativa);
+                    else if ("En reparación por terceros".equals(estadoGuardado)) rgEstado.check(R.id.rbReparacionTerceros);
+                    else if (estadoGuardado != null) rgEstado.check(R.id.rbOperativa);
+
+                    String ubicacionGuardada = (String) mapGuardado.get("ubicacion");
+                    if ("Campo".equals(ubicacionGuardada)) rgUbicacion.check(R.id.rbCampo);
+                    else if ("Taller de terceros".equals(ubicacionGuardada)) rgUbicacion.check(R.id.rbTallerTerceros);
+                    else if (ubicacionGuardada != null) rgUbicacion.check(R.id.rbTallerCliente);
+
+                    String defServicioGuardado = (String) mapGuardado.get("defServicio");
+                    if ("Evaluación".equals(defServicioGuardado)) rgDefServicio.check(R.id.rbServEvaluacion);
+                    else if ("Entrega".equals(defServicioGuardado)) rgDefServicio.check(R.id.rbServEntrega);
+                    else if ("Realizar Ajuste".equals(defServicioGuardado)) rgDefServicio.check(R.id.rbServAjuste);
+                    else if (defServicioGuardado != null) rgDefServicio.check(R.id.rbServMantenimiento);
+
+                    // Restaurar códigos de filtros guardados
+                    if (mapGuardado.containsKey("codigosFiltros")) {
+                        Object objF = mapGuardado.get("codigosFiltros");
+                        if (objF instanceof Map) {
+                            Map<?, ?> mapF = (Map<?, ?>) objF;
+                            for (Map.Entry<?, ?> entry : mapF.entrySet()) {
+                                if (entry.getKey() != null && entry.getValue() != null) {
+                                    codigosGuardadosHolder.put(entry.getKey().toString(), entry.getValue().toString());
+                                }
+                            }
+                        }
+                    }
+                    if (doc.contains("codigosFiltrosUsados")) {
+                        Object objF2 = doc.get("codigosFiltrosUsados");
+                        if (objF2 instanceof Map) {
+                            Map<?, ?> mapF2 = (Map<?, ?>) objF2;
+                            for (Map.Entry<?, ?> entry : mapF2.entrySet()) {
+                                if (entry.getKey() != null && entry.getValue() != null) {
+                                    codigosGuardadosHolder.put(entry.getKey().toString(), entry.getValue().toString());
+                                }
+                            }
+                        }
+                    }
+
+                    // Si las vistas en layoutFiltros ya fueron añadidas, restaurar su contenido
+                    restaurarCodigosEnLayoutFiltros(layoutFiltros, codigosGuardadosHolder);
                 }
             } else {
                 StringBuilder trabajosAuto = new StringBuilder("Mantenimiento preventivo. ");
@@ -957,15 +1343,23 @@ public class NuevoMantenimientoFragment extends Fragment {
                                                     (TextInputLayout) LayoutInflater.from(requireContext())
                                                             .inflate(R.layout.item_input_filtro, layoutFiltros, false);
                                             textInputLayout.setHint("Código para " + nombreFiltro);
+                                            textInputLayout.setTag(nombreFiltro);
 
                                             // 3. Enlazar el AutoCompleteTextView que está adentro del molde
                                             AutoCompleteTextView autoComplete = textInputLayout.findViewById(R.id.autoCompleteFiltro);
                                             autoComplete.setDropDownBackgroundDrawable(new ColorDrawable(Color.WHITE));
                                             autoComplete.setTextColor(Color.BLACK);
+                                            autoComplete.setTag(nombreFiltro);
 
                                             // 4. Ponerle la lista de opciones (Donaldson, Perkins, etc.)
                                             ArrayAdapter<String> adapterCodigos = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_black, opcionesCodigos);
                                             autoComplete.setAdapter(adapterCodigos);
+
+                                            // Restaurar selección previa si existe
+                                            String codigoPrevio = obtenerCodigoParaFiltro(codigosGuardadosHolder, nombreFiltro);
+                                            if (codigoPrevio != null && !codigoPrevio.isEmpty()) {
+                                                autoComplete.setText(codigoPrevio, false);
+                                            }
 
                                             // Truco para que despliegue al tocarlo
                                             autoComplete.setOnClickListener(v -> autoComplete.showDropDown());
@@ -978,8 +1372,25 @@ public class NuevoMantenimientoFragment extends Fragment {
                                         }
                                     });
                         } else {
-                            // Opcional: Mostrar un mensaje si no se encuentra el equipo
+                            // Fallback: Si no se encontró el equipo, mostrar los inputs para que el usuario pueda escribir o ver lo guardado
                             android.util.Log.e("FILTROS", "No se encontró el equipo con código: " + codigoGrupo);
+                            for (String nombreFiltro : filtrosCambiados) {
+                                TextInputLayout textInputLayout =
+                                        (TextInputLayout) LayoutInflater.from(requireContext())
+                                                .inflate(R.layout.item_input_filtro, layoutFiltros, false);
+                                textInputLayout.setHint("Código para " + nombreFiltro);
+                                textInputLayout.setTag(nombreFiltro);
+                                AutoCompleteTextView autoComplete = textInputLayout.findViewById(R.id.autoCompleteFiltro);
+                                autoComplete.setDropDownBackgroundDrawable(new ColorDrawable(Color.WHITE));
+                                autoComplete.setTextColor(Color.BLACK);
+                                autoComplete.setTag(nombreFiltro);
+
+                                String codigoPrevio = obtenerCodigoParaFiltro(codigosGuardadosHolder, nombreFiltro);
+                                if (codigoPrevio != null && !codigoPrevio.isEmpty()) {
+                                    autoComplete.setText(codigoPrevio, false);
+                                }
+                                layoutFiltros.addView(textInputLayout);
+                            }
                         }
                     });
         }
@@ -987,7 +1398,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         ExtendedFloatingActionButton btnGenerarPdfDialog = dialog.findViewById(R.id.btnGenerarPdfDialog);
 
         btnGenerarPdfDialog.setOnClickListener(item -> {
-            // 1. RECOLECTAR T0DO EN UN MAPA
+            // 1. RECOLECTAR TODO EN UN MAPA
             Map<String, Object> mapDatos = new HashMap<>();
 
             String estado = "Operativa";
@@ -1042,13 +1453,19 @@ public class NuevoMantenimientoFragment extends Fragment {
                 if (child instanceof TextInputLayout) {
                     TextInputLayout til = (TextInputLayout) child;
                     AutoCompleteTextView actv = (AutoCompleteTextView) til.getEditText();
-                    if (actv != null && !actv.getText().toString().isEmpty()) {
-                        String nombreFiltro = til.getHint().toString().replace("Código para ", "");
-                        codigosIngresados.put(nombreFiltro, actv.getText().toString());
+                    if (actv != null && actv.getText() != null && !actv.getText().toString().trim().isEmpty()) {
+                        String nombreFiltro = til.getTag() instanceof String
+                                ? (String) til.getTag()
+                                : (til.getHint() != null ? til.getHint().toString().replace("Código para ", "").trim() : "");
+                        codigosIngresados.put(nombreFiltro, actv.getText().toString().trim());
                     }
                 }
             }
             mapDatos.put("codigosFiltros", codigosIngresados);
+            if (mantenimientoActual != null) {
+                mantenimientoActual.setCodigosFiltrosUsados(codigosIngresados);
+            }
+            codigosGuardadosHolder.putAll(codigosIngresados);
 
             List<Map<String, Object>> listaRutinasFinal = new ArrayList<>();
             for (int i = 0; i < layoutListaRutinas.getChildCount(); i++) {
@@ -1066,7 +1483,16 @@ public class NuevoMantenimientoFragment extends Fragment {
             mapDatos.put("rutinasList", listaRutinasFinal);
 
             // 2. GUARDAR EN FIREBASE (Persistencia)
-            db.collection("mantenimientos").document(mantenimientoId).update("datosInforme", mapDatos);
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("datosInforme", mapDatos);
+            updates.put("codigosFiltrosUsados", codigosIngresados);
+            db.collection("mantenimientos").document(mantenimientoId).update(updates);
+
+            Context safeCtx = getContext();
+            if (safeCtx != null && mantenimientoActual != null &&
+                    com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientePorId(safeCtx, mantenimientoId) != null) {
+                com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(safeCtx, mantenimientoActual);
+            }
 
             // 3. GENERAR PDF (Cargador Visual)
             dialog.dismiss();
@@ -1081,6 +1507,65 @@ public class NuevoMantenimientoFragment extends Fragment {
                 "Tensión de la correa del ventilador", "Revisar las RPM del motor en vacío", "Mantenimiento al sistema de enfriamiento del motor"};
         for (String r : rutinasBase) {
             agregarFilaRutinaVisual(layout, r, true);
+        }
+    }
+
+    private String obtenerCodigoParaFiltro(Map<String, String> codigosGuardados, String nombreFiltro) {
+        if (codigosGuardados == null || codigosGuardados.isEmpty() || nombreFiltro == null) return null;
+
+        // 1. Coincidencia exacta
+        if (codigosGuardados.containsKey(nombreFiltro)) {
+            String val = codigosGuardados.get(nombreFiltro);
+            if (val != null && !val.trim().isEmpty()) return val.trim();
+        }
+
+        // 2. Coincidencia insensible a mayúsculas
+        for (Map.Entry<String, String> entry : codigosGuardados.entrySet()) {
+            if (entry.getKey() != null && entry.getKey().trim().equalsIgnoreCase(nombreFiltro.trim())) {
+                if (entry.getValue() != null && !entry.getValue().trim().isEmpty()) {
+                    return entry.getValue().trim();
+                }
+            }
+        }
+
+        // 3. Coincidencia por palabra clave del tipo de filtro (aire, aceite, combustible/petróleo, separador/agua)
+        String normFiltro = nombreFiltro.toLowerCase().trim();
+        for (Map.Entry<String, String> entry : codigosGuardados.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null || entry.getValue().trim().isEmpty()) continue;
+            String keyNorm = entry.getKey().toLowerCase().trim();
+            boolean match = false;
+            if (normFiltro.contains("aire") && keyNorm.contains("aire")) match = true;
+            else if (normFiltro.contains("aceite") && keyNorm.contains("aceite")) match = true;
+            else if ((normFiltro.contains("combustible") || normFiltro.contains("petróleo") || normFiltro.contains("petroleo"))
+                    && (keyNorm.contains("combustible") || keyNorm.contains("petróleo") || keyNorm.contains("petroleo"))) match = true;
+            else if ((normFiltro.contains("separador") || normFiltro.contains("agua"))
+                    && (keyNorm.contains("separador") || keyNorm.contains("agua"))) match = true;
+
+            if (match) {
+                return entry.getValue().trim();
+            }
+        }
+
+        return null;
+    }
+
+    private void restaurarCodigosEnLayoutFiltros(LinearLayout layoutFiltros, Map<String, String> codigosGuardados) {
+        if (layoutFiltros == null || codigosGuardados == null || codigosGuardados.isEmpty()) return;
+        for (int i = 0; i < layoutFiltros.getChildCount(); i++) {
+            View child = layoutFiltros.getChildAt(i);
+            if (child instanceof TextInputLayout) {
+                TextInputLayout til = (TextInputLayout) child;
+                AutoCompleteTextView actv = (AutoCompleteTextView) til.getEditText();
+                if (actv != null) {
+                    String nombreFiltro = til.getTag() instanceof String
+                            ? (String) til.getTag()
+                            : (til.getHint() != null ? til.getHint().toString().replace("Código para ", "").trim() : "");
+                    String guardado = obtenerCodigoParaFiltro(codigosGuardados, nombreFiltro);
+                    if (guardado != null && !guardado.isEmpty()) {
+                        actv.setText(guardado, false);
+                    }
+                }
+            }
         }
     }
 
@@ -1226,6 +1711,7 @@ public class NuevoMantenimientoFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ocultarDialogoCargando();
         hideGlobalFab();
     }
 

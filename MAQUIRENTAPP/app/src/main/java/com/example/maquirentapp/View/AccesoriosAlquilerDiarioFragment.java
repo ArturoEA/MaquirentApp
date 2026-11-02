@@ -35,6 +35,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -298,8 +299,11 @@ public class AccesoriosAlquilerDiarioFragment extends Fragment {
     private void subirIconoYCrear(String nombre, Dialog dialog, MaterialButton btnGuardar) {
         String fileName = "accesorios/" + TIPO_ACCESORIO + "/" + System.currentTimeMillis() + ".png";
         StorageReference storageRef = storage.getReference().child(fileName);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/png")
+                .build();
 
-        storageRef.putFile(selectedImageUri)
+        storageRef.putFile(selectedImageUri, metadata)
                 .addOnSuccessListener(taskSnapshot ->
                         storageRef.getDownloadUrl()
                                 .addOnSuccessListener(downloadUri -> {
@@ -362,8 +366,11 @@ public class AccesoriosAlquilerDiarioFragment extends Fragment {
 
         String fileName = "accesorios/" + TIPO_ACCESORIO + "/" + System.currentTimeMillis() + ".png";
         StorageReference storageRef = storage.getReference().child(fileName);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/png")
+                .build();
 
-        storageRef.putFile(selectedImageUri)
+        storageRef.putFile(selectedImageUri, metadata)
                 .addOnSuccessListener(taskSnapshot ->
                         storageRef.getDownloadUrl()
                                 .addOnSuccessListener(downloadUri -> {

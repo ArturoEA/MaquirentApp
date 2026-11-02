@@ -105,7 +105,7 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         if (Cotizacion.TIPO_DIARIO.equalsIgnoreCase(tipoAlquiler)) {
             condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
             condiciones.add("FORMA DE PAGO: AL CONTADO / PREVIO ACUERDO COMERCIAL ANTES DE LA ENTREGA.");
-            condiciones.add("TARIFA DIARIA POR JORNADA DE HASTA <b>" + (horasPorDia > 0 ? horasPorDia : 8) + " HORAS DIARIAS</b> POR <b>" + (diasAlquiler > 0 ? diasAlquiler : 1) + " DÍA(S)</b>. EXCESOS SE FACTURARÁN COMO HORA EXTRA.");
+            condiciones.add("TARIFA DIARIA POR JORNADA DE HASTA " + (horasPorDia > 0 ? horasPorDia : 8) + " HORAS DIARIAS POR " + (diasAlquiler > 0 ? diasAlquiler : 1) + " DÍA(S). EXCESOS SE FACTURARÁN COMO HORA EXTRA.");
             condiciones.add("TRANSPORTE Y TRASLADO DE EQUIPOS A CARGO DEL CLIENTE.");
             condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL.");
             condiciones.add("EN CASO DE PÉRDIDA O DAÑOS DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA REPARACIÓN O REPOSICIÓN DEL MISMO.");
@@ -115,7 +115,7 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         } else {
             condiciones.add("LOS EQUIPOS SE ALQUILAN SIN COMBUSTIBLE NI OPERADOR.");
             condiciones.add("EL PAGO DEL ALQUILER SE REALIZARÁ A 30 DÍAS DE LA FACTURACIÓN.");
-            condiciones.add("TARIFA SE APLICA CON HORAS MÍNIMAS DE <b>" + (horasMinimas > 0 ? horasMinimas : 200) + " HORAS MENSUALES</b>, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.");
+            condiciones.add("TARIFA SE APLICA CON HORAS MÍNIMAS DE " + (horasMinimas > 0 ? horasMinimas : 200) + " HORAS MENSUALES, EXCESOS SE FACTURARÁN SEGÚN HORÓMETRO.");
             condiciones.add("LOS EQUIPOS DEBEN SER DEVUELTOS EN LAS MISMAS CONDICIONES EN QUE FUERON ENTREGADOS SIN MÁS DETERIORO DEL QUE PUEDE PRODUCIRSE POR EL USO NORMAL. EN CASO DE PRESENTARSE CUALQUIER DAÑO, EL CLIENTE SE HARÁ RESPONSABLE DE LAS REPARACIONES, SEGÚN LOS CARGOS POR DAÑOS VIGENTES A LA DEVOLUCIÓN.");
             condiciones.add("EN CASO DE PÉRDIDA DE LOS EQUIPOS, EL CLIENTE SE HARÁ RESPONSABLE DE LA DEVOLUCIÓN DEL MISMO, YA SEA COMO EQUIPO O EN EFECTIVO, TENIENDO EN CUENTA LA FACTURA DE COMPRA.");
             condiciones.add("LA INSPECCIÓN DIARIA ES RESPONSABILIDAD DEL CLIENTE (AGUA Y ACEITE DE MOTOR).");
@@ -163,7 +163,7 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
         int dias = cotizacion.getDiasAlquiler();
 
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><style>");
+        html.append("<html><head><meta charset='utf-8'><style>");
         html.append("@page { size: A4; margin: 20mm 15mm 20mm 15mm; }");
         html.append("body { font-family: 'Times New Roman', 'Arial', sans-serif; font-size: 10pt; color: #000; line-height: 1.3; padding: 60px;}");
         html.append("thead { display: table-header-group; }");
@@ -198,19 +198,20 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
 
         html.append("<table><thead><tr>");
         if (esDiario) {
-            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>POTENCIA</th><th>TARIFA DÍA</th><th>CANT. DÍAS</th><th>HORAS/DÍA</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
+            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>TARIFA DÍA</th><th>CANT. DÍAS</th><th>HORAS/DÍA</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
         } else {
-            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>POTENCIA</th><th>TARIFA MES</th><th>HORAS MÍN.</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
+            html.append("<th>ITEM</th><th>DESCRIPCIÓN</th><th>TARIFA MES</th><th>HORAS MÍN.</th><th>PRECIO HE</th><th>SUBTOTAL</th>");
         }
         html.append("</tr></thead><tbody>");
 
         int index = 1;
         for (ItemCotizacion item : cotizacion.getItems()) {
             double subtotalItem = item.getSubtotal(cotizacion.getTipoAlquiler(), dias);
+            String descFormatted = item.getDescripcionEquipo() != null
+                    ? item.getDescripcionEquipo().replace("\n", "<br>") : "";
             html.append("<tr>");
             html.append("<td>").append(index++).append("</td>");
-            html.append("<td class='td-left'>").append(item.getDescripcionEquipo() != null ? item.getDescripcionEquipo() : "").append("</td>");
-            html.append("<td>").append(item.getPotencia() != null ? item.getPotencia() : "-").append("</td>");
+            html.append("<td class='td-left'>").append(descFormatted).append("</td>");
             html.append("<td>").append(String.format(Locale.US, "%.2f", item.getPrecioUnitario())).append("</td>");
 
             if (esDiario) {
@@ -225,7 +226,25 @@ public abstract class BasePdfGeneratorStrategy implements PdfGeneratorStrategy {
             html.append("</tr>");
         }
 
-        int colspan = esDiario ? 7 : 6;
+        if (cotizacion.getCostoMovilizacion() > 0) {
+            html.append("<tr>");
+            html.append("<td>").append(index++).append("</td>");
+            html.append("<td class='td-left'>MOVILIZACIÓN Y DESMOVILIZACIÓN</td>");
+            html.append("<td>-</td>");
+
+            if (esDiario) {
+                html.append("<td>-</td>");
+                html.append("<td>-</td>");
+            } else {
+                html.append("<td>-</td>");
+            }
+
+            html.append("<td>-</td>");
+            html.append("<td>").append(String.format(Locale.US, "%.2f", cotizacion.getCostoMovilizacion())).append("</td>");
+            html.append("</tr>");
+        }
+
+        int colspan = esDiario ? 6 : 5;
         html.append("<tr>");
         html.append("<td colspan='").append(colspan).append("' class='td-left no-border'><b>SUBTOTAL (").append(cotizacion.getMoneda()).append(")</b></td>");
         html.append("<td><b>").append(String.format(Locale.US, "%.2f", cotizacion.getSubtotalGlobal())).append("</b></td>");

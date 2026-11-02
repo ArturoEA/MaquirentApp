@@ -83,7 +83,7 @@ public class CertificadosRepository {
                     datosContador.put(FIELD_ULTIMO_CERT, nuevoNumero);
 
                     transaction.set(nuevoCertRef, certificado);
-                    transaction.set(secuenciaRef, datosContador);
+                    transaction.set(secuenciaRef, datosContador, com.google.firebase.firestore.SetOptions.merge());
 
                     return null;
                 }).addOnSuccessListener(aVoid -> callback.onSuccess(certificado.getNumeroCertificado()))

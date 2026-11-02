@@ -36,6 +36,7 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
 
     public interface OnItemClickListener {
         void onItemClick(FichaTecnica ficha);
+        void onEditarNombreClick(FichaTecnica ficha);
         void onCompartirClick(FichaTecnica ficha);
         void onDescargarClick(FichaTecnica ficha);
         void onEliminarClick(FichaTecnica ficha);
@@ -84,8 +85,8 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         private ImageView ivPreview, ivPdfIcon;
-        private TextView tvNombre, tvFecha;
-        private ImageButton btnCompartir, btnDescargar, btnEliminar;
+        private TextView tvNombre;
+        private ImageButton btnEditarNombre, btnCompartir, btnDescargar, btnEliminar;
         private ProgressBar progressPreview;
 
         public ViewHolder(@NonNull View itemView) {
@@ -93,7 +94,7 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
             ivPreview = itemView.findViewById(R.id.iv_pdf_preview);
             ivPdfIcon = itemView.findViewById(R.id.iv_pdf_icon);
             tvNombre = itemView.findViewById(R.id.tv_nombre_archivo);
-            tvFecha = itemView.findViewById(R.id.tv_fecha);
+            btnEditarNombre = itemView.findViewById(R.id.btn_editar_nombre);
             btnCompartir = itemView.findViewById(R.id.btn_compartir);
             btnDescargar = itemView.findViewById(R.id.btn_descargar);
             btnEliminar = itemView.findViewById(R.id.btn_eliminar);
@@ -102,12 +103,18 @@ public class FichasTecnicasAdapter extends RecyclerView.Adapter<FichasTecnicasAd
 
         public void bind(FichaTecnica ficha, OnItemClickListener listener) {
             tvNombre.setText(ficha.getNombreArchivo());
-            tvFecha.setText(ficha.getFechaSubida());
 
             // Click en el item completo para abrir el PDF
             itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onItemClick(ficha);
             });
+
+            // Botón editar nombre
+            if (btnEditarNombre != null) {
+                btnEditarNombre.setOnClickListener(v -> {
+                    if (listener != null) listener.onEditarNombreClick(ficha);
+                });
+            }
 
             // Botón compartir
             btnCompartir.setOnClickListener(v -> {

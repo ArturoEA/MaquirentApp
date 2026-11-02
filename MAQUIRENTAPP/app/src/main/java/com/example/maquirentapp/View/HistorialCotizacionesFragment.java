@@ -48,10 +48,19 @@ public class HistorialCotizacionesFragment extends Fragment {
     private CotizacionesAdapter adapter;
     private CotizacionesRepository repository;
     private List<Cotizacion> listaCompleta = new ArrayList<>();
+    private List<Cotizacion> listaFiltradaAnio = new ArrayList<>();
     private TextView tvAnio;
     private int anioSeleccionado;
     private LinearLayout emptyState;
     private com.facebook.shimmer.ShimmerFrameLayout shimmerCotizaciones;
+
+    // Paginación
+    private LinearLayout layoutPaginacion;
+    private ImageButton btnPaginaAnterior;
+    private ImageButton btnPaginaSiguiente;
+    private TextView tvInfoPaginacion;
+    private static final int PAGE_SIZE = 10;
+    private int paginaActual = 1;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,6 +92,10 @@ public class HistorialCotizacionesFragment extends Fragment {
         emptyState = view.findViewById(R.id.emptyStateCotizaciones);
         recyclerView = view.findViewById(R.id.recyclerCotizaciones);
         shimmerCotizaciones = view.findViewById(R.id.shimmerCotizaciones);
+        layoutPaginacion = view.findViewById(R.id.layoutPaginacionCotizaciones);
+        btnPaginaAnterior = view.findViewById(R.id.btnPaginaAnterior);
+        btnPaginaSiguiente = view.findViewById(R.id.btnPaginaSiguiente);
+        tvInfoPaginacion = view.findViewById(R.id.tvInfoPaginacion);
 
         actualizarTextoAnio();
 
@@ -99,6 +112,23 @@ public class HistorialCotizacionesFragment extends Fragment {
         });
 
         tvAnio.setOnClickListener(v -> mostrarSelectorAnio());
+
+        btnPaginaAnterior.setOnClickListener(v -> {
+            if (paginaActual > 1) {
+                paginaActual--;
+                actualizarVistaPaginacion();
+                if (recyclerView != null) recyclerView.scrollToPosition(0);
+            }
+        });
+
+        btnPaginaSiguiente.setOnClickListener(v -> {
+            int totalPaginas = (int) Math.ceil((double) listaFiltradaAnio.size() / PAGE_SIZE);
+            if (paginaActual < totalPaginas) {
+                paginaActual++;
+                actualizarVistaPaginacion();
+                if (recyclerView != null) recyclerView.scrollToPosition(0);
+            }
+        });
     }
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -165,22 +195,53 @@ public class HistorialCotizacionesFragment extends Fragment {
     }
 
     private void filtrarPorAnio() {
-        List<Cotizacion> filtradas = new ArrayList<>();
+        listaFiltradaAnio.clear();
         for (Cotizacion c : listaCompleta) {
             int anio = extraerAnio(c.getFechaEmision());
+            if (anio <= 0 && c.getNumeroCotizacion() != null) {
+                anio = com.example.maquirentapp.Repository.CotizacionesRepository.extraerAnio(c.getNumeroCotizacion());
+            }
             if (anio == anioSeleccionado) {
-                filtradas.add(c);
+                listaFiltradaAnio.add(c);
             }
         }
 
-        adapter.submitList(filtradas);
+        paginaActual = 1;
+        actualizarVistaPaginacion();
+    }
 
-        if (filtradas.isEmpty()) {
+    private void actualizarVistaPaginacion() {
+        int totalItems = listaFiltradaAnio.size();
+
+        if (totalItems == 0) {
             recyclerView.setVisibility(View.GONE);
             if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
-        } else {
-            recyclerView.setVisibility(View.VISIBLE);
-            if (emptyState != null) emptyState.setVisibility(View.GONE);
+            if (layoutPaginacion != null) layoutPaginacion.setVisibility(View.GONE);
+            adapter.submitList(new ArrayList<>());
+            return;
+        }
+
+        recyclerView.setVisibility(View.VISIBLE);
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
+
+        int totalPaginas = (int) Math.ceil((double) totalItems / PAGE_SIZE);
+        if (totalPaginas < 1) totalPaginas = 1;
+        if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+        if (paginaActual < 1) paginaActual = 1;
+
+        int fromIndex = (paginaActual - 1) * PAGE_SIZE;
+        int toIndex = Math.min(fromIndex + PAGE_SIZE, totalItems);
+
+        List<Cotizacion> pagina = new ArrayList<>(listaFiltradaAnio.subList(fromIndex, toIndex));
+        adapter.submitList(pagina);
+
+        if (layoutPaginacion != null) {
+            layoutPaginacion.setVisibility(View.VISIBLE);
+            tvInfoPaginacion.setText("Página " + paginaActual + " de " + totalPaginas);
+            btnPaginaAnterior.setEnabled(paginaActual > 1);
+            btnPaginaAnterior.setAlpha(paginaActual > 1 ? 1.0f : 0.3f);
+            btnPaginaSiguiente.setEnabled(paginaActual < totalPaginas);
+            btnPaginaSiguiente.setAlpha(paginaActual < totalPaginas ? 1.0f : 0.3f);
         }
     }
 
@@ -212,11 +273,12 @@ public class HistorialCotizacionesFragment extends Fragment {
                         .setTitle("Eliminar Cotización")
                         .setMessage("¿Eliminar " + item.getNumeroCotizacion() + "?")
                         .setPositiveButton("Eliminar", (d, w) -> {
-                            repository.eliminarCotizacion(item.getId(), new Callback<Void>() {
+                            repository.eliminarCotizacion(item.getId(), item.getNumeroCotizacion(), new Callback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                                         listaCompleta.removeIf(c -> c.getId().equals(item.getId()));
+                                        listaFiltradaAnio.removeIf(c -> c.getId().equals(item.getId()));
                                     } else {
                                         for (int i = 0; i < listaCompleta.size(); i++) {
                                             if (listaCompleta.get(i).getId().equals(item.getId())) {
@@ -224,8 +286,18 @@ public class HistorialCotizacionesFragment extends Fragment {
                                                 break;
                                             }
                                         }
+                                        for (int i = 0; i < listaFiltradaAnio.size(); i++) {
+                                            if (listaFiltradaAnio.get(i).getId().equals(item.getId())) {
+                                                listaFiltradaAnio.remove(i);
+                                                break;
+                                            }
+                                        }
                                     }
-                                    filtrarPorAnio();
+                                    int totalPaginas = (int) Math.ceil((double) listaFiltradaAnio.size() / PAGE_SIZE);
+                                    if (paginaActual > totalPaginas && paginaActual > 1) {
+                                        paginaActual = totalPaginas;
+                                    }
+                                    actualizarVistaPaginacion();
                                     Toast.makeText(getContext(), "Eliminado", Toast.LENGTH_SHORT).show();
                                 }
 

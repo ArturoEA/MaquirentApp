@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.NetworkUtils;
 import com.example.maquirentapp.adapters.MantenimientosAdapter;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -42,12 +43,14 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -398,11 +401,14 @@ public class MantenimientosFragment extends Fragment {
         finMes.set(Calendar.MILLISECOND, 999);
         long fin = finMes.getTimeInMillis();
 
+        boolean online = NetworkUtils.isNetworkAvailable(getContext());
+        Source source = online ? Source.DEFAULT : Source.CACHE;
+
         db.collection("mantenimientos")
                 .whereEqualTo("codigoGrupo", codigo)
                 .whereGreaterThanOrEqualTo("fechaCreacion", inicio)
                 .whereLessThanOrEqualTo("fechaCreacion", fin)
-                .get()
+                .get(source)
                 .addOnSuccessListener(querySnapshot -> {
                     if (shimmerMantenimientos != null) {
                         shimmerMantenimientos.stopShimmer();
@@ -414,6 +420,26 @@ public class MantenimientosFragment extends Fragment {
                         m.setId(doc.getId());
                         mantenimientosList.add(m);
                     }
+
+                    // Integrar mantenimientos guardados localmente en modo offline
+                    Context ctx = getContext();
+                    if (ctx != null) {
+                        List<Mantenimiento> pendientes = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientesPorGrupo(ctx, codigo);
+                        for (Mantenimiento p : pendientes) {
+                            boolean yaExiste = false;
+                            for (int i = 0; i < mantenimientosList.size(); i++) {
+                                if (mantenimientosList.get(i).getId() != null && mantenimientosList.get(i).getId().equals(p.getId())) {
+                                    mantenimientosList.set(i, p);
+                                    yaExiste = true;
+                                    break;
+                                }
+                            }
+                            if (!yaExiste && p.getFechaCreacion() >= inicio && p.getFechaCreacion() <= fin) {
+                                mantenimientosList.add(0, p);
+                            }
+                        }
+                    }
+
                     actualizarUI();
                 })
                 .addOnFailureListener(e -> {
@@ -422,12 +448,38 @@ public class MantenimientosFragment extends Fragment {
                         shimmerMantenimientos.setVisibility(View.GONE);
                     }
                     Log.e(TAG, "Error cargando mantenimientos del mes", e);
+
+                    // Si falla Firestore en offline, mostrar los que estén guardados localmente
+                    Context ctx = getContext();
+                    if (ctx != null) {
+                        mantenimientosList.clear();
+                        List<Mantenimiento> pendientes = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientesPorGrupo(ctx, codigo);
+                        for (Mantenimiento p : pendientes) {
+                            if (p.getFechaCreacion() >= inicio && p.getFechaCreacion() <= fin) {
+                                mantenimientosList.add(p);
+                            }
+                        }
+                    }
+                    actualizarUI();
                 });
     }
 
     private void cargarItemsConfiguracion() {
+        Context ctx = getContext();
+        if (ctx != null) {
+            List<MantenimientoConfiguracion> backup = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerConfiguracionBackup(ctx);
+            if (!backup.isEmpty()) {
+                itemsConfigList.clear();
+                itemsConfigList.addAll(backup);
+                if (adapter != null) adapter.actualizarItemsConfig(itemsConfigList);
+            }
+        }
+
+        boolean online = NetworkUtils.isNetworkAvailable(getContext());
+        Source source = online ? Source.DEFAULT : Source.CACHE;
+
         db.collection("mantenimientos_configuracion")
-                .get()
+                .get(source)
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     itemsConfigList.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
@@ -435,7 +487,9 @@ public class MantenimientosFragment extends Fragment {
                         item.setId(doc.getId());
                         itemsConfigList.add(item);
                     }
-                    adapter.actualizarItemsConfig(itemsConfigList);
+                    Collections.sort(itemsConfigList, (a, b) -> Long.compare(a.getFechaCreacion(), b.getFechaCreacion()));
+                    if (adapter != null) adapter.actualizarItemsConfig(itemsConfigList);
+                    if (ctx != null) com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, itemsConfigList);
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error cargando items configuración", e));
     }
@@ -495,6 +549,24 @@ public class MantenimientosFragment extends Fragment {
 
         configureGlobalFab();
         cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+
+        Context ctx = getContext();
+        if (ctx != null && NetworkUtils.isNetworkAvailable(ctx)) {
+            com.example.maquirentapp.Utils.MantenimientoOfflineManager.sincronizarPendientes(ctx, new com.example.maquirentapp.Repository.Callback<Integer>() {
+                @Override
+                public void onSuccess(Integer count) {
+                    if (count > 0 && isAdded()) {
+                        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                        Toast.makeText(getContext(), "Se sincronizaron " + count + " mantenimientos pendientes con la nube", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.w(TAG, "Error en sincronización automática", e);
+                }
+            });
+        }
     }
 
     @Override

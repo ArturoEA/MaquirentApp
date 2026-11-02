@@ -35,19 +35,26 @@ public class CondicionesCotizacionAdapter extends RecyclerView.Adapter<Condicion
     public void setItems(List<CondicionComercialItem> items) {
         lista.clear();
         if (items != null) {
-            lista.addAll(items);
+            for (CondicionComercialItem item : items) {
+                if (item != null && item.getTexto() != null) {
+                    item.setTexto(item.getTexto().replace("<b>", "").replace("</b>", "").replace("<B>", "").replace("</B>", ""));
+                }
+                lista.add(item);
+            }
         }
         notifyDataSetChanged();
     }
 
     public void agregarItem(String texto) {
-        lista.add(new CondicionComercialItem(texto, true));
+        String textoLimpio = texto != null ? texto.replace("<b>", "").replace("</b>", "").replace("<B>", "").replace("</B>", "") : "";
+        lista.add(new CondicionComercialItem(textoLimpio, true));
         notifyItemInserted(lista.size() - 1);
     }
 
     public void actualizarItem(int position, String nuevoTexto) {
         if (position >= 0 && position < lista.size()) {
-            lista.get(position).setTexto(nuevoTexto);
+            String textoLimpio = nuevoTexto != null ? nuevoTexto.replace("<b>", "").replace("</b>", "").replace("<B>", "").replace("</B>", "") : "";
+            lista.get(position).setTexto(textoLimpio);
             notifyItemChanged(position);
         }
     }

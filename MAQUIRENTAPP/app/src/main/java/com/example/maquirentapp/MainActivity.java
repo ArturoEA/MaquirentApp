@@ -424,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
                     setHeaderTitle("Mantenimientos");
                 } else if (dest.getId() == R.id.listaGruposElectrogenosFragment) {
                     setHeaderIcon(R.drawable.icon_generador);
-                    setHeaderTitle("Lista de grupos electrógenos");
+                    setHeaderTitle("Lista de maquinaria");
                 } else if (dest.getId() == R.id.HistorialCotizacionesFragment) {
                     setHeaderIcon(R.drawable.icon_cotizacion_blanco);
                     setHeaderTitle("Historial de cotizaciones");

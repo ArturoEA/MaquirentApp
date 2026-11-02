@@ -50,15 +50,17 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCotizaciones"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="80dp"
+        android:paddingBottom="12dp"
         tools:listitem="@layout/item_historial_cotizacion" />
 
     <LinearLayout
         android:id="@+id/emptyStateCotizaciones"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone">
@@ -75,6 +77,44 @@
             android:layout_marginTop="16dp"
             android:text="No hay cotizaciones este año"
             android:textColor="@color/gray_dark"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutPaginacionCotizaciones"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="16dp"
+        android:layout_marginBottom="70dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageButton
+            android:id="@+id/btnPaginaAnterior"
+            android:layout_width="40dp"
+            android:layout_height="30dp"
+            android:background="@drawable/icon_flecha_negro"
+            android:contentDescription="Página anterior" />
+
+        <TextView
+            android:id="@+id/tvInfoPaginacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:fontFamily="@font/anta_font"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Página 1 de 3" />
+
+        <ImageButton
+            android:id="@+id/btnPaginaSiguiente"
+            android:layout_width="40dp"
+            android:layout_height="30dp"
+            android:background="@drawable/icon_flecha_negro"
+            android:rotation="180"
+            android:contentDescription="Página siguiente" />
     </LinearLayout>
 
 </LinearLayout>

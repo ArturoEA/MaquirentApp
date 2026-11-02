@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.util.Log;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 /**
@@ -677,7 +678,10 @@ public class AlquilerRepository {
     public void subirFotoAccesorio(Uri uri, Callback<String> callback) {
         String fileName = "accesorios/" + System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child(fileName);
-        ref.putFile(uri)
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
+        ref.putFile(uri, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();

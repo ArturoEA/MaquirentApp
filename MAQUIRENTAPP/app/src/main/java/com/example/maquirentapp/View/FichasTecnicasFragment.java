@@ -102,6 +102,11 @@ public class FichasTecnicasFragment extends Fragment {
             }
 
             @Override
+            public void onEditarNombreClick(FichaTecnica ficha) {
+                mostrarDialogoEditarNombre(ficha);
+            }
+
+            @Override
             public void onCompartirClick(FichaTecnica ficha) {
                 compartirPdf(ficha);
             }
@@ -239,6 +244,57 @@ public class FichasTecnicasFragment extends Fragment {
                     } else {
                         viewModel.subirPdf(pdfUri, nombreFinal);
                     }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void mostrarDialogoEditarNombre(FichaTecnica ficha) {
+        if (ficha == null || getContext() == null) return;
+
+        String nombreOriginal = ficha.getNombreArchivo();
+        if (nombreOriginal != null && nombreOriginal.toLowerCase().endsWith(".pdf")) {
+            nombreOriginal = nombreOriginal.substring(0, nombreOriginal.length() - 4);
+        }
+
+        TextInputEditText inputNombre = new TextInputEditText(requireContext());
+        inputNombre.setText(nombreOriginal != null ? nombreOriginal : "");
+        if (inputNombre.getText() != null) {
+            inputNombre.setSelection(inputNombre.getText().length());
+        }
+        inputNombre.setHint("Ej. FT 75-109");
+
+        android.widget.FrameLayout container = new android.widget.FrameLayout(requireContext());
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(50, 20, 50, 0);
+        inputNombre.setLayoutParams(params);
+        container.addView(inputNombre);
+
+        final String nombreViejoOriginal = ficha.getNombreArchivo();
+
+        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                .setTitle("Editar nombre de Ficha Técnica")
+                .setMessage("Asigna un nuevo nombre para identificar este documento.")
+                .setView(container)
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    String nuevoNombre = inputNombre.getText() != null ? inputNombre.getText().toString().trim() : "";
+                    if (nuevoNombre.isEmpty()) {
+                        Toast.makeText(getContext(), "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String nombreFinal = nuevoNombre;
+                    if (!nombreFinal.toLowerCase().endsWith(".pdf")) {
+                        nombreFinal += ".pdf";
+                    }
+
+                    if (nombreFinal.equals(nombreViejoOriginal)) {
+                        return;
+                    }
+
+                    PdfCacheManager.renombrarPdfOffline(requireContext(), nombreViejoOriginal, nombreFinal);
+                    viewModel.actualizarNombrePdf(ficha, nombreFinal);
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();

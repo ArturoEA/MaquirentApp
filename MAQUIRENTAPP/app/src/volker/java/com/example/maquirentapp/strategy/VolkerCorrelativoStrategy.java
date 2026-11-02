@@ -6,8 +6,15 @@ import java.util.Locale;
 public class VolkerCorrelativoStrategy implements CorrelativoStrategy {
 
     @Override
+    public String generarCodigoCotizacion(long numero, int anio) {
+        int anioDosDigitos = Math.abs(anio) % 100;
+        return String.format(Locale.US, "%s%03d-%02d", BuildConfig.PREFIX_COTIZACION, numero, anioDosDigitos);
+    }
+
+    @Override
     public String generarCodigoCotizacion(long numero) {
-        return String.format(Locale.US, "%s%06d", BuildConfig.PREFIX_COTIZACION, numero);
+        int anio = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+        return generarCodigoCotizacion(numero, anio);
     }
 
     @Override

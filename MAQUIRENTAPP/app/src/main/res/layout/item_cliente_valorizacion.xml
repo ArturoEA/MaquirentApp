@@ -52,7 +52,8 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Eliminar cliente"
             android:padding="7dp"
-            android:src="@drawable/icon_eliminar_rojo" />
+            android:src="@drawable/icon_eliminar_rojo"
+            app:tint="@color/red_accent" />
 
         <ImageView
             android:layout_width="24dp"

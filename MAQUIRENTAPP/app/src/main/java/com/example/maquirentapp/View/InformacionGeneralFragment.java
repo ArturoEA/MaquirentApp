@@ -84,7 +84,7 @@ public class InformacionGeneralFragment extends Fragment {
     private TextInputEditText inputPotenciaSB, inputPotenciaC, inputMarcaG, inputModeloG, inputSerieG;
     private TextInputEditText inputMarcaM, inputModeloM, inputSerieM;
     private TextInputEditText inputMarcaGen, inputModeloGen, inputSerieGen;
-    private TextInputEditText inputMarcaCompresor, inputModeloCompresor, inputSerieCompresor;
+    private TextInputEditText inputMarcaCompresor, inputModeloCompresor, inputSerieCompresor, inputCaudalCompresor;
     private Button btnGuardarTecnicos;
     private com.facebook.shimmer.ShimmerFrameLayout shimmerInfoGeneral;
     private LinearLayout llContenidoCards;
@@ -163,6 +163,7 @@ public class InformacionGeneralFragment extends Fragment {
         inputMarcaCompresor = view.findViewById(R.id.inputMarcaCompresor);
         inputModeloCompresor = view.findViewById(R.id.inputModeloCompresor);
         inputSerieCompresor = view.findViewById(R.id.inputSerieCompresor);
+        inputCaudalCompresor = view.findViewById(R.id.inputCaudalCompresor);
 
         btnGuardarTecnicos = view.findViewById(R.id.btnGuardarDatosTecnicos);
         shimmerInfoGeneral = view.findViewById(R.id.shimmerInfoGeneral);
@@ -420,6 +421,7 @@ public class InformacionGeneralFragment extends Fragment {
         if (inputMarcaCompresor != null) inputMarcaCompresor.setText(infoPlacaActual.getMarcaCompresor());
         if (inputModeloCompresor != null) inputModeloCompresor.setText(infoPlacaActual.getModeloCompresor());
         if (inputSerieCompresor != null) inputSerieCompresor.setText(infoPlacaActual.getSerieCompresor());
+        if (inputCaudalCompresor != null) inputCaudalCompresor.setText(infoPlacaActual.getCaudal());
 
         fotosAdapter = new FotosSimpleAdapter(infoPlacaActual.getImagenesUrls(), new FotosSimpleAdapter.OnFotoActionListener() {
             @Override
@@ -721,6 +723,9 @@ public class InformacionGeneralFragment extends Fragment {
         }
         if (inputSerieCompresor != null) {
             infoPlacaActual.setSerieCompresor(inputSerieCompresor.getText().toString().trim());
+        }
+        if (inputCaudalCompresor != null) {
+            infoPlacaActual.setCaudal(inputCaudalCompresor.getText().toString().trim());
         }
 
         Toast.makeText(getContext(), "Guardando...", Toast.LENGTH_SHORT).show();

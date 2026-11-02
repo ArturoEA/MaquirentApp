@@ -22,10 +22,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.maquirentapp.Model.CondicionComercialItem;
 import com.example.maquirentapp.Model.Cotizacion;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
+import com.example.maquirentapp.Model.InfoPlaca;
 import com.example.maquirentapp.Model.ItemCotizacion;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.CotizacionesRepository;
+import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.adapters.CondicionesCotizacionAdapter;
 import com.example.maquirentapp.adapters.CotizacionItemsAdapter;
 import com.example.maquirentapp.Utils.HtmlGenerator;
@@ -53,6 +55,7 @@ public class NuevaCotizacionFragment extends Fragment {
 
     private FragmentNuevaCotizacionBinding binding;
     private CotizacionesRepository repository;
+    private GeneradorRepository generadorRepository;
     private CotizacionItemsAdapter adapter;
     private CondicionesCotizacionAdapter condicionesAdapter;
     private Cotizacion cotizacionActual;
@@ -67,6 +70,7 @@ public class NuevaCotizacionFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         repository = new CotizacionesRepository();
+        generadorRepository = new GeneradorRepository();
         cotizacionActual = new Cotizacion();
     }
 
@@ -125,6 +129,12 @@ public class NuevaCotizacionFragment extends Fragment {
             binding.radioSol.setChecked(true);
         }
 
+        if (cotizacionActual.getCostoMovilizacion() > 0) {
+            binding.inputMovilizacion.setText(String.format(Locale.US, "%.2f", cotizacionActual.getCostoMovilizacion()));
+        } else {
+            binding.inputMovilizacion.setText("");
+        }
+
         adapter.setParametrosModalidad(cotizacionActual.getTipoAlquiler(), cotizacionActual.getDiasAlquiler());
 
         if (cotizacionActual.getCondicionesComerciales() != null && !cotizacionActual.getCondicionesComerciales().isEmpty()) {
@@ -152,7 +162,7 @@ public class NuevaCotizacionFragment extends Fragment {
 
                 autoCompleteAdapter = new ArrayAdapter<>(
                         requireContext(),
-                        android.R.layout.simple_dropdown_item_1line,
+                        R.layout.item_dropdown_custom,
                         nombresGrupos
                 );
             }
@@ -205,8 +215,19 @@ public class NuevaCotizacionFragment extends Fragment {
     private void setupListeners() {
         binding.inputFecha.setOnClickListener(v -> mostrarDatePicker());
         binding.btnAgregarItem.setOnClickListener(v -> mostrarDialogoAgregarItem(null));
-        binding.btnGenerarCotizacion.setOnClickListener(v -> guardarYGenerar("WORD"));
-        binding.btnGenerarPdf.setOnClickListener(v -> guardarYGenerar("PDF"));
+        binding.btnGenerarPdf.setOnClickListener(v -> guardarYGenerarPdf());
+
+        // Toggle colapsar/expandir grupo de condiciones comerciales
+        binding.layoutHeaderCondiciones.setOnClickListener(v -> {
+            boolean visible = binding.layoutContenidoCondiciones.getVisibility() == View.VISIBLE;
+            if (visible) {
+                binding.layoutContenidoCondiciones.setVisibility(View.GONE);
+                binding.ivExpandirCondiciones.animate().rotation(90).setDuration(200).start();
+            } else {
+                binding.layoutContenidoCondiciones.setVisibility(View.VISIBLE);
+                binding.ivExpandirCondiciones.animate().rotation(270).setDuration(200).start();
+            }
+        });
 
         // Modalidad Mensual vs Diario
         binding.radioGroupModalidad.setOnCheckedChangeListener((group, checkedId) -> {
@@ -269,6 +290,24 @@ public class NuevaCotizacionFragment extends Fragment {
                 if (!cotizacionActual.isDiario()) {
                     recalcularPreciosHoraExtraGlobal();
                 }
+            }
+        });
+
+        // Escucha de Movilización y desmovilización
+        binding.inputMovilizacion.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                double mov = 0;
+                try {
+                    String str = s != null ? s.toString().trim() : "";
+                    if (!str.isEmpty()) {
+                        mov = Double.parseDouble(str);
+                    }
+                } catch (NumberFormatException ignored) {}
+                cotizacionActual.setCostoMovilizacion(mov);
+                actualizarListaYTotales();
             }
         });
 
@@ -374,31 +413,79 @@ public class NuevaCotizacionFragment extends Fragment {
         if (dialog.getWindow() != null)
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
+        AutoCompleteTextView autoSelectMaquina = view.findViewById(R.id.autoCompleteSeleccionarMaquina);
         AutoCompleteTextView autoDesc = view.findViewById(R.id.autoCompleteDescripcion);
-        TextInputEditText inputPotencia = view.findViewById(R.id.inputPotencia);
-        TextInputEditText inputMarca = view.findViewById(R.id.inputMarca);
-        TextInputEditText inputModo = view.findViewById(R.id.inputModo);
+        AutoCompleteTextView inputModo = view.findViewById(R.id.inputModo);
         TextInputEditText inputIncluye = view.findViewById(R.id.inputIncluye);
         TextInputLayout tilPrecio = view.findViewById(R.id.tilPrecio);
         TextInputEditText inputPrecio = view.findViewById(R.id.inputPrecio);
         TextInputEditText inputPrecioHE = view.findViewById(R.id.inputPrecioHE);
         Button btnGuardar = view.findViewById(R.id.btnGuardarItem);
 
-        if (tilPrecio != null) {
-            tilPrecio.setHint(cotizacionActual.isDiario() ? "Tarifa por Día (Sin IGV)" : "Tarifa Mensual (Sin IGV)");
+        final String[] maquinaSeleccionadaHolder = new String[]{""};
+        if (itemExistente != null && itemExistente.getCodigoMaquina() != null && !itemExistente.getCodigoMaquina().isEmpty()) {
+            maquinaSeleccionadaHolder[0] = itemExistente.getCodigoMaquina();
         }
 
-        if (autoCompleteAdapter != null) {
-            autoDesc.setAdapter(autoCompleteAdapter);
+        // Configuración de selector de máquina de inventario (Opcional)
+        List<String> codigosMaquinas = new ArrayList<>();
+        codigosMaquinas.add("Ninguna (Entrada manual)");
+        if (listaGruposInventario != null) {
+            for (GrupoElectrogeno g : listaGruposInventario) {
+                if (g.getCodigo() != null && !g.getCodigo().isEmpty()) {
+                    codigosMaquinas.add(g.getCodigo());
+                }
+            }
+        }
+        ArrayAdapter<String> adapterMaquinas = new ArrayAdapter<>(requireContext(), R.layout.item_dropdown_custom, codigosMaquinas);
+        autoSelectMaquina.setAdapter(adapterMaquinas);
+        if (!maquinaSeleccionadaHolder[0].isEmpty()) {
+            autoSelectMaquina.setText(maquinaSeleccionadaHolder[0], false);
+        } else {
+            autoSelectMaquina.setText("Ninguna (Entrada manual)", false);
+        }
+        autoSelectMaquina.setOnClickListener(v -> autoSelectMaquina.showDropDown());
 
-            autoDesc.setOnItemClickListener((parent, v, position, id) -> {
-                String seleccion = (String) parent.getItemAtPosition(position);
+        autoSelectMaquina.setOnItemClickListener((parent, vItem, position, id) -> {
+            String seleccion = (String) parent.getItemAtPosition(position);
+            if ("Ninguna (Entrada manual)".equals(seleccion)) {
+                maquinaSeleccionadaHolder[0] = "";
+                return;
+            }
+            maquinaSeleccionadaHolder[0] = seleccion;
+            GrupoElectrogeno grupoSeleccionado = null;
+            if (listaGruposInventario != null) {
                 for (GrupoElectrogeno g : listaGruposInventario) {
-                    if (seleccion.contains(g.getCodigo())) {
+                    if (g.getCodigo() != null && g.getCodigo().equalsIgnoreCase(seleccion)) {
+                        grupoSeleccionado = g;
                         break;
                     }
                 }
+            }
+            if (grupoSeleccionado == null) return;
+
+            generadorRepository.getInfoPlaca(grupoSeleccionado.getId(), new Callback<InfoPlaca>() {
+                @Override
+                public void onSuccess(InfoPlaca info) {
+                    if (getContext() == null) return;
+                    aplicarDatosMaquinaAItem(info, seleccion, autoDesc, inputIncluye);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (getContext() == null) return;
+                    aplicarDatosMaquinaAItem(null, seleccion, autoDesc, inputIncluye);
+                }
             });
+        });
+
+        String[] opcionesModo = new String[]{"OPERACIÓN", "STAND-BY", "EMERGENCIA"};
+        ArrayAdapter<String> modoAdapter = new ArrayAdapter<>(requireContext(), R.layout.item_dropdown_custom, opcionesModo);
+        inputModo.setAdapter(modoAdapter);
+        inputModo.setOnClickListener(v -> inputModo.showDropDown());
+
+        if (tilPrecio != null) {
+            tilPrecio.setHint(cotizacionActual.isDiario() ? "Tarifa por Día (Sin IGV)" : "Tarifa Mensual (Sin IGV)");
         }
 
         inputPrecio.addTextChangedListener(new android.text.TextWatcher() {
@@ -416,14 +503,17 @@ public class NuevaCotizacionFragment extends Fragment {
 
         if (itemExistente != null) {
             autoDesc.setText(itemExistente.getDescripcionEquipo());
-            inputPotencia.setText(itemExistente.getPotencia());
-            inputMarca.setText(itemExistente.getMarca());
-            inputModo.setText(itemExistente.getModoTrabajo());
+            if (itemExistente.getModoTrabajo() != null && !itemExistente.getModoTrabajo().isEmpty()) {
+                inputModo.setText(itemExistente.getModoTrabajo(), false);
+            } else {
+                inputModo.setText("OPERACIÓN", false);
+            }
             inputIncluye.setText(itemExistente.getIncluye());
             inputPrecio.setText(String.valueOf(itemExistente.getPrecioUnitario()));
             inputPrecioHE.setText(String.valueOf(itemExistente.getPrecioHoraExtra()));
             btnGuardar.setText("Actualizar");
         } else {
+            inputModo.setText("OPERACIÓN", false);
             inputIncluye.setText("Bandeja y kit anti derrame, extintor, varilla puesta a tierra y certificado de operatividad");
         }
 
@@ -434,8 +524,6 @@ public class NuevaCotizacionFragment extends Fragment {
             }
 
             String desc = autoDesc.getText().toString();
-            String pot = inputPotencia.getText().toString();
-            String marca = inputMarca.getText().toString();
             String modo = inputModo.getText().toString();
             String incluye = inputIncluye.getText().toString();
             double precio = 0;
@@ -457,12 +545,14 @@ public class NuevaCotizacionFragment extends Fragment {
 
             if (itemExistente != null) {
                 int index = cotizacionActual.getItems().indexOf(itemExistente);
-                ItemCotizacion itemEditado = new ItemCotizacion(desc, pot, modo, marca, precio, precioHE);
+                ItemCotizacion itemEditado = new ItemCotizacion(desc, "", modo, "", precio, precioHE);
                 itemEditado.setIncluye(incluye);
+                itemEditado.setCodigoMaquina(maquinaSeleccionadaHolder[0]);
                 cotizacionActual.getItems().set(index, itemEditado);
             } else {
-                ItemCotizacion nuevoItem = new ItemCotizacion(desc, pot, modo, marca, precio, precioHE);
+                ItemCotizacion nuevoItem = new ItemCotizacion(desc, "", modo, "", precio, precioHE);
                 nuevoItem.setIncluye(incluye);
+                nuevoItem.setCodigoMaquina(maquinaSeleccionadaHolder[0]);
                 cotizacionActual.getItems().add(nuevoItem);
             }
 
@@ -471,6 +561,65 @@ public class NuevaCotizacionFragment extends Fragment {
         });
 
         dialog.show();
+    }
+
+    private void aplicarDatosMaquinaAItem(InfoPlaca info, String codigoGrupo, AutoCompleteTextView autoDesc,
+                                          TextInputEditText inputIncluye) {
+        String tipo = (info != null) ? info.getTipoEquipoOrDefault(codigoGrupo) : "";
+        if (tipo.isEmpty()) {
+            if (codigoGrupo != null && (codigoGrupo.toUpperCase().startsWith("CAP") || codigoGrupo.toUpperCase().startsWith("COM"))) {
+                tipo = "Compresora de aire";
+            } else {
+                tipo = "Grupo electrógeno";
+            }
+        }
+
+        boolean esCompresora = "Compresora de aire".equalsIgnoreCase(tipo);
+
+        if (esCompresora) {
+            String marca = "";
+            String caudal = "";
+            if (info != null) {
+                marca = !info.getMarcaCompresor().isEmpty() ? info.getMarcaCompresor() : info.getMarcaGrupo();
+                caudal = !info.getCaudal().isEmpty() ? info.getCaudal() : info.getPotenciaStandBy();
+            }
+
+            StringBuilder descBuilder = new StringBuilder();
+            descBuilder.append("Compresora de aire");
+            if (marca != null && !marca.trim().isEmpty()) {
+                descBuilder.append(" marca ").append(marca.trim());
+            }
+            descBuilder.append(".");
+
+            if (caudal != null && !caudal.trim().isEmpty()) {
+                descBuilder.append("\nCaudal: ").append(caudal.trim());
+            }
+
+            autoDesc.setText(descBuilder.toString());
+            inputIncluye.setText("Bandeja y kit anti derrame, extintor, mangueras de aire con acoples rápidos y certificado de operatividad");
+
+        } else {
+            String marca = (info != null && info.getMarcaGrupo() != null) ? info.getMarcaGrupo().trim() : "";
+            String potSb = (info != null && info.getPotenciaStandBy() != null) ? info.getPotenciaStandBy().trim() : "";
+            String potC = (info != null && info.getPotenciaContinua() != null) ? info.getPotenciaContinua().trim() : "";
+
+            StringBuilder descBuilder = new StringBuilder();
+            descBuilder.append("Grupo electrógeno encapsulado");
+            if (!marca.isEmpty()) {
+                descBuilder.append(" marca ").append(marca);
+            }
+            descBuilder.append(".");
+
+            if (!potSb.isEmpty()) {
+                descBuilder.append("\nPotencia stand-by: ").append(potSb);
+            }
+            if (!potC.isEmpty()) {
+                descBuilder.append("\nPotencia continua: ").append(potC);
+            }
+
+            autoDesc.setText(descBuilder.toString());
+            inputIncluye.setText("Bandeja y kit anti derrame, extintor, varilla puesta a tierra y certificado de operatividad");
+        }
     }
 
     private void calcularHoraExtraAutomatica(TextInputEditText inputPrecio, TextInputEditText inputHE) {
@@ -503,12 +652,19 @@ public class NuevaCotizacionFragment extends Fragment {
 
         cotizacionActual.calcularTotales();
 
+        if (cotizacionActual.getCostoMovilizacion() > 0) {
+            binding.layoutRowMovilizacion.setVisibility(View.VISIBLE);
+            binding.tvMovilizacionGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getCostoMovilizacion()));
+        } else {
+            binding.layoutRowMovilizacion.setVisibility(View.GONE);
+        }
+
         binding.tvSubtotalGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getSubtotalGlobal()));
         binding.tvIgvGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getIgvGlobal()));
         binding.tvTotalGlobal.setText(String.format(Locale.US, "%.2f", cotizacionActual.getTotalGlobal()));
     }
 
-    private void guardarYGenerar(String tipoDocumento) {
+    private void guardarYGenerarPdf() {
         if (binding.inputCliente.getText().toString().isEmpty()) {
             binding.inputCliente.setError("Requerido");
             return;
@@ -541,6 +697,15 @@ public class NuevaCotizacionFragment extends Fragment {
             }
         }
 
+        double mov = 0;
+        try {
+            String val = binding.inputMovilizacion.getText() != null ? binding.inputMovilizacion.getText().toString().trim() : "";
+            if (!val.isEmpty()) {
+                mov = Double.parseDouble(val);
+            }
+        } catch (NumberFormatException ignored) {}
+        cotizacionActual.setCostoMovilizacion(mov);
+
         cotizacionActual.setTipoAlquiler(binding.radioModalidadDiario.isChecked() ? Cotizacion.TIPO_DIARIO : Cotizacion.TIPO_MENSUAL);
         cotizacionActual.setDiasAlquiler(getDiasAlquilerActuales());
         cotizacionActual.setHorasPorDia(getHorasDiaActuales());
@@ -553,13 +718,14 @@ public class NuevaCotizacionFragment extends Fragment {
         cotizacionActual.setFechaEmision(binding.inputFecha.getText().toString());
         cotizacionActual.setMoneda(binding.radioSol.isChecked() ? "SOL" : "USD");
 
+        cotizacionActual.calcularTotales();
+
         if (fichaSeleccionada != null) {
             cotizacionActual.setFichaTecnicaNombre(fichaSeleccionada.getNombreArchivo());
         } else {
             cotizacionActual.setFichaTecnicaNombre(null);
         }
 
-        binding.btnGenerarCotizacion.setEnabled(false);
         binding.btnGenerarPdf.setEnabled(false);
 
         if (esEdicion) {
@@ -567,8 +733,7 @@ public class NuevaCotizacionFragment extends Fragment {
                 @Override
                 public void onSuccess(Void result) {
                     Toast.makeText(getContext(), "Cotización actualizada", Toast.LENGTH_SHORT).show();
-                    if (tipoDocumento.equals("WORD")) generarDocumentoWord();
-                    else generarDocumentoPdf();
+                    generarDocumentoPdf();
                 }
 
                 @Override
@@ -583,9 +748,7 @@ public class NuevaCotizacionFragment extends Fragment {
                 public void onSuccess(String numeroCotizacion) {
                     if (getContext() == null) return;
                     Toast.makeText(getContext(), "Cotización " + numeroCotizacion + " guardada.", Toast.LENGTH_SHORT).show();
-
-                    if (tipoDocumento.equals("WORD")) generarDocumentoWord();
-                    else generarDocumentoPdf();
+                    generarDocumentoPdf();
                 }
 
                 @Override
@@ -598,12 +761,7 @@ public class NuevaCotizacionFragment extends Fragment {
     }
 
     private void habilitarBotones() {
-        binding.btnGenerarCotizacion.setEnabled(true);
         binding.btnGenerarPdf.setEnabled(true);
-    }
-
-    private void generarDocumentoWord() {
-        generarDocumentoPdf();
     }
 
     private void generarDocumentoPdf() {
@@ -652,7 +810,7 @@ public class NuevaCotizacionFragment extends Fragment {
         List<String> nombresFichas = new ArrayList<>();
         nombresFichas.add("Ninguna (No adjuntar)");
 
-        fichasAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, nombresFichas);
+        fichasAdapter = new ArrayAdapter<>(requireContext(), R.layout.item_dropdown_custom, nombresFichas);
         binding.autoCompleteFichas.setAdapter(fichasAdapter);
 
         if (esEdicion && cotizacionActual.getFichaTecnicaNombre() != null) {

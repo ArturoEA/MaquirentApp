@@ -26,6 +26,7 @@ public class Cotizacion implements Serializable {
     private List<String> condicionesComerciales;
 
     private List<ItemCotizacion> items;
+    private double costoMovilizacion = 0.0;
     private double subtotalGlobal;
     private double igvGlobal;
     private double totalGlobal;
@@ -53,6 +54,10 @@ public class Cotizacion implements Serializable {
                 double subtotalItem = esDiario ? (precio * dias) : precio;
                 this.subtotalGlobal += subtotalItem;
             }
+        }
+
+        if (this.costoMovilizacion > 0) {
+            this.subtotalGlobal += this.costoMovilizacion;
         }
 
         this.igvGlobal = com.example.maquirentapp.strategy.StrategyProvider.getCalculadoraStrategy().calcularImpuesto(this.subtotalGlobal);
@@ -211,5 +216,13 @@ public class Cotizacion implements Serializable {
 
     public void setFichaTecnicaNombre(String fichaTecnicaNombre) {
         this.fichaTecnicaNombre = fichaTecnicaNombre;
+    }
+
+    public double getCostoMovilizacion() {
+        return costoMovilizacion;
+    }
+
+    public void setCostoMovilizacion(double costoMovilizacion) {
+        this.costoMovilizacion = costoMovilizacion;
     }
 }

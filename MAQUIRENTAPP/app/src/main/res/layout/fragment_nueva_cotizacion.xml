@@ -268,6 +268,23 @@
             tools:itemCount="2"
             tools:listitem="@layout/item_cotizacion" />
 
+        <!-- Campo Opcional: Movilización y desmovilización -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilMovilizacion"
+            style="@style/CustomTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Movilización y desmovilización (Opcional)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputMovilizacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -275,6 +292,32 @@
             android:background="@drawable/input_border"
             android:orientation="vertical"
             android:padding="12dp">
+
+            <LinearLayout
+                android:id="@+id/layoutRowMovilizacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/anta_font"
+                    android:text="Movilización y desmov.:"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:id="@+id/tvMovilizacionGlobal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta_font"
+                    android:text="0.00"
+                    android:textColor="@color/black"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -351,7 +394,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Sección Condiciones Comerciales -->
+        <!-- Sección Condiciones Comerciales agrupada en card colapsable -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -359,59 +402,118 @@
             android:layout_marginBottom="12dp"
             android:background="#CCCCCC" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="@font/anta_font"
-                android:text="Condiciones Comerciales"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/btnRestablecerCondiciones"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/anta_font"
-                android:minHeight="36dp"
-                android:text="Restablecer"
-                android:textColor="@color/azul_100"
-                android:textSize="12sp" />
-
-            <Button
-                android:id="@+id/btnAgregarCondicion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:backgroundTint="@color/selection_indicator"
-                android:fontFamily="@font/anta_font"
-                android:minHeight="40dp"
-                android:text="+ Condición"
-                android:textColor="@color/white" />
-        </LinearLayout>
-
-        <TextView
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardGrupoCondiciones"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:fontFamily="@font/anta_font"
-            android:text="Puedes editar, marcar/desmarcar o eliminar condiciones según este contrato."
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:backgroundTint="@color/background_light"
+            app:cardBackgroundColor="@color/background_light"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/black"
+            app:strokeWidth="2dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerCondiciones"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <!-- Header de la sección (Click para expandir/colapsar) -->
+                <LinearLayout
+                    android:id="@+id/layoutHeaderCondiciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tvTituloCondiciones"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/anta_font"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="Condiciones comerciales"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/ivExpandirCondiciones"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/icon_flecha_negro"
+                        android:rotation="90" />
+                </LinearLayout>
+
+                <!-- Contenido colapsable (por defecto compacto / oculto) -->
+                <LinearLayout
+                    android:id="@+id/layoutContenidoCondiciones"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Texto descriptivo por debajo del título -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/anta_font"
+                        android:text="Puedes editar, marcar/desmarcar o eliminar condiciones según este contrato."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <!-- Botones por debajo y a la derecha de este texto -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:gravity="end|center_vertical"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnRestablecerCondiciones"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/anta_font"
+                            android:minHeight="36dp"
+                            android:text="RESTABLECER"
+                            android:textColor="@color/azul_100"
+                            android:textSize="12sp" />
+
+                        <Button
+                            android:id="@+id/btnAgregarCondicion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:backgroundTint="@color/selection_indicator"
+                            android:fontFamily="@font/anta_font"
+                            android:minHeight="38dp"
+                            android:paddingHorizontal="12dp"
+                            android:text="+ Añadir otra condición"
+                            android:textColor="@color/white"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Lista de condiciones -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerCondiciones"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Sección Ficha Técnica -->
         <View
@@ -454,43 +556,22 @@
                 android:id="@+id/autoCompleteFichas"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/anta_font"
                 android:inputType="none"
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
+        <Button
+            android:id="@+id/btnGenerarPdf"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnGenerarCotizacion"
-                android:layout_width="0dp"
-                android:layout_height="55dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginEnd="15dp"
-                android:layout_marginBottom="32dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/selection_indicator"
-                android:fontFamily="@font/anta_font"
-                android:text="Word"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/btnGenerarPdf"
-                android:layout_width="0dp"
-                android:layout_height="55dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="32dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/selection_indicator"
-                android:fontFamily="@font/anta_font"
-                android:text="PDF"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
-
-        </LinearLayout>
+            android:layout_height="55dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="@color/selection_indicator"
+            android:fontFamily="@font/anta_font"
+            android:text="Generar PDF"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
 
         <WebView
             android:id="@+id/webViewPdfHidden"

@@ -2,8 +2,10 @@ package com.example.maquirentapp.View;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +18,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,6 +39,8 @@ import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -361,6 +367,7 @@ public class ListaClientesValorizacionFragment extends Fragment {
         recyclerConsolidado.setLayoutManager(new LinearLayoutManager(getContext()));
         consolidadoAdapter = new ConsolidadoValorizacionesAdapter(valorizacion -> abrirPdfValorizacion(valorizacion));
         recyclerConsolidado.setAdapter(consolidadoAdapter);
+        setupSwipeToDeleteConsolidado();
 
         btnMesAnterior.setOnClickListener(v -> {
             fechaDesdePersonalizada = null;
@@ -395,6 +402,66 @@ public class ListaClientesValorizacionFragment extends Fragment {
         });
 
         btnExportarExcel.setOnClickListener(v -> exportarConsolidadoExcel());
+    }
+
+    private void setupSwipeToDeleteConsolidado() {
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView r, @NonNull RecyclerView.ViewHolder v, @NonNull RecyclerView.ViewHolder t) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int pos = viewHolder.getAdapterPosition();
+                if (pos < 0 || pos >= consolidadoAdapter.getItemCount()) return;
+                Valorizacion item = consolidadoAdapter.getItem(pos);
+
+                new MaterialAlertDialogBuilder(getContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Eliminar Valorización")
+                        .setMessage("¿Eliminar valorización " + (item.getNumeroValorizacion() != null ? item.getNumeroValorizacion() : "") + "?")
+                        .setPositiveButton("Eliminar", (d, w) -> {
+                            repository.eliminarValorizacion(item.getId(), new Callback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                        listaTodasLasValorizaciones.removeIf(v -> v.getId().equals(item.getId()));
+                                    } else {
+                                        for (int i = 0; i < listaTodasLasValorizaciones.size(); i++) {
+                                            if (listaTodasLasValorizaciones.get(i).getId().equals(item.getId())) {
+                                                listaTodasLasValorizaciones.remove(i);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    filtrarYAplicarConsolidado();
+                                    Toast.makeText(getContext(), "Valorización eliminada", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Toast.makeText(getContext(), "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    consolidadoAdapter.notifyItemChanged(pos);
+                                }
+                            });
+                        })
+                        .setNegativeButton("Cancelar", (d, w) -> consolidadoAdapter.notifyItemChanged(pos))
+                        .setOnCancelListener(d -> consolidadoAdapter.notifyItemChanged(pos))
+                        .show();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView r, @NonNull RecyclerView.ViewHolder v, float dX, float dY, int a, boolean i) {
+                new RecyclerViewSwipeDecorator.Builder(c, r, v, dX, dY, a, i)
+                        .addBackgroundColor(ContextCompat.getColor(requireContext(), R.color.red_accent))
+                        .addActionIcon(R.drawable.icon_eliminar_rojo)
+                        .setActionIconTint(R.color.white)
+                        .addCornerRadius(TypedValue.COMPLEX_UNIT_DIP, 12)
+                        .create()
+                        .decorate();
+                super.onChildDraw(c, r, v, dX, dY, a, i);
+            }
+        }).attachToRecyclerView(recyclerConsolidado);
     }
 
     private void abrirPdfValorizacion(Valorizacion valorizacion) {

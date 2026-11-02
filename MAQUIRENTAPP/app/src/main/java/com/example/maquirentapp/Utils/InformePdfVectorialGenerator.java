@@ -57,13 +57,13 @@ public class InformePdfVectorialGenerator {
         paintTitulo.setTextAlign(Paint.Align.CENTER);
 
         Paint paintLogoMaqui = new Paint();
-        paintLogoMaqui.setColor(Color.parseColor("#ff8c8c"));
-        paintLogoMaqui.setTextSize(22f);
+        paintLogoMaqui.setColor(Color.BLACK);
+        paintLogoMaqui.setTextSize(19f);
         paintLogoMaqui.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
         Paint paintLogoRent = new Paint();
-        paintLogoRent.setColor(Color.parseColor("#80b6e0"));
-        paintLogoRent.setTextSize(22f);
+        paintLogoRent.setColor(Color.BLACK);
+        paintLogoRent.setTextSize(19f);
         paintLogoRent.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
         Paint paintLineas = new Paint();
@@ -419,7 +419,10 @@ public class InformePdfVectorialGenerator {
 
     private static int dibujarEncabezado(Canvas canvas, Paint logoM, Paint logoR, Paint texto, Paint negrita, Paint lineas) {
         int y = 40;
-        canvas.drawText(BuildConfig.COMPANY_NAME, MARGIN, y, logoM);
+        String tituloEmpresa = (BuildConfig.COMPANY_NAME != null && BuildConfig.COMPANY_NAME.toUpperCase().contains("MAQUIRENT"))
+                ? "MAQUIRENT"
+                : BuildConfig.COMPANY_NAME;
+        canvas.drawText(tituloEmpresa, MARGIN, y, logoM);
 
         y += 20;
         canvas.drawText(BuildConfig.COMPANY_OWNER, MARGIN, y, negrita);

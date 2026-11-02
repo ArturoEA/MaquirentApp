@@ -179,7 +179,7 @@ public class ConfiguracionFragment extends Fragment {
         // Item Lista de Grupos
         View itemListaGrupos = view.findViewById(R.id.item_lista_grupos);
         ((TextView) itemListaGrupos.findViewById(R.id.text_item_configuracion))
-                .setText("Lista de grupos electrógenos");
+                .setText("Lista de maquinaria");
         ((ImageView) itemListaGrupos.findViewById(R.id.icon_item_configuracion))
                 .setImageResource(R.drawable.icon_generador);
         ((ImageView) itemListaGrupos.findViewById(R.id.icon_item_configuracion))

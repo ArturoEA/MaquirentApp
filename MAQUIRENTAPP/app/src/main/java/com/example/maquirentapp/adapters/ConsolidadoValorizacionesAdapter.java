@@ -53,6 +53,11 @@ public class ConsolidadoValorizacionesAdapter extends ListAdapter<Valorizacion, 
         holder.bind(getItem(position), listener);
     }
 
+    @Override
+    public Valorizacion getItem(int position) {
+        return super.getItem(position);
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvNumeroVal, tvFechaEmision, tvCliente, tvEquipo, tvPeriodoTareo, tvBadgeHE, tvTotal;
 

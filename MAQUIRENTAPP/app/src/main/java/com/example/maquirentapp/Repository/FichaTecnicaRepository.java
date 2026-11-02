@@ -5,7 +5,9 @@ import android.net.Uri;
 import com.example.maquirentapp.Model.FichaTecnica;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -14,8 +16,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -101,13 +105,29 @@ public class FichaTecnicaRepository {
                                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
                                 ficha.setFechaSubida(sdf.format(new Date(timeCreated)));
 
-                                // Almacenar en Firestore para disponibilidad offline permanente
-                                db.collection(COL_FICHAS).document(item.getName()).set(ficha);
-
-                                fichas.add(ficha);
-                                if (counter.decrementAndGet() == 0) {
-                                    if (callback != null) callback.onSuccess(new ArrayList<>(fichas));
-                                }
+                                // Almacenar en Firestore respetando nombres ya editados por el usuario
+                                db.collection(COL_FICHAS).document(item.getName()).get().addOnSuccessListener(docSnapshot -> {
+                                    if (!docSnapshot.exists()) {
+                                        db.collection(COL_FICHAS).document(item.getName()).set(ficha);
+                                        fichas.add(ficha);
+                                    } else {
+                                        FichaTecnica fExistente = docSnapshot.toObject(FichaTecnica.class);
+                                        if (fExistente != null) {
+                                            if (fExistente.getId() == null) fExistente.setId(docSnapshot.getId());
+                                            fichas.add(fExistente);
+                                        } else {
+                                            fichas.add(ficha);
+                                        }
+                                    }
+                                    if (counter.decrementAndGet() == 0) {
+                                        if (callback != null) callback.onSuccess(new ArrayList<>(fichas));
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    fichas.add(ficha);
+                                    if (counter.decrementAndGet() == 0) {
+                                        if (callback != null) callback.onSuccess(new ArrayList<>(fichas));
+                                    }
+                                });
                             }).addOnFailureListener(e -> {
                                 if (counter.decrementAndGet() == 0) {
                                     if (callback != null) callback.onSuccess(new ArrayList<>(fichas));
@@ -127,7 +147,10 @@ public class FichaTecnicaRepository {
 
     public void subirPdf(Uri pdfUri, String nombreFinal, ProgressCallback progressCallback, Callback<Void> callback) {
         StorageReference fileRef = fichasTecnicasRef.child(nombreFinal);
-        UploadTask uploadTask = fileRef.putFile(pdfUri);
+        StorageMetadata uploadMetadata = new StorageMetadata.Builder()
+                .setContentType("application/pdf")
+                .build();
+        UploadTask uploadTask = fileRef.putFile(pdfUri, uploadMetadata);
 
         if (progressCallback != null) {
             uploadTask.addOnProgressListener(snapshot -> {
@@ -155,6 +178,65 @@ public class FichaTecnicaRepository {
                 }).addOnFailureListener(e -> callback.onSuccess(null));
             }).addOnFailureListener(e -> callback.onSuccess(null));
         }).addOnFailureListener(callback::onError);
+    }
+
+    public void actualizarNombrePdf(FichaTecnica ficha, String nuevoNombre, Callback<Void> callback) {
+        if (ficha == null) {
+            if (callback != null) callback.onError(new Exception("Ficha no válida"));
+            return;
+        }
+        String docId = ficha.getId();
+        if (docId == null || docId.trim().isEmpty()) {
+            docId = ficha.getNombreArchivo();
+        }
+        if (docId == null || docId.trim().isEmpty()) {
+            if (callback != null) callback.onError(new Exception("ID de documento no válido"));
+            return;
+        }
+
+        String finalNombre = nuevoNombre.trim();
+        if (!finalNombre.toLowerCase().endsWith(".pdf")) {
+            finalNombre = finalNombre + ".pdf";
+        }
+        final String nombreParaGuardar = finalNombre;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("nombreArchivo", nombreParaGuardar);
+
+        db.collection(COL_FICHAS).document(docId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    ficha.setNombreArchivo(nombreParaGuardar);
+                    if (callback != null) callback.onSuccess(null);
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
+
+    public void eliminarPdf(FichaTecnica ficha, Callback<Void> callback) {
+        if (ficha == null || ficha.getUrlPdf() == null) {
+            if (callback != null) callback.onError(new Exception("Ficha o URL no válida"));
+            return;
+        }
+        try {
+            StorageReference fileRef = storage.getReferenceFromUrl(ficha.getUrlPdf());
+            String fileName = fileRef.getName();
+            fileRef.delete()
+                    .addOnSuccessListener(aVoid -> {
+                        String docId = ficha.getId() != null ? ficha.getId() : fileName;
+                        db.collection(COL_FICHAS).document(docId).delete();
+                        if (!docId.equals(fileName)) {
+                            db.collection(COL_FICHAS).document(fileName).delete();
+                        }
+                        if (callback != null) callback.onSuccess(null);
+                    })
+                    .addOnFailureListener(e -> {
+                        if (callback != null) callback.onError(e);
+                    });
+        } catch (Exception e) {
+            if (callback != null) callback.onError(e);
+        }
     }
 
     public void eliminarPdf(String urlPdf, Callback<Void> callback) {

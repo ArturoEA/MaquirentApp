@@ -3,6 +3,7 @@ package com.example.maquirentapp.Model;
 import java.io.Serializable;
 
 public class ItemCotizacion implements Serializable {
+    private String codigoMaquina = "";
     private String descripcionEquipo;
     private String potencia;
     private String modoTrabajo;
@@ -116,5 +117,13 @@ public class ItemCotizacion implements Serializable {
 
     public double getTotalConIgv() {
         return getPrecioUnitario() * 1.18;
+    }
+
+    public String getCodigoMaquina() {
+        return codigoMaquina != null ? codigoMaquina : "";
+    }
+
+    public void setCodigoMaquina(String codigoMaquina) {
+        this.codigoMaquina = codigoMaquina != null ? codigoMaquina : "";
     }
 }

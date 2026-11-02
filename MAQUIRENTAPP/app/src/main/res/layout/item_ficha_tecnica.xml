@@ -49,34 +49,45 @@
 
         </FrameLayout>
 
-        <!-- Nombre del archivo -->
-        <TextView
-            android:id="@+id/tv_nombre_archivo"
+        <!-- Fila Nombre del archivo y Botón Editar -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="ficha_tecnica.pdf"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <!-- Fecha de subida -->
-        <TextView
-            android:id="@+id/tv_fecha"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="01/01/2025"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="12sp" />
+            <!-- Nombre del archivo -->
+            <TextView
+                android:id="@+id/tv_nombre_archivo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="@font/anta_font"
+                android:maxLines="2"
+                android:text="ficha_tecnica.pdf"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Botón editar nombre del PDF -->
+            <ImageButton
+                android:id="@+id/btn_editar_nombre"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/icon_editar_blanco"
+                android:backgroundTint="@color/white"
+                android:contentDescription="Editar nombre" />
+
+        </LinearLayout>
 
         <!-- Botones de acción -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="5dp"
             android:gravity="center"
             android:orientation="horizontal">
@@ -84,8 +95,8 @@
             <!-- Botón compartir -->
             <ImageButton
                 android:id="@+id/btn_compartir"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="27dp"
+                android:layout_height="27dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/icon_compartir"
                 android:backgroundTint="@color/white"
@@ -94,10 +105,10 @@
             <!-- Botón descargar -->
             <ImageButton
                 android:id="@+id/btn_descargar"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="27dp"
+                android:layout_height="27dp"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="5dp"
+                android:layout_marginEnd="6dp"
                 android:background="@drawable/icon_descargar"
                 android:backgroundTint="@color/white"
                 android:contentDescription="Descargar" />
@@ -105,8 +116,8 @@
             <!-- Botón eliminar -->
             <ImageButton
                 android:id="@+id/btn_eliminar"
-                android:layout_width="37dp"
-                android:layout_height="37dp"
+                android:layout_width="29dp"
+                android:layout_height="29dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/icon_eliminar_negro"
                 android:backgroundTint="@color/white"

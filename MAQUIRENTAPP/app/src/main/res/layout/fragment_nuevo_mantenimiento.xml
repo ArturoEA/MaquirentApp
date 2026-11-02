@@ -74,6 +74,15 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
+        <!-- Shimmer Skeleton Items -->
+        <include
+            android:id="@+id/shimmerItemsMantenimiento"
+            layout="@layout/skeleton_list_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:visibility="gone" />
+
         <!-- RecyclerView Items -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerItemsMantenimiento"
@@ -102,19 +111,13 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <HorizontalScrollView
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/layoutFotos"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fillViewport="true"
-            android:layout_marginBottom="55dp"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:id="@+id/layoutFotos"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="55dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAbrirInforme"

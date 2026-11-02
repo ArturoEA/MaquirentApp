@@ -14,6 +14,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -105,7 +106,11 @@ public class GeneradorRepository {
             StorageReference storageRef = storage.getReference()
                     .child("grupos/" + docRef.getId() + ".jpg");
 
-            storageRef.putFile(imagenUri)
+            StorageMetadata metadata = new StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .build();
+
+            storageRef.putFile(imagenUri, metadata)
                     .continueWithTask(task -> {
                         if (!task.isSuccessful()) throw task.getException();
                         return storageRef.getDownloadUrl();
@@ -133,7 +138,11 @@ public class GeneradorRepository {
             StorageReference storageRef = storage.getReference()
                     .child("grupos/" + docRef.getId() + ".jpg");
 
-            storageRef.putBytes(data)
+            StorageMetadata metadata = new StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .build();
+
+            storageRef.putBytes(data, metadata)
                     .continueWithTask(task -> {
                         if (!task.isSuccessful()) throw task.getException();
                         return storageRef.getDownloadUrl();
@@ -186,7 +195,11 @@ public class GeneradorRepository {
         db.collection(COL_GRUPOS).document(grupoId).get()
                 .addOnSuccessListener(doc -> {
                     String oldFotoUrl = doc != null ? doc.getString("foto") : null;
-                    storageRef.putBytes(dataImagen)
+                    StorageMetadata metadata = new StorageMetadata.Builder()
+                            .setContentType("image/jpeg")
+                            .build();
+
+                    storageRef.putBytes(dataImagen, metadata)
                             .continueWithTask(task -> {
                                 if (!task.isSuccessful()) throw task.getException();
                                 return storageRef.getDownloadUrl();
@@ -348,7 +361,10 @@ public class GeneradorRepository {
     public void subirFotoPlaca(String nombreCarpeta, Uri uri, Callback<String> callback) {
         String nombreArchivo = "placa_" + System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("placas/" + nombreCarpeta + "/" + nombreArchivo);
-        ref.putFile(uri)
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
+        ref.putFile(uri, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();
@@ -360,7 +376,10 @@ public class GeneradorRepository {
     public void subirFotoPlacaBytes(String nombreCarpeta, byte[] data, Callback<String> callback) {
         String nombreArchivo = "placa_" + System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("placas/" + nombreCarpeta + "/" + nombreArchivo);
-        ref.putBytes(data)
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
+        ref.putBytes(data, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();
@@ -445,8 +464,11 @@ public class GeneradorRepository {
     public void subirFotoEquipo(String idGrupo, Uri imagenUri, Callback<Void> callback) {
         String nombreArchivo = System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("fotos_equipo/" + idGrupo + "/" + nombreArchivo);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
 
-        ref.putFile(imagenUri)
+        ref.putFile(imagenUri, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();
@@ -463,8 +485,11 @@ public class GeneradorRepository {
     public void subirFotoEquipoBytes(String idGrupo, byte[] data, Callback<Void> callback) {
         String nombreArchivo = System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("fotos_equipo/" + idGrupo + "/" + nombreArchivo);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
 
-        ref.putBytes(data)
+        ref.putBytes(data, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();
@@ -518,8 +543,11 @@ public class GeneradorRepository {
     public void subirPlano(Uri uri, Callback<Void> callback) {
         String nombreArchivo = System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("planos/" + nombreArchivo);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
 
-        ref.putFile(uri)
+        ref.putFile(uri, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();
@@ -536,8 +564,11 @@ public class GeneradorRepository {
     public void subirPlanoBytes(byte[] data, Callback<Void> callback) {
         String nombreArchivo = System.currentTimeMillis() + ".jpg";
         StorageReference ref = storage.getReference().child("planos/" + nombreArchivo);
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpeg")
+                .build();
 
-        ref.putBytes(data)
+        ref.putBytes(data, metadata)
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     return ref.getDownloadUrl();

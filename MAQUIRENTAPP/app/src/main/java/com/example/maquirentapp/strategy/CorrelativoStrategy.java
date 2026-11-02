@@ -2,7 +2,12 @@ package com.example.maquirentapp.strategy;
 
 public interface CorrelativoStrategy {
     /**
-     * Genera el código correlativo de cotización (ej. COT-000123).
+     * Genera el código correlativo de cotización por año (ej. COT-2026-001).
+     */
+    String generarCodigoCotizacion(long numero, int anio);
+
+    /**
+     * Genera el código correlativo de cotización (ej. COT-2026-001 usando el año actual).
      */
     String generarCodigoCotizacion(long numero);
 

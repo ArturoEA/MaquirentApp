@@ -114,4 +114,30 @@ public class PdfCacheManager {
             Log.w(TAG, "Error eliminando PDF offline: " + nombreArchivo, e);
         }
     }
+
+    public static void renombrarPdfOffline(Context context, String nombreViejo, String nombreNuevo) {
+        try {
+            File viejo = getCachedFile(context, nombreViejo);
+            File nuevo = getCachedFile(context, nombreNuevo);
+            if (viejo.exists()) {
+                if (nuevo.exists()) {
+                    nuevo.delete();
+                }
+                if (!viejo.renameTo(nuevo)) {
+                    // Fallback con copiado
+                    try (InputStream is = new FileInputStream(viejo);
+                         FileOutputStream fos = new FileOutputStream(nuevo)) {
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = is.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    }
+                    viejo.delete();
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error renombrando PDF offline: " + nombreViejo + " -> " + nombreNuevo, e);
+        }
+    }
 }

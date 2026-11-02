@@ -206,7 +206,7 @@ public class ValorizacionesRepository {
                     datosContador.put(FIELD_ULTIMA_VAL, nuevoNumero);
 
                     transaction.set(nuevaValRef, valorizacion);
-                    transaction.set(secuenciaRef, datosContador);
+                    transaction.set(secuenciaRef, datosContador, SetOptions.merge());
 
                     return null;
                 }).addOnSuccessListener(aVoid -> callback.onSuccess(valorizacion.getNumeroValorizacion()))

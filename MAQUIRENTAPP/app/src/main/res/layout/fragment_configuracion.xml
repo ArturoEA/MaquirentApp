@@ -110,7 +110,7 @@
 
         <include layout="@layout/item_configuracion"
             android:id="@+id/item_lista_grupos"
-            android:tag="Lista de grupos electrógenos"/>
+            android:tag="Lista de maquinaria"/>
 
         <TextView
             android:id="@+id/tvHeaderUsuarios"

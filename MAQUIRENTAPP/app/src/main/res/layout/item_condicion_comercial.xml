@@ -16,12 +16,15 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <CheckBox
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/cbCondicion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            app:buttonTint="@color/azul_100" />
+            android:button="@drawable/checkbox_condicion"
+            app:useMaterialThemeColors="false"
+            app:buttonTint="@null"
+            android:buttonTint="@null" />
 
         <TextView
             android:id="@+id/tvCondicion"

@@ -5,8 +5,15 @@ import java.util.Locale;
 public class MaquirentCorrelativoStrategy implements CorrelativoStrategy {
 
     @Override
+    public String generarCodigoCotizacion(long numero, int anio) {
+        int anioDosDigitos = Math.abs(anio) % 100;
+        return String.format(Locale.US, "COT-%03d-%02d", numero, anioDosDigitos);
+    }
+
+    @Override
     public String generarCodigoCotizacion(long numero) {
-        return String.format(Locale.US, "COT-%06d", numero);
+        int anio = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+        return generarCodigoCotizacion(numero, anio);
     }
 
     @Override
