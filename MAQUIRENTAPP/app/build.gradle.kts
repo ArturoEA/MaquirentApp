@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.maquirentapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1"
+        versionCode = 4
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,8 +34,8 @@ android {
         create("maquirent") {
             dimension = "cliente"
                 applicationId = "com.example.maquirentapp"
-            versionCode = 3
-            versionName = "1.1-maquirent"
+            versionCode = 4
+            versionName = "1.2-maquirent"
 
             buildConfigField("String", "COMPANY_NAME", "\"MAQUIRENT SERVICIOS GENERALES\"")
             buildConfigField("String", "COMPANY_RUC", "\"10266739414\"")
