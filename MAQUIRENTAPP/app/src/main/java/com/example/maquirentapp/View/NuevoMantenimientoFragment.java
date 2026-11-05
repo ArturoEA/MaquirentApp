@@ -828,7 +828,8 @@ public class NuevoMantenimientoFragment extends Fragment {
                     todasLasFotos
             );
             m.setId(id);
-            m.setFechaCreacion(mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis());
+            long tsFecha = Mantenimiento.parseFechaToMillis(fecha);
+            m.setFechaCreacion(tsFecha > 0 ? tsFecha : (mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis()));
 
             if (mantenimientoActual != null) {
                 m.setProximoHorometro(mantenimientoActual.getProximoHorometro());
@@ -898,11 +899,15 @@ public class NuevoMantenimientoFragment extends Fragment {
                 fotos
         );
 
+        long tsFecha = Mantenimiento.parseFechaToMillis(fecha);
+        long fechaDefinitiva = tsFecha > 0 ? tsFecha : (mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis());
+
         if (mantenimientoId != null) {
             mantenimiento.setId(mantenimientoId);
-            mantenimiento.setFechaCreacion(mantenimientoActual != null ? mantenimientoActual.getFechaCreacion() : System.currentTimeMillis());
+            mantenimiento.setFechaCreacion(fechaDefinitiva);
             actualizarMantenimiento(mantenimiento);
         } else {
+            mantenimiento.setFechaCreacion(fechaDefinitiva);
             crearMantenimiento(mantenimiento);
         }
     }

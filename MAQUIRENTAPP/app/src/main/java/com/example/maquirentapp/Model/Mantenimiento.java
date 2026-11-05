@@ -1,7 +1,13 @@
 package com.example.maquirentapp.Model;
 
+import com.google.firebase.firestore.Exclude;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class Mantenimiento {
@@ -50,7 +56,8 @@ public class Mantenimiento {
         this.itemsRealizados = itemsRealizados != null ? itemsRealizados : new ArrayList<>();
         this.comentarios = comentarios;
         this.fotos = fotos != null ? fotos : new ArrayList<>();
-        this.fechaCreacion = System.currentTimeMillis();
+        long parsed = parseFechaToMillis(fecha);
+        this.fechaCreacion = parsed > 0 ? parsed : System.currentTimeMillis();
     }
 
     // Getters y Setters
@@ -292,5 +299,40 @@ public class Mantenimiento {
 
     public void setCantidadAceite(String cantidadAceite) {
         this.cantidadAceite = cantidadAceite;
+    }
+
+    public static long parseFechaToMillis(String fechaStr) {
+        if (fechaStr == null || fechaStr.trim().isEmpty()) {
+            return 0L;
+        }
+        String[] formatos = new String[]{"dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "yyyy-MM-dd"};
+        for (String formato : formatos) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(formato, Locale.getDefault());
+                sdf.setLenient(false);
+                Date d = sdf.parse(fechaStr.trim());
+                if (d != null) {
+                    return d.getTime();
+                }
+            } catch (Exception ignored) {}
+        }
+        return 0L;
+    }
+
+    @Exclude
+    public long getFechaMantenimientoMillis() {
+        long parsed = parseFechaToMillis(this.fecha);
+        if (parsed > 0) {
+            return parsed;
+        }
+        return fechaCreacion > 0 ? fechaCreacion : System.currentTimeMillis();
+    }
+
+    @Exclude
+    public boolean perteneceAlMes(int anio, int mes) {
+        long millis = getFechaMantenimientoMillis();
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(millis);
+        return cal.get(Calendar.YEAR) == anio && cal.get(Calendar.MONTH) == mes;
     }
 }

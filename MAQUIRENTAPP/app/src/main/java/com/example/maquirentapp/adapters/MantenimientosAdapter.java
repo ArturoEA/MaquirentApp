@@ -90,6 +90,14 @@ public class MantenimientosAdapter extends RecyclerView.Adapter<MantenimientosAd
                                 item.getEmpresa().toLowerCase().contains(filterPattern)) {
                             filteredList.add(item);
                         }
+                        else if (item.getFecha() != null &&
+                                item.getFecha().toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+                        else if (item.getHorometro() != null &&
+                                item.getHorometro().toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
                     }
                 }
 

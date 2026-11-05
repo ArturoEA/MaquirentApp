@@ -68,6 +68,7 @@ public class MantenimientosFragment extends Fragment {
     private Calendar calendarioActual;
     private TextView tvMes;
     private ImageButton btnAnterior, btnSiguiente;
+    private List<Mantenimiento> todosMantenimientosGrupo = new ArrayList<>();
     private List<Mantenimiento> mantenimientosList = new ArrayList<>();
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
     private ImageButton btnAbrirBuscador, btnCerrarBuscador;
@@ -136,30 +137,25 @@ public class MantenimientosFragment extends Fragment {
         calendarioActual = Calendar.getInstance();
         actualizarTextoMes();
 
-        cargarMantenimientosDelMes(
-                calendarioActual.get(Calendar.YEAR),
-                calendarioActual.get(Calendar.MONTH)
-        );
+        cargarMantenimientos(false);
 
         btnAnterior.setOnClickListener(v -> {
             if (!isSearchMode) {
                 calendarioActual.add(Calendar.MONTH, -1);
                 actualizarTextoMes();
-                cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
             }
         });
         btnSiguiente.setOnClickListener(v -> {
             if (!isSearchMode) {
                 calendarioActual.add(Calendar.MONTH, 1);
                 actualizarTextoMes();
-                cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
             }
         });
         tvMes.setOnClickListener(v -> {
             if (!isSearchMode) mostrarSelectorDeMes();
         });
-
-        btnAbrirBuscador.setOnClickListener(v -> activarModoBusqueda());
 
         btnAbrirBuscador.setOnClickListener(v -> activarModoBusqueda());
 
@@ -222,8 +218,12 @@ public class MantenimientosFragment extends Fragment {
                         .setCancelable(false)
                         .setPositiveButton("Eliminar", (dialog, which) -> {
                             adapter.removerMantenimiento(position);
-
+                            todosMantenimientosGrupo.remove(mantenimiento);
                             eliminarMantenimientoFirestore(mantenimiento);
+                            Context ctx = getContext();
+                            if (ctx != null && mantenimiento.getId() != null) {
+                                com.example.maquirentapp.Utils.MantenimientoOfflineManager.eliminarPendiente(ctx, mantenimiento.getId());
+                            }
 
                             Toast.makeText(requireContext(),
                                     "Mantenimiento eliminado",
@@ -277,61 +277,27 @@ public class MantenimientosFragment extends Fragment {
 
         etBuscador.requestFocus();
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(etBuscador, InputMethodManager.SHOW_IMPLICIT);
+        if (imm != null) {
+            imm.showSoftInput(etBuscador, InputMethodManager.SHOW_IMPLICIT);
+        }
 
-        cargarTodoElHistorial();
+        mantenimientosList.clear();
+        mantenimientosList.addAll(todosMantenimientosGrupo);
+        actualizarUI();
     }
 
     private void desactivarModoBusqueda() {
         isSearchMode = false;
 
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(etBuscador.getWindowToken(), 0);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(etBuscador.getWindowToken(), 0);
+        }
 
         layoutBuscador.setVisibility(View.GONE);
         layoutHeader.setVisibility(View.VISIBLE);
 
-        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
-    }
-
-    private void cargarTodoElHistorial() {
-        if (shimmerMantenimientos != null) {
-            shimmerMantenimientos.setVisibility(View.VISIBLE);
-            shimmerMantenimientos.startShimmer();
-        }
-        progressBarBusqueda.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.GONE);
-        emptyState.setVisibility(View.GONE);
-
-        db.collection("mantenimientos")
-                .whereEqualTo("codigoGrupo", codigo)
-                .orderBy("fechaCreacion", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    if (shimmerMantenimientos != null) {
-                        shimmerMantenimientos.stopShimmer();
-                        shimmerMantenimientos.setVisibility(View.GONE);
-                    }
-                    mantenimientosList.clear();
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-                        Mantenimiento m = doc.toObject(Mantenimiento.class);
-                        m.setId(doc.getId());
-                        mantenimientosList.add(m);
-                    }
-
-                    actualizarUI();
-
-                    Toast.makeText(getContext(), "Historial completo cargado para búsqueda", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    if (shimmerMantenimientos != null) {
-                        shimmerMantenimientos.stopShimmer();
-                        shimmerMantenimientos.setVisibility(View.GONE);
-                    }
-                    Log.e(TAG, "Error cargando historial completo", e);
-                    Toast.makeText(getContext(), "Error al cargar historial", Toast.LENGTH_SHORT).show();
-                    desactivarModoBusqueda();
-                });
+        aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
     }
 
     private void actualizarTextoMes() {
@@ -344,7 +310,6 @@ public class MantenimientosFragment extends Fragment {
         tvMes.setText(mes + "\n" + año);
     }
 
-
     private void mostrarSelectorDeMes() {
         final String[] meses = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                 "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"};
@@ -356,13 +321,13 @@ public class MantenimientosFragment extends Fragment {
         NumberPicker yearPicker = new NumberPicker(requireContext());
         yearPicker.setMinValue(añoActual - 30);
         yearPicker.setMaxValue(añoActual + 30);
-        yearPicker.setValue(añoActual);
+        yearPicker.setValue(calendarioActual.get(Calendar.YEAR));
 
         NumberPicker monthPicker = new NumberPicker(requireContext());
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(meses.length - 1);
         monthPicker.setDisplayedValues(meses);
-        monthPicker.setValue(mesActual);
+        monthPicker.setValue(calendarioActual.get(Calendar.MONTH));
 
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.HORIZONTAL);
@@ -377,13 +342,28 @@ public class MantenimientosFragment extends Fragment {
                     calendarioActual.set(Calendar.YEAR, yearPicker.getValue());
                     calendarioActual.set(Calendar.MONTH, monthPicker.getValue());
                     actualizarTextoMes();
-                    cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                    aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
 
-    private void cargarMantenimientosDelMes(int añoSeleccionado, int mesSeleccionado) {
+    private void aplicarFiltroPorMes(int añoSeleccionado, int mesSeleccionado) {
+        mantenimientosList.clear();
+        for (Mantenimiento m : todosMantenimientosGrupo) {
+            if (m.perteneceAlMes(añoSeleccionado, mesSeleccionado)) {
+                mantenimientosList.add(m);
+            }
+        }
+        actualizarUI();
+    }
+
+    private void cargarMantenimientos(boolean forzarRecarga) {
+        if (!forzarRecarga && !todosMantenimientosGrupo.isEmpty()) {
+            aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+            return;
+        }
+
         if (shimmerMantenimientos != null) {
             shimmerMantenimientos.setVisibility(View.VISIBLE);
             shimmerMantenimientos.startShimmer();
@@ -391,34 +371,22 @@ public class MantenimientosFragment extends Fragment {
         recyclerView.setVisibility(View.GONE);
         emptyState.setVisibility(View.GONE);
 
-        Calendar inicioMes = Calendar.getInstance();
-        inicioMes.set(añoSeleccionado, mesSeleccionado, 1, 0, 0, 0);
-        inicioMes.set(Calendar.MILLISECOND, 0);
-        long inicio = inicioMes.getTimeInMillis();
-
-        Calendar finMes = Calendar.getInstance();
-        finMes.set(añoSeleccionado, mesSeleccionado, finMes.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
-        finMes.set(Calendar.MILLISECOND, 999);
-        long fin = finMes.getTimeInMillis();
-
         boolean online = NetworkUtils.isNetworkAvailable(getContext());
         Source source = online ? Source.DEFAULT : Source.CACHE;
 
         db.collection("mantenimientos")
                 .whereEqualTo("codigoGrupo", codigo)
-                .whereGreaterThanOrEqualTo("fechaCreacion", inicio)
-                .whereLessThanOrEqualTo("fechaCreacion", fin)
                 .get(source)
                 .addOnSuccessListener(querySnapshot -> {
                     if (shimmerMantenimientos != null) {
                         shimmerMantenimientos.stopShimmer();
                         shimmerMantenimientos.setVisibility(View.GONE);
                     }
-                    mantenimientosList.clear();
+                    todosMantenimientosGrupo.clear();
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         Mantenimiento m = doc.toObject(Mantenimiento.class);
                         m.setId(doc.getId());
-                        mantenimientosList.add(m);
+                        todosMantenimientosGrupo.add(m);
                     }
 
                     // Integrar mantenimientos guardados localmente en modo offline
@@ -427,40 +395,57 @@ public class MantenimientosFragment extends Fragment {
                         List<Mantenimiento> pendientes = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientesPorGrupo(ctx, codigo);
                         for (Mantenimiento p : pendientes) {
                             boolean yaExiste = false;
-                            for (int i = 0; i < mantenimientosList.size(); i++) {
-                                if (mantenimientosList.get(i).getId() != null && mantenimientosList.get(i).getId().equals(p.getId())) {
-                                    mantenimientosList.set(i, p);
+                            for (int i = 0; i < todosMantenimientosGrupo.size(); i++) {
+                                if (todosMantenimientosGrupo.get(i).getId() != null && todosMantenimientosGrupo.get(i).getId().equals(p.getId())) {
+                                    todosMantenimientosGrupo.set(i, p);
                                     yaExiste = true;
                                     break;
                                 }
                             }
-                            if (!yaExiste && p.getFechaCreacion() >= inicio && p.getFechaCreacion() <= fin) {
-                                mantenimientosList.add(0, p);
+                            if (!yaExiste) {
+                                todosMantenimientosGrupo.add(p);
                             }
                         }
                     }
 
-                    actualizarUI();
+                    // Ordenar todo el historial por fecha de mantenimiento descendente
+                    Collections.sort(todosMantenimientosGrupo, (a, b) -> {
+                        int comp = Long.compare(b.getFechaMantenimientoMillis(), a.getFechaMantenimientoMillis());
+                        if (comp != 0) return comp;
+                        return Long.compare(b.getFechaCreacion(), a.getFechaCreacion());
+                    });
+
+                    if (isSearchMode) {
+                        mantenimientosList.clear();
+                        mantenimientosList.addAll(todosMantenimientosGrupo);
+                        actualizarUI();
+                    } else {
+                        aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                    }
                 })
                 .addOnFailureListener(e -> {
                     if (shimmerMantenimientos != null) {
                         shimmerMantenimientos.stopShimmer();
                         shimmerMantenimientos.setVisibility(View.GONE);
                     }
-                    Log.e(TAG, "Error cargando mantenimientos del mes", e);
+                    Log.e(TAG, "Error cargando mantenimientos", e);
 
-                    // Si falla Firestore en offline, mostrar los que estén guardados localmente
+                    // Si falla Firestore, cargar de pendientes offline
                     Context ctx = getContext();
                     if (ctx != null) {
-                        mantenimientosList.clear();
+                        todosMantenimientosGrupo.clear();
                         List<Mantenimiento> pendientes = com.example.maquirentapp.Utils.MantenimientoOfflineManager.obtenerPendientesPorGrupo(ctx, codigo);
-                        for (Mantenimiento p : pendientes) {
-                            if (p.getFechaCreacion() >= inicio && p.getFechaCreacion() <= fin) {
-                                mantenimientosList.add(p);
-                            }
-                        }
+                        todosMantenimientosGrupo.addAll(pendientes);
+                        Collections.sort(todosMantenimientosGrupo, (a, b) -> Long.compare(b.getFechaMantenimientoMillis(), a.getFechaMantenimientoMillis()));
                     }
-                    actualizarUI();
+
+                    if (isSearchMode) {
+                        mantenimientosList.clear();
+                        mantenimientosList.addAll(todosMantenimientosGrupo);
+                        actualizarUI();
+                    } else {
+                        aplicarFiltroPorMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                    }
                 });
     }
 
@@ -548,7 +533,7 @@ public class MantenimientosFragment extends Fragment {
         }
 
         configureGlobalFab();
-        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+        cargarMantenimientos(true);
 
         Context ctx = getContext();
         if (ctx != null && NetworkUtils.isNetworkAvailable(ctx)) {
@@ -556,7 +541,7 @@ public class MantenimientosFragment extends Fragment {
                 @Override
                 public void onSuccess(Integer count) {
                     if (count > 0 && isAdded()) {
-                        cargarMantenimientosDelMes(calendarioActual.get(Calendar.YEAR), calendarioActual.get(Calendar.MONTH));
+                        cargarMantenimientos(true);
                         Toast.makeText(getContext(), "Se sincronizaron " + count + " mantenimientos pendientes con la nube", Toast.LENGTH_SHORT).show();
                     }
                 }
