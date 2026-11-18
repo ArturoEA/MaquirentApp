@@ -125,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
                 // Verificar si hay fragmentos en el back stack manual
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     getSupportFragmentManager().popBackStack();
+                } else if (navController != null && navController.popBackStack()) {
+                    // Manejado por NavController
                 } else {
                     // Si no hay más fragmentos, dejar que el sistema maneje (salir de la app)
                     setEnabled(false);
@@ -138,12 +140,8 @@ public class MainActivity extends AppCompatActivity {
             btnBack.setOnClickListener(v -> {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     getSupportFragmentManager().popBackStack();
-                } else {
-                    // Comportamiento por defecto del Navigation Component
-                    NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-                    if (!navController.navigateUp()) {
-                        finish();
-                    }
+                } else if (navController != null && !navController.popBackStack()) {
+                    finish();
                 }
             });
         }
@@ -463,6 +461,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Configurar clicks de navegación con animaciones inteligentes
             navHome.setOnClickListener(v -> {
+                limpiarBackStackManual();
                 if ("empleado".equals(userRole)) {
                     navigateWithAnimation(navController, R.id.tareasFragment, 0);
                 } else {
@@ -471,21 +470,34 @@ public class MainActivity extends AppCompatActivity {
             });
 
             navRent.setOnClickListener(v -> {
+                limpiarBackStackManual();
                 navigateWithAnimation(navController, R.id.cgeFragment, 1);
             });
 
             navConfiguracion.setOnClickListener(v -> {
+                limpiarBackStackManual();
                 navigateWithAnimation(navController, R.id.configuracionFragment, 2);
             });
 
             // Configurar botón de retroceso
             btnBack = findViewById(R.id.btn_back);
             btnBack.setOnClickListener(v -> {
-                if (!navController.popBackStack()) {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                } else if (!navController.popBackStack()) {
                     finish();
                 }
             });
         }
+    }
+
+    private void limpiarBackStackManual() {
+        try {
+            androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
+            while (fm.getBackStackEntryCount() > 0) {
+                fm.popBackStackImmediate();
+            }
+        } catch (Exception ignored) {}
     }
 
     // Mét0do público para que los fragments puedan acceder a los datos del usuario

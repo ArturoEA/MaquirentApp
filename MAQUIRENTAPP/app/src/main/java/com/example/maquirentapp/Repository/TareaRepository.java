@@ -56,6 +56,10 @@ public class TareaRepository {
     }
 
     public void completarTarea(String idTarea, List<String> participantesIds, Callback<Void> callback) {
+        completarTareaConChecklist(idTarea, participantesIds, null, callback);
+    }
+
+    public void completarTareaConChecklist(String idTarea, List<String> participantesIds, List<Map<String, Object>> checklist, Callback<Void> callback) {
         FirebaseUser user = auth.getCurrentUser();
         String completadorUid = user != null ? user.getUid() : "sistema";
 
@@ -63,7 +67,24 @@ public class TareaRepository {
         updates.put("completada", true);
         updates.put("completadaPor", completadorUid);
         updates.put("participantes", participantesIds);
+        if (checklist != null) {
+            updates.put("checklist", checklist);
+        }
         updates.put("completadaEn", System.currentTimeMillis());
+
+        db.collection(COL_TAREAS).document(idTarea)
+                .update(updates)
+                .addOnSuccessListener(v -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void aprobarPorGerencia(String idTarea, String aprobadorNombre, Callback<Void> callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("aprobadoPorGerencia", true);
+        updates.put("fechaAprobacion", System.currentTimeMillis());
+        if (aprobadorNombre != null && !aprobadorNombre.isEmpty()) {
+            updates.put("aprobadoPorNombre", aprobadorNombre);
+        }
 
         db.collection(COL_TAREAS).document(idTarea)
                 .update(updates)

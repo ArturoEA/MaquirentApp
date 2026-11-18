@@ -46,18 +46,22 @@ import com.example.maquirentapp.Repository.AlquilerRepository;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.Utils.CustomDatePickerDialog;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager;
 import com.example.maquirentapp.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -68,6 +72,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
     private boolean modoEdicion = false;
     private boolean modoSoloLectura = false;
     private boolean editandoActualmente = false;
+    private boolean advertenciaMantenimientoAceptada = false;
 
     private TextInputEditText inputEmpresa, inputUbicacion, inputFechaInicial, inputFechaFinal,
             inputHorometroInicial, inputHorometroFinal, inputPrecioAlquiler, inputHorasMinimas, inputPrecioHoraExtra;
@@ -810,7 +815,7 @@ public class NuevoAlquilerMensualFragment extends Fragment {
 
                 StringBuilder mensaje = new StringBuilder();
                 if (detalleAEliminar.isPagoMesConfirmado() || detalleAEliminar.isPagoHEConfirmado()) {
-                    mensaje.append("⚠️ Advertencia: Este período ya tiene pagos confirmados (Mes o Horas Extras).\n\n");
+                    mensaje.append("Advertencia: Este período ya tiene pagos confirmados (Mes o Horas Extras).\n\n");
                 }
                 mensaje.append("¿Estás seguro de que deseas eliminar este período: ").append(periodoStr).append("?\n\nEsta acción no se puede deshacer.");
 
@@ -977,6 +982,48 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             Toast.makeText(getContext(), "Por favor completa todos los campos obligatorios", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Advertencia informativa de mantenimiento no bloqueante para nuevo alquiler mensual
+        if (!modoEdicion && !advertenciaMantenimientoAceptada && idGrupo != null) {
+            MantenimientoSaludManager.evaluarSalud(idGrupo, new Callback<MantenimientoSaludManager.ResultadoSalud>() {
+                @Override
+                public void onSuccess(MantenimientoSaludManager.ResultadoSalud salud) {
+                    if (getContext() != null && salud != null && salud.isVencido()) {
+                        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                                .setTitle("Mantenimiento Vencido")
+                                .setMessage("Atención: El equipo asignado presenta mantenimiento pendiente o vencido:\n\n"
+                                        + salud.getMotivo()
+                                        + "\n\n¿Desea continuar con el registro del alquiler de todas formas?")
+                                .setPositiveButton("Continuar con alquiler", (dialog, which) -> {
+                                    advertenciaMantenimientoAceptada = true;
+                                    ejecutarGuardadoAlquilerMensual();
+                                })
+                                .setNegativeButton("Revisar equipo", null)
+                                .setCancelable(false)
+                                .show();
+                    } else {
+                        ejecutarGuardadoAlquilerMensual();
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    ejecutarGuardadoAlquilerMensual();
+                }
+            });
+            return;
+        }
+
+        ejecutarGuardadoAlquilerMensual();
+    }
+
+    private void ejecutarGuardadoAlquilerMensual() {
+        String empresa = inputEmpresa.getText().toString().trim();
+        String ubicacion = inputUbicacion.getText().toString().trim();
+        String fechaInicial = inputFechaInicial.getText().toString().trim();
+        String hIniStr = inputHorometroInicial.getText().toString().trim();
+        String precioStr = inputPrecioAlquiler.getText().toString().trim();
+        String horasMinStr = inputHorasMinimas.getText().toString().trim();
 
         double horometroInicial, horometroFinal = 0, precioAlquiler, precioHoraExtra = 0;
         int horasMinimas;
@@ -1234,6 +1281,9 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                             Toast.makeText(getContext(), "Alquiler Finalizado", Toast.LENGTH_LONG).show();
                         }
                         alquilerActual.setFinalizado(true);
+                        if (idGrupo != null) {
+                            actualizarHorometroYCrearTareaRetorno(idGrupo, horometroFinal);
+                        }
                         deshabilitarCampos();
                         hideGlobalFab();
                     }
@@ -1594,5 +1644,21 @@ public class NuevoAlquilerMensualFragment extends Fragment {
                 btnGenerarSiguienteMesManual.setEnabled(true);
             }
         }
+    }
+
+    private void actualizarHorometroYCrearTareaRetorno(String idGrupoTarget, double horometroFinal) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("gruposElectrogenos").document(idGrupoTarget).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                String codigoG = doc.getString("codigo");
+                Map<String, Object> up = new HashMap<>();
+                if (horometroFinal > 0) {
+                    up.put("horometroActual", horometroFinal);
+                    up.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                }
+                db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
+                MantenimientoSaludManager.crearTareaRetornoCarreta(codigoG != null ? codigoG : idGrupoTarget, null);
+            }
+        });
     }
 }

@@ -594,7 +594,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         btnGenerarValorizacion.setEnabled(true);
-                        btnGenerarValorizacion.setText("📄 Generar Valorización y Guardar PDF");
+                        btnGenerarValorizacion.setText("Generar Valorización y Guardar PDF");
                         progressGenerar.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
@@ -612,7 +612,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         btnGenerarValorizacion.setEnabled(true);
-                        btnGenerarValorizacion.setText("📄 Generar Valorización y Guardar PDF");
+                        btnGenerarValorizacion.setText("Generar Valorización y Guardar PDF");
                         progressGenerar.setVisibility(View.GONE);
 
                         Toast.makeText(getContext(), "Valorización " + valorizacion.getNumeroValorizacion() + " generada", Toast.LENGTH_SHORT).show();
@@ -629,7 +629,7 @@ public class DialogGenerarValorizacion extends DialogFragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         btnGenerarValorizacion.setEnabled(true);
-                        btnGenerarValorizacion.setText("📄 Generar Valorización y Guardar PDF");
+                        btnGenerarValorizacion.setText("Generar Valorización y Guardar PDF");
                         progressGenerar.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "Error creando PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });

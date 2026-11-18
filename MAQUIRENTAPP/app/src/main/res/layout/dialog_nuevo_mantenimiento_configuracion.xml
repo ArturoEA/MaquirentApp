@@ -1,91 +1,225 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/dialog_rounded_white_background"
-    android:orientation="vertical"
-    android:padding="24dp"
     android:theme="@style/Theme.TextMain">
 
-    <TextView
-        android:id="@+id/tvTituloDialog"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
-        android:text="Nuevo Item Mantenimiento"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-    <!-- Vista previa del ícono -->
-    <ImageView
-        android:id="@+id/imgIconoPreview"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/shape_circular"
-        android:backgroundTint="@color/black"
-        android:padding="16dp"
-        android:src="@drawable/icon_mantenimiento_blanco" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSeleccionarIcono"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="@color/selection_indicator"
-        android:text="Seleccionar Ícono"
-        android:textColor="@color/white"
-        app:cornerRadius="12dp"
-        app:icon="@drawable/icon_editar_blanco"
-        app:iconTint="@color/white" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/CustomTextInputLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:hint="Nombre del mantenimiento">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/inputNombreMantenimientoConfiguracion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textCapSentences"
-            android:textColor="@color/black" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Botones de acción -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="20dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancelarDialog"
-            style="@style/Widget.Material3.Button.TextButton"
+        <TextView
+            android:id="@+id/tvTituloDialog"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:backgroundTint="@android:color/transparent"
-            android:text="Cancelar"
-            android:textColor="@color/text_secondary" />
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:text="Nuevo Item de Mantenimiento"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGuardarDialog"
+        <!-- Plan / Tipo de Equipo -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/selection_indicator"
-            android:text="Guardar"
-            android:textColor="@color/white"
-            app:cornerRadius="12dp" />
+            android:layout_marginBottom="4dp"
+            android:text="Plan / Tipo de equipo:"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerTipoEquipo"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/spinner_background"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:spinnerMode="dropdown" />
+
+        <!-- Subsistema -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="Subsistema:"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerSubsistema"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/spinner_background"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:spinnerMode="dropdown" />
+
+        <!-- Nombre del mantenimiento -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/CustomTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:hint="Nombre de la tarea">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputNombreMantenimientoConfiguracion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:textColor="@color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Tipo de Frecuencia -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="Tipo de frecuencia:"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerTipoFrecuencia"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/spinner_background"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:spinnerMode="dropdown" />
+
+        <!-- Contenedor: Por Horas de trabajo -->
+        <LinearLayout
+            android:id="@+id/layoutCamposHoras"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/CustomTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:hint="Intervalo en horas (ej. 250, 500)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputIntervaloHoras"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/black" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/CustomTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:hint="Meses máximos recomendados (ej. 6, 12)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputMesesMaximos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/black" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Contenedor: Por Retorno de Alquiler -->
+        <LinearLayout
+            android:id="@+id/layoutCamposRetorno"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:text="Frecuencia de inspección:"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/spinnerFrecuenciaRetornos"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/spinner_background"
+                android:gravity="center_vertical"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:spinnerMode="dropdown" />
+        </LinearLayout>
+
+        <!-- Componente Clave para Reloj Independiente -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="Reloj de componente asociado:"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerComponenteKey"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/spinner_background"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:spinnerMode="dropdown" />
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelarDialog"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/transparent"
+                android:text="Cancelar"
+                android:textColor="@color/text_secondary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardarDialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/selection_indicator"
+                android:text="Guardar"
+                android:textColor="@color/white"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

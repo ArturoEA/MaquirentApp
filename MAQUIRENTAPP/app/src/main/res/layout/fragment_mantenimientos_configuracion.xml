@@ -1,48 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
-    tools:context=".View.MantenimientosConfiguracionFragment"
+    android:orientation="vertical"
     android:paddingBottom="70dp"
-    android:clipToPadding="true"
-    android:theme="@style/Theme.TextMain">
+    android:clipToPadding="false"
+    android:theme="@style/Theme.TextMain"
+    tools:context=".View.MantenimientosConfiguracionFragment">
 
-    <include
-        android:id="@+id/shimmerConfiguracion"
-        layout="@layout/skeleton_list_vertical"
+    <!-- Selector de Planes (Grupos electrógenos / Compresoras de aire) -->
+    <HorizontalScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:clipToPadding="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewMantenimientosConfiguracion"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <LinearLayout
-        android:id="@+id/emptyState"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
-
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/icon_mantenimiento_blanco"
-            android:alpha="0.5"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
+        <LinearLayout
+            android:id="@+id/containerChipsPlanes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No hay items registrados"
-            android:textSize="16sp"
-            android:textColor="@color/text_secondary" />
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
-    </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-</FrameLayout>
+        <include
+            android:id="@+id/shimmerConfiguracion"
+            layout="@layout/skeleton_list_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewMantenimientosConfiguracion"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/emptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/icon_mantenimiento_blanco"
+                android:alpha="0.3"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No hay tareas registradas en este plan"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>

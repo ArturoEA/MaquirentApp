@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -35,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Model.MantenimientoConfiguracion;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager;
 import com.example.maquirentapp.Utils.NetworkUtils;
 import com.example.maquirentapp.adapters.MantenimientosAdapter;
 import com.facebook.shimmer.ShimmerFrameLayout;
@@ -123,13 +125,17 @@ public class MantenimientosFragment extends Fragment {
         btnAnterior = view.findViewById(R.id.btnAnterior);
         btnSiguiente = view.findViewById(R.id.btnSiguiente);
 
+        ImageButton btnMetricasSalud = view.findViewById(R.id.btnMetricasSalud);
+        if (btnMetricasSalud != null) {
+            btnMetricasSalud.setOnClickListener(v -> mostrarDialogoMetricasSalud());
+        }
+
         btnAbrirBuscador = view.findViewById(R.id.btnAbrirBuscador);
         progressBarBusqueda = view.findViewById(R.id.progressBarBusqueda);
 
         layoutHeader = view.findViewById(R.id.layoutHeader);
         layoutBuscador = view.findViewById(R.id.layoutBuscador);
         etBuscador = view.findViewById(R.id.etBuscador);
-        btnAbrirBuscador = view.findViewById(R.id.btnAbrirBuscador);
         btnCerrarBuscador = view.findViewById(R.id.btnCerrarBuscador);
         progressBarBusqueda = view.findViewById(R.id.progressBarBusqueda);
         shimmerMantenimientos = view.findViewById(R.id.shimmerMantenimientos);
@@ -491,7 +497,26 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void abrirDetalleMantenimiento(Mantenimiento mantenimiento) {
-        NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, mantenimiento.getId());
+        Bundle args = new Bundle();
+        if (codigo != null) args.putString("codigo", codigo);
+        if (mantenimiento != null && mantenimiento.getId() != null) {
+            args.putString("mantenimiento_id", mantenimiento.getId());
+        }
+
+        if (getView() != null) {
+            try {
+                androidx.navigation.Navigation.findNavController(getView())
+                        .navigate(R.id.action_mantenimientos_to_nuevoMantenimiento, args);
+                return;
+            } catch (Exception ignored) {}
+            try {
+                androidx.navigation.Navigation.findNavController(getView())
+                        .navigate(R.id.nuevoMantenimientoFragment, args);
+                return;
+            } catch (Exception ignored) {}
+        }
+
+        NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, mantenimiento != null ? mantenimiento.getId() : null);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.nav_host_fragment, fragment)
@@ -580,11 +605,106 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void abrirNuevoMantenimiento() {
-        NuevoMantenimientoFragment fragment = NuevoMantenimientoFragment.newInstance(codigo, null);
-        requireActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.nav_host_fragment, fragment)
-                .addToBackStack(null)
-                .commit();
+        abrirDetalleMantenimiento(null);
+    }
+
+    private void mostrarDialogoMetricasSalud() {
+        if (getContext() == null || codigo == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_metricas_salud_mantenimiento, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvTitulo = dialogView.findViewById(R.id.tvTituloMetricas);
+        TextView tvSubtitulo = dialogView.findViewById(R.id.tvSubtituloMetricas);
+        TextView tvValorPuntualidad = dialogView.findViewById(R.id.tvValorPuntualidad);
+        TextView tvValorIntervaloPromedio = dialogView.findViewById(R.id.tvValorIntervaloPromedio);
+        TextView tvDiagnostico = dialogView.findViewById(R.id.tvDiagnosticoSalud);
+        LinearLayout layoutBarras = dialogView.findViewById(R.id.layoutBarrasIntervalos);
+        Button btnCerrar = dialogView.findViewById(R.id.btnCerrarMetricas);
+
+        tvTitulo.setText("Salud & Disciplina: " + codigo);
+        tvSubtitulo.setText("Analizando historial de mantenimientos...");
+
+        btnCerrar.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+
+        db.collection("mantenimientos")
+                .whereEqualTo("codigoGrupo", codigo)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Mantenimiento> todosM = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : query) {
+                        Mantenimiento m = doc.toObject(Mantenimiento.class);
+                        m.setId(doc.getId());
+                        todosM.add(m);
+                    }
+
+                    MantenimientoSaludManager.MetricasPuntualidad metricas =
+                            MantenimientoSaludManager.calcularMetricasPuntualidad(todosM);
+
+                    tvSubtitulo.setText(String.format(Locale.US, "Historial de %d mantenimientos evaluados", todosM.size()));
+                    tvValorPuntualidad.setText(String.format(Locale.US, "%.0f%%", metricas.indicePuntualidad));
+
+                    if (metricas.indicePuntualidad >= 85) {
+                        tvValorPuntualidad.setTextColor(Color.parseColor("#4CAF50"));
+                    } else if (metricas.indicePuntualidad >= 60) {
+                        tvValorPuntualidad.setTextColor(Color.parseColor("#FFC107"));
+                    } else {
+                        tvValorPuntualidad.setTextColor(Color.parseColor("#F44336"));
+                    }
+
+                    tvValorIntervaloPromedio.setText(String.format(Locale.US, "%.1f h", metricas.intervaloPromedio));
+                    tvDiagnostico.setText(metricas.diagnostico);
+
+                    layoutBarras.removeAllViews();
+                    if (metricas.intervalos.isEmpty()) {
+                        TextView tvVacio = new TextView(getContext());
+                        tvVacio.setText("Aún no hay suficientes mantenimientos para calcular intervalos.");
+                        tvVacio.setTextColor(Color.GRAY);
+                        tvVacio.setTextSize(12);
+                        layoutBarras.addView(tvVacio);
+                    } else {
+                        for (int i = 0; i < metricas.intervalos.size(); i++) {
+                            MantenimientoSaludManager.PuntoHistorialIntervalo p = metricas.intervalos.get(i);
+                            LinearLayout itemFila = new LinearLayout(getContext());
+                            itemFila.setOrientation(LinearLayout.VERTICAL);
+                            itemFila.setPadding(0, 10, 0, 10);
+
+                            TextView tvCabecera = new TextView(getContext());
+                            String estadoStr = p.esATiempo ? "[A TIEMPO]" : String.format(Locale.US, "[+%.0f h exceso]", p.deltaHoras - 250);
+                            tvCabecera.setText(String.format(Locale.US, "Servicio #%d al horómetro %.1f h  %s", i + 1, p.horometro, estadoStr));
+                            tvCabecera.setTextColor(Color.WHITE);
+                            tvCabecera.setTextSize(12);
+                            tvCabecera.setTypeface(null, android.graphics.Typeface.BOLD);
+
+                            TextView tvSub = new TextView(getContext());
+                            tvSub.setText(String.format(Locale.US, "Fecha: %s | Intervalo: %.1f horas", p.fecha, p.deltaHoras));
+                            tvSub.setTextColor(Color.parseColor("#B0BEC5"));
+                            tvSub.setTextSize(11);
+
+                            ProgressBar barra = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleHorizontal);
+                            barra.setMax(400);
+                            barra.setProgress((int) Math.min(400, p.deltaHoras));
+                            barra.getProgressDrawable().setColorFilter(
+                                    Color.parseColor(p.esATiempo ? "#4CAF50" : "#F44336"),
+                                    android.graphics.PorterDuff.Mode.SRC_IN
+                            );
+
+                            itemFila.addView(tvCabecera);
+                            itemFila.addView(tvSub);
+                            itemFila.addView(barra);
+                            layoutBarras.addView(itemFila);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    tvSubtitulo.setText("Error al cargar historial: " + e.getMessage());
+                });
     }
 }

@@ -1,5 +1,8 @@
 package com.example.maquirentapp.Model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GrupoElectrogeno {
     private String id;
     private String codigo;
@@ -8,6 +11,14 @@ public class GrupoElectrogeno {
     private boolean eliminado = false;
     private long fechaEliminacion = 0;
     private String eliminadoPor = "";
+
+    // Campos de seguimiento de mantenimiento y horómetro
+    private double horometroActual = 0.0;
+    private long fechaActualizacionHorometro = 0;
+    private String tipoEquipo = "Grupo electrógeno";
+    private String unidadMedida = "HORAS";
+    private Map<String, Double> relojesComponentes = new HashMap<>();
+    private Map<String, Long> fechasComponentes = new HashMap<>();
 
     public GrupoElectrogeno() { }
 
@@ -41,5 +52,55 @@ public class GrupoElectrogeno {
 
     public void setOrden(int orden) {
         this.orden = orden;
+    }
+
+    public double getHorometroActual() {
+        return horometroActual;
+    }
+
+    public void setHorometroActual(double horometroActual) {
+        this.horometroActual = horometroActual;
+    }
+
+    public long getFechaActualizacionHorometro() {
+        return fechaActualizacionHorometro;
+    }
+
+    public void setFechaActualizacionHorometro(long fechaActualizacionHorometro) {
+        this.fechaActualizacionHorometro = fechaActualizacionHorometro;
+    }
+
+    public String getTipoEquipo() {
+        return tipoEquipo;
+    }
+
+    public void setTipoEquipo(String tipoEquipo) {
+        this.tipoEquipo = tipoEquipo;
+    }
+
+    public String getUnidadMedida() {
+        return unidadMedida;
+    }
+
+    public void setUnidadMedida(String unidadMedida) {
+        this.unidadMedida = unidadMedida;
+    }
+
+    public Map<String, Double> getRelojesComponentes() {
+        if (relojesComponentes == null) relojesComponentes = new HashMap<>();
+        return relojesComponentes;
+    }
+
+    public void setRelojesComponentes(Map<String, Double> relojesComponentes) {
+        this.relojesComponentes = relojesComponentes;
+    }
+
+    public Map<String, Long> getFechasComponentes() {
+        if (fechasComponentes == null) fechasComponentes = new HashMap<>();
+        return fechasComponentes;
+    }
+
+    public void setFechasComponentes(Map<String, Long> fechasComponentes) {
+        this.fechasComponentes = fechasComponentes;
     }
 }

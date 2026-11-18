@@ -97,7 +97,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:hint="Comentarios">
+            android:hint="Comentarios"
+            app:helperText="Recuerda marcar arriba los componentes cambiados para actualizar sus contadores de horas."
+            app:helperTextEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputComentarios"

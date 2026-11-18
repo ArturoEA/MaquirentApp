@@ -59,7 +59,17 @@
     <fragment
         android:id="@+id/nuevoMantenimientoFragment"
         android:name="com.example.maquirentapp.View.NuevoMantenimientoFragment"
-        tools:layout="@layout/fragment_nuevo_mantenimiento" />
+        tools:layout="@layout/fragment_nuevo_mantenimiento">
+        <argument
+            android:name="codigo"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="mantenimiento_id"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
 
     <fragment
         android:id="@+id/tareasFragment"
@@ -340,6 +350,13 @@
         <argument
             android:name="codigo"
             app:argType="string" />
+        <action
+            android:id="@+id/action_mantenimientos_to_nuevoMantenimiento"
+            app:destination="@id/nuevoMantenimientoFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment

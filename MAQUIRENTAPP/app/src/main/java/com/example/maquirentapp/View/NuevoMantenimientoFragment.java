@@ -55,6 +55,7 @@ import com.example.maquirentapp.R;
 import com.example.maquirentapp.adapters.ItemsMantenimientoSeleccionablesAdapter;
 import com.example.maquirentapp.Utils.ImageUtils;
 import com.example.maquirentapp.Utils.InformePdfVectorialGenerator;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.example.maquirentapp.Utils.NetworkUtils;
@@ -62,6 +63,7 @@ import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
@@ -91,6 +93,7 @@ public class NuevoMantenimientoFragment extends Fragment {
     private String codigoGrupo;
     private String mantenimientoId;
     private boolean modoLectura = true;
+    private double ultimoHorometroRegistrado = 0.0;
 
     // Views
     private TextInputEditText inputEmpresa, inputHorometro, inputFecha, inputComentarios;
@@ -105,6 +108,8 @@ public class NuevoMantenimientoFragment extends Fragment {
 
     private ItemsMantenimientoSeleccionablesAdapter itemsAdapter;
     private List<MantenimientoConfiguracion> itemsConfigList = new ArrayList<>();
+    private List<MantenimientoConfiguracion> todosLosItemsConfig = new ArrayList<>();
+    private String tipoEquipoActual = "Grupo electrógeno";
     private List<Uri> fotosUriList = new ArrayList<>();
     private List<String> fotosUrlList = new ArrayList<>();
 
@@ -188,6 +193,7 @@ public class NuevoMantenimientoFragment extends Fragment {
             modoLectura = false;
             aplicarModoEdicion();
             mostrarFotos();
+            cargarUltimoHorometroEquipo();
         }
     }
 
@@ -264,10 +270,68 @@ public class NuevoMantenimientoFragment extends Fragment {
         }
     }
 
-    private void aplicarItemsConfiguracion(List<MantenimientoConfiguracion> items) {
+    private int obtenerPrioridadSubsistema(String subsistema) {
+        if (subsistema == null) return 99;
+        String s = subsistema.toLowerCase().trim();
+        if (s.contains("lubricaci")) return 1;
+        if (s.contains("combustible")) return 2;
+        if (s.contains("admis") || s.contains("escape")) return 3;
+        if (s.contains("eléctric") || s.contains("electric") || s.contains("generac") || s.contains("control") || s.contains("compres")) return 4;
+        if (s.contains("estructural") || s.contains("carreta") || s.contains("chasis")) return 5;
+        return 6;
+    }
+
+    private MantenimientoConfiguracion buscarConfigPorId(String id) {
+        if (id == null) return null;
+        for (MantenimientoConfiguracion c : itemsConfigList) {
+            if (id.equals(c.getId())) return c;
+        }
+        for (MantenimientoConfiguracion c : todosLosItemsConfig) {
+            if (id.equals(c.getId())) return c;
+        }
+        return null;
+    }
+
+    private void filtrarYAplicarItems() {
+        List<MantenimientoConfiguracion> filtrados = new ArrayList<>();
+        String tipoBuscado = tipoEquipoActual != null ? tipoEquipoActual.toLowerCase().trim() : "grupo electrógeno";
+        boolean esCompresora = tipoBuscado.contains("compresor");
+
+        for (MantenimientoConfiguracion item : todosLosItemsConfig) {
+            String t = item.getTipoEquipo() != null ? item.getTipoEquipo().toLowerCase().trim() : "";
+            if (esCompresora) {
+                if (t.contains("compresor")) {
+                    filtrados.add(item);
+                }
+            } else {
+                if (t.isEmpty() || t.contains("grupo") || t.contains("electr")) {
+                    filtrados.add(item);
+                }
+            }
+        }
+
+        Collections.sort(filtrados, (a, b) -> {
+            int prioA = obtenerPrioridadSubsistema(a.getSubsistema());
+            int prioB = obtenerPrioridadSubsistema(b.getSubsistema());
+            if (prioA != prioB) return Integer.compare(prioA, prioB);
+            return Integer.compare(a.getIntervaloHoras(), b.getIntervaloHoras());
+        });
+
         itemsConfigList.clear();
-        itemsConfigList.addAll(items);
+        itemsConfigList.addAll(filtrados);
         itemsAdapter.actualizarLista(itemsConfigList);
+
+        if (mantenimientoActual != null && mantenimientoActual.getItemsRealizados() != null) {
+            itemsAdapter.setItemsSeleccionados(mantenimientoActual.getItemsRealizados());
+        }
+    }
+
+    private void aplicarItemsConfiguracion(List<MantenimientoConfiguracion> items) {
+        todosLosItemsConfig.clear();
+        if (items != null) {
+            todosLosItemsConfig.addAll(items);
+        }
+        filtrarYAplicarItems();
     }
 
     private void cargarItemsConfiguracion() {
@@ -294,7 +358,6 @@ public class NuevoMantenimientoFragment extends Fragment {
                             item.setId(document.getId());
                             lista.add(item);
                         }
-                        Collections.sort(lista, (a, b) -> Long.compare(a.getFechaCreacion(), b.getFechaCreacion()));
                         aplicarItemsConfiguracion(lista);
                         mostrarShimmerItems(false);
                         com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, lista);
@@ -312,14 +375,29 @@ public class NuevoMantenimientoFragment extends Fragment {
                     .get(Source.SERVER)
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         mostrarShimmerItems(false);
-                        if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
+                        if (queryDocumentSnapshots == null || queryDocumentSnapshots.isEmpty() || queryDocumentSnapshots.size() < 20) {
+                            // Si está vacía o incompleta, sincronizar todas las tareas oficiales de Perkins y Stamford
+                            com.example.maquirentapp.Utils.PlanesMantenimientoDefaults.sincronizarPlantillasCompletas(db, () -> {
+                                db.collection("mantenimientos_configuracion").get(Source.SERVER).addOnSuccessListener(snap2 -> {
+                                    if (snap2 != null && !snap2.isEmpty()) {
+                                        List<MantenimientoConfiguracion> lista = new ArrayList<>();
+                                        for (QueryDocumentSnapshot document : snap2) {
+                                            MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
+                                            item.setId(document.getId());
+                                            lista.add(item);
+                                        }
+                                        aplicarItemsConfiguracion(lista);
+                                        com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, lista);
+                                    }
+                                });
+                            });
+                        } else {
                             List<MantenimientoConfiguracion> lista = new ArrayList<>();
                             for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                                 MantenimientoConfiguracion item = document.toObject(MantenimientoConfiguracion.class);
                                 item.setId(document.getId());
                                 lista.add(item);
                             }
-                            Collections.sort(lista, (a, b) -> Long.compare(a.getFechaCreacion(), b.getFechaCreacion()));
                             aplicarItemsConfiguracion(lista);
                             com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarConfiguracionBackup(ctx, lista);
                         }
@@ -360,7 +438,13 @@ public class NuevoMantenimientoFragment extends Fragment {
                             db.collection("gruposElectrogenos").whereEqualTo("codigo", codigoGrupo).get(source)
                                     .addOnSuccessListener(query -> {
                                         if (!query.isEmpty()) {
-                                            String idEquipo = query.getDocuments().get(0).getId();
+                                            DocumentSnapshot docEq = query.getDocuments().get(0);
+                                            String tipo = docEq.getString("tipoEquipo");
+                                            if (tipo != null && !tipo.trim().isEmpty()) {
+                                                tipoEquipoActual = tipo.trim();
+                                                filtrarYAplicarItems();
+                                            }
+                                            String idEquipo = docEq.getId();
                                             db.collection("infoPlacaGrupo").whereEqualTo("idGrupo", idEquipo).get(source)
                                                     .addOnSuccessListener(query2 -> {
                                                         if (!query2.isEmpty()) {
@@ -769,6 +853,33 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         List<String> itemsSeleccionados = itemsAdapter.getItemsSeleccionados();
 
+        double nuevoH = MantenimientoSaludManager.parseDoubleSafe(horometro);
+        if (!modoLectura && ultimoHorometroRegistrado > 0) {
+            MantenimientoSaludManager.ResultadoValidacionHorometro val =
+                    MantenimientoSaludManager.validarHorometroMantenimiento(ultimoHorometroRegistrado, nuevoH);
+            if (!val.esValido) {
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Horómetro Inválido")
+                        .setMessage(val.mensajeError)
+                        .setPositiveButton("Corregir", null)
+                        .show();
+                return;
+            }
+            if (val.esSaltoGrande) {
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Confirmar incremento de horas")
+                        .setMessage(val.mensajeError)
+                        .setPositiveButton("Sí, es correcto", (d, w) -> iniciarProcesoGuardado(empresa, horometro, fecha, comentarios, itemsSeleccionados))
+                        .setNegativeButton("Corregir", null)
+                        .show();
+                return;
+            }
+        }
+
+        iniciarProcesoGuardado(empresa, horometro, fecha, comentarios, itemsSeleccionados);
+    }
+
+    private void iniciarProcesoGuardado(String empresa, String horometro, String fecha, String comentarios, List<String> itemsSeleccionados) {
         boolean online = NetworkUtils.isNetworkAvailable(getContext());
 
         // Si no hay conexión, guardar directamente en modo offline (datos + fotos locales)
@@ -873,9 +984,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                                     + "\n\nSe sincronizará automáticamente con la nube cuando recuperes la conexión.")
                             .setCancelable(false)
                             .setPositiveButton("Entendido", (dialog, which) -> {
-                                if (isAdded()) {
-                                    requireActivity().getSupportFragmentManager().popBackStack();
-                                }
+                                volverAtras();
                             })
                             .show();
                 });
@@ -1000,11 +1109,12 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos")
                 .add(mantenimiento)
                 .addOnSuccessListener(documentReference -> {
+                    actualizarRelojesDeMaquina(mantenimiento);
                     isGuardando = false;
                     ocultarDialogoCargando();
                     if (getContext() == null) return;
                     Toast.makeText(getContext(), "Mantenimiento guardado", Toast.LENGTH_SHORT).show();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    volverAtras();
                 })
                 .addOnFailureListener(e -> {
                     isGuardando = false;
@@ -1013,7 +1123,7 @@ public class NuevoMantenimientoFragment extends Fragment {
                     Log.w(TAG, "Fallo al guardar en la nube. Guardando en modo offline.", e);
                     com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(getContext(), mantenimiento);
                     Toast.makeText(getContext(), "Guardado localmente en tu dispositivo", Toast.LENGTH_SHORT).show();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    volverAtras();
                 });
     }
 
@@ -1021,12 +1131,13 @@ public class NuevoMantenimientoFragment extends Fragment {
         db.collection("mantenimientos").document(mantenimientoId)
                 .set(mantenimiento)
                 .addOnSuccessListener(aVoid -> {
+                    actualizarRelojesDeMaquina(mantenimiento);
                     isGuardando = false;
                     ocultarDialogoCargando();
                     if (getContext() == null) return;
                     Toast.makeText(getContext(), "Mantenimiento actualizado", Toast.LENGTH_SHORT).show();
                     eliminarFotosRemovidasDeStorage();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    volverAtras();
                 })
                 .addOnFailureListener(e -> {
                     isGuardando = false;
@@ -1035,7 +1146,137 @@ public class NuevoMantenimientoFragment extends Fragment {
                     Log.w(TAG, "Fallo al actualizar en la nube. Guardando en modo offline.", e);
                     com.example.maquirentapp.Utils.MantenimientoOfflineManager.guardarMantenimientoOffline(getContext(), mantenimiento);
                     Toast.makeText(getContext(), "Actualizado localmente en tu dispositivo", Toast.LENGTH_SHORT).show();
-                    requireActivity().getSupportFragmentManager().popBackStack();
+                    volverAtras();
+                });
+    }
+
+    private void volverAtras() {
+        if (!isAdded()) return;
+        if (getView() != null) {
+            try {
+                if (androidx.navigation.Navigation.findNavController(getView()).popBackStack()) {
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
+        if (getActivity() != null) {
+            try {
+                requireActivity().getSupportFragmentManager().popBackStack();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private void cargarUltimoHorometroEquipo() {
+        if (codigoGrupo == null) return;
+        db.collection("gruposElectrogenos").whereEqualTo("codigo", codigoGrupo).get().addOnSuccessListener(query -> {
+            if (query != null && !query.isEmpty()) {
+                DocumentSnapshot doc = query.getDocuments().get(0);
+                Double h = doc.getDouble("horometroActual");
+                if (h != null && h > 0) {
+                    ultimoHorometroRegistrado = h;
+                }
+                String tipo = doc.getString("tipoEquipo");
+                if (tipo != null && !tipo.trim().isEmpty()) {
+                    tipoEquipoActual = tipo.trim();
+                    filtrarYAplicarItems();
+                }
+            }
+            if (ultimoHorometroRegistrado <= 0) {
+                db.collection("mantenimientos")
+                        .whereEqualTo("codigoGrupo", codigoGrupo)
+                        .get()
+                        .addOnSuccessListener(snapM -> {
+                            for (DocumentSnapshot d : snapM.getDocuments()) {
+                                double h = MantenimientoSaludManager.parseDoubleSafe(d.getString("horometro"));
+                                if (h > ultimoHorometroRegistrado) ultimoHorometroRegistrado = h;
+                            }
+                        });
+            }
+        });
+    }
+
+    private void actualizarRelojesDeMaquina(Mantenimiento mantenimiento) {
+        if (mantenimiento == null || mantenimiento.getCodigoGrupo() == null) return;
+        String codigo = mantenimiento.getCodigoGrupo();
+        double horometro = MantenimientoSaludManager.parseDoubleSafe(mantenimiento.getHorometro());
+        final List<String> items = mantenimiento.getItemsRealizados() != null ? mantenimiento.getItemsRealizados() : new ArrayList<>();
+
+        db.collection("gruposElectrogenos")
+                .whereEqualTo("codigo", codigo)
+                .get()
+                .addOnSuccessListener(query -> {
+                    if (query != null && !query.isEmpty()) {
+                        for (DocumentSnapshot doc : query.getDocuments()) {
+                            String docId = doc.getId();
+                            Map<String, Object> relojes = doc.contains("relojesComponentes") && doc.get("relojesComponentes") instanceof Map
+                                    ? (Map<String, Object>) doc.get("relojesComponentes") : new HashMap<>();
+                            Map<String, Object> fechas = doc.contains("fechasComponentes") && doc.get("fechasComponentes") instanceof Map
+                                    ? (Map<String, Object>) doc.get("fechasComponentes") : new HashMap<>();
+
+                            long now = System.currentTimeMillis();
+
+                            relojes.put("aceite", horometro);
+                            fechas.put("aceite", now);
+
+                            for (String it : items) {
+                                MantenimientoConfiguracion cfg = buscarConfigPorId(it);
+                                String clave = (cfg != null && cfg.getClaveRelojComponente() != null && !cfg.getClaveRelojComponente().trim().isEmpty())
+                                        ? cfg.getClaveRelojComponente().trim().toLowerCase() : "";
+                                String nombre = cfg != null && cfg.getNombre() != null ? cfg.getNombre().toLowerCase() : it.toLowerCase();
+
+                                if (!clave.isEmpty()) {
+                                    relojes.put(clave, horometro);
+                                    fechas.put(clave, now);
+                                }
+                                if (clave.equals("aceite") || nombre.contains("aceite")) {
+                                    relojes.put("aceite", horometro);
+                                    fechas.put("aceite", now);
+                                }
+                                if (clave.equals("faja") || nombre.contains("faja") || nombre.contains("correa")) {
+                                    relojes.put("faja", horometro);
+                                    fechas.put("faja", now);
+                                }
+                                if (clave.equals("filtro_aire") || nombre.contains("filtro de aire") || nombre.contains("filtro aire")) {
+                                    relojes.put("filtro_aire", horometro);
+                                    fechas.put("filtro_aire", now);
+                                }
+                                if (clave.equals("filtro_petroleo") || nombre.contains("combustible") || nombre.contains("petróleo") || nombre.contains("petroleo") || nombre.contains("separador")) {
+                                    relojes.put("filtro_petroleo", horometro);
+                                    fechas.put("filtro_petroleo", now);
+                                }
+                                if (clave.equals("carreta") || nombre.contains("carreta") || nombre.contains("perno") || nombre.contains("chasis") || nombre.contains("lanza")) {
+                                    relojes.put("carreta", horometro);
+                                    fechas.put("carreta", now);
+                                }
+                                if (clave.equals("tornillo_compresor") || nombre.contains("tornillo") || nombre.contains("coalescente")) {
+                                    relojes.put("tornillo_compresor", horometro);
+                                    fechas.put("tornillo_compresor", now);
+                                }
+                            }
+
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("horometroActual", horometro);
+                            updates.put("fechaActualizacionHorometro", now);
+                            updates.put("relojesComponentes", relojes);
+                            updates.put("fechasComponentes", fechas);
+
+                            db.collection("gruposElectrogenos").document(docId).update(updates);
+                        }
+                    }
+                });
+
+        // Completar automáticamente tarea preventiva pendiente si existía
+        db.collection("tareas")
+                .whereEqualTo("codigoGrupo", codigo)
+                .whereEqualTo("tipoTarea", "PREVENTIVO")
+                .whereEqualTo("completada", false)
+                .get()
+                .addOnSuccessListener(snapT -> {
+                    if (snapT != null && !snapT.isEmpty()) {
+                        for (DocumentSnapshot tDoc : snapT.getDocuments()) {
+                            db.collection("tareas").document(tDoc.getId()).update("completada", true);
+                        }
+                    }
                 });
     }
 

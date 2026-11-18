@@ -1,12 +1,17 @@
 package com.example.maquirentapp.View;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,33 +23,48 @@ import androidx.navigation.Navigation;
 
 import com.example.maquirentapp.Model.AlquilerMensual;
 import com.example.maquirentapp.Model.DetalleMes;
+import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.Model.Ingreso;
+import com.example.maquirentapp.Model.Mantenimiento;
 import com.example.maquirentapp.Repository.AlquilerRepository;
 import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GrupoElectrogenoFragment extends Fragment {
     private String codigo;
     private String idGrupo;
     private AlquilerRepository alquilerRepository;
+    private FirebaseFirestore db;
 
     private Spinner spinnerMeses;
     private TextView tvTotalSOL, tvTotalUSD;
+    private TextView tvEstadoMantenimientoSub, tvBadgeSaludMantenimiento, btnActualizarHorometroCampo;
+    private GrupoElectrogeno grupoActual;
+    private double horometroActualEquipo = 0.0;
+
     private int mesSeleccionado = Calendar.getInstance().get(Calendar.MONTH); // Mes actual (0-11)
     private int anioActual = Calendar.getInstance().get(Calendar.YEAR);
     private double acumuladoSOL = 0;
     private double acumuladoUSD = 0;
     private boolean isSpinnerInitialLoad = true;
     private int idCargaActual = 0;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +73,7 @@ public class GrupoElectrogenoFragment extends Fragment {
             idGrupo = getArguments().getString("idGrupo");
         }
         alquilerRepository = new AlquilerRepository();
+        db = FirebaseFirestore.getInstance();
     }
 
     @Override
@@ -78,6 +99,16 @@ public class GrupoElectrogenoFragment extends Fragment {
         tvTotalUSD = view.findViewById(R.id.tvTotalUSD);
 
         configurarSpinnerMeses();
+
+        tvEstadoMantenimientoSub = view.findViewById(R.id.tvEstadoMantenimientoSub);
+        tvBadgeSaludMantenimiento = view.findViewById(R.id.tvBadgeSaludMantenimiento);
+        btnActualizarHorometroCampo = view.findViewById(R.id.btnActualizarHorometroCampo);
+
+        if (btnActualizarHorometroCampo != null) {
+            btnActualizarHorometroCampo.setOnClickListener(v -> mostrarDialogoActualizarHorometro(codigoLocal, idGrupoLocal));
+        }
+
+        cargarEstadoSaludMantenimiento(codigoLocal, idGrupoLocal);
 
         CardView cardMantenimientos = view.findViewById(R.id.cardMantenimientos);
         CardView cardHistorialAlquilerMensual = view.findViewById(R.id.cardHistorialAlquilerMensual);
@@ -214,5 +245,148 @@ public class GrupoElectrogenoFragment extends Fragment {
         String simbolo = moneda.equals("USD") ? "$" : "S/.";
         String totalFormateado = String.format(Locale.US, "%s %.2f", simbolo, total);
         textView.setText(totalFormateado);
+    }
+
+    private void cargarEstadoSaludMantenimiento(String codigoGrupo, String idGrupoDoc) {
+        if (codigoGrupo == null && idGrupoDoc == null) return;
+        String idTarget = idGrupoDoc != null && !idGrupoDoc.isEmpty() ? idGrupoDoc : codigoGrupo;
+
+        // 1. Obtener datos del grupo electrógeno
+        db.collection("gruposElectrogenos").document(idTarget).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                grupoActual = doc.toObject(GrupoElectrogeno.class);
+                if (grupoActual != null) {
+                    grupoActual.setId(doc.getId());
+                    horometroActualEquipo = grupoActual.getHorometroActual();
+                }
+            }
+
+            // 2. Obtener mantenimientos para calcular el delta exacto
+            String codigoBuscado = codigoGrupo != null ? codigoGrupo : (grupoActual != null ? grupoActual.getCodigo() : idTarget);
+            db.collection("mantenimientos")
+                    .whereEqualTo("codigoGrupo", codigoBuscado)
+                    .get()
+                    .addOnSuccessListener(snapM -> {
+                        List<Mantenimiento> listaM = new ArrayList<>();
+                        for (QueryDocumentSnapshot mDoc : snapM) {
+                            Mantenimiento m = mDoc.toObject(Mantenimiento.class);
+                            m.setId(mDoc.getId());
+                            listaM.add(m);
+                        }
+
+                        // Si el grupo no tenía horómetro guardado, inferirlo del historial
+                        if (horometroActualEquipo <= 0) {
+                            for (Mantenimiento m : listaM) {
+                                double h = MantenimientoSaludManager.parseDoubleSafe(m.getHorometro());
+                                if (h > horometroActualEquipo) horometroActualEquipo = h;
+                            }
+                            if (grupoActual != null) grupoActual.setHorometroActual(horometroActualEquipo);
+                        }
+
+                        MantenimientoSaludManager.ResultadoSalud salud =
+                                MantenimientoSaludManager.evaluarSalud(grupoActual, listaM);
+
+                        if (isAdded() && tvBadgeSaludMantenimiento != null && tvEstadoMantenimientoSub != null) {
+                            tvBadgeSaludMantenimiento.setText(salud.badgeTexto);
+                            try {
+                                tvBadgeSaludMantenimiento.setBackgroundTintList(
+                                        ColorStateList.valueOf(Color.parseColor(salud.colorHex)));
+                            } catch (Exception ignored) {}
+
+                            String textoHorometro = salud.horometroActual > 0
+                                    ? String.format(Locale.US, "Últ. horómetro: %.0f h", salud.horometroActual)
+                                    : "Últ. horómetro: --";
+                            tvEstadoMantenimientoSub.setText(textoHorometro);
+                            tvEstadoMantenimientoSub.setTextColor(Color.parseColor("#B0BEC5"));
+
+                            if (salud.estado == MantenimientoSaludManager.EstadoSalud.VENCIDO_HORAS ||
+                                    salud.estado == MantenimientoSaludManager.EstadoSalud.VENCIDO_TIEMPO) {
+                                // Generar automáticamente tarea preventiva si no existe
+                                MantenimientoSaludManager.crearTareaPreventivaSiNoExiste(codigoBuscado, salud.horometroActual, null, null);
+                            }
+                        }
+                    });
+        });
+    }
+
+    private void mostrarDialogoActualizarHorometro(String codigoGrupo, String idGrupoDoc) {
+        if (getContext() == null) return;
+        String idTarget = idGrupoDoc != null && !idGrupoDoc.isEmpty() ? idGrupoDoc : codigoGrupo;
+        String codigoFinal = codigoGrupo != null ? codigoGrupo : (grupoActual != null ? grupoActual.getCodigo() : idTarget);
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta);
+        builder.setTitle("Actualizar Horómetro de Campo");
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 10);
+
+        TextView tvInfo = new TextView(requireContext());
+        tvInfo.setText(String.format(Locale.US, "Máquina: %s\nÚltimo horómetro registrado: %.1f h", codigoFinal, horometroActualEquipo));
+        tvInfo.setTextColor(Color.WHITE);
+        tvInfo.setTextSize(14);
+        tvInfo.setPadding(0, 0, 0, 20);
+        layout.addView(tvInfo);
+
+        final EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setHint("Nuevo horómetro reportado");
+        input.setTextColor(Color.WHITE);
+        input.setHintTextColor(Color.GRAY);
+        layout.addView(input);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Guardar", (dialog, which) -> {
+            String valorStr = input.getText().toString().trim();
+            if (valorStr.isEmpty()) {
+                Toast.makeText(getContext(), "Ingresa un horómetro válido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double nuevoH = MantenimientoSaludManager.parseDoubleSafe(valorStr);
+            MantenimientoSaludManager.ResultadoValidacionHorometro val =
+                    MantenimientoSaludManager.validarHorometro(horometroActualEquipo, nuevoH);
+
+            if (!val.esValido) {
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Horómetro Inválido")
+                        .setMessage(val.mensajeError)
+                        .setPositiveButton("Entendido", null)
+                        .show();
+                return;
+            }
+
+            if (val.esSaltoGrande) {
+                new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                        .setTitle("Confirmar incremento de horas")
+                        .setMessage(val.mensajeError)
+                        .setPositiveButton("Sí, es correcto", (d2, w2) -> guardarHorometroConfirmado(idTarget, codigoFinal, nuevoH))
+                        .setNegativeButton("Corregir", (d2, w2) -> mostrarDialogoActualizarHorometro(codigoGrupo, idGrupoDoc))
+                        .show();
+            } else {
+                guardarHorometroConfirmado(idTarget, codigoFinal, nuevoH);
+            }
+        });
+
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
+    }
+
+    private void guardarHorometroConfirmado(String idDoc, String codigoGrupo, double nuevoH) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("horometroActual", nuevoH);
+        updates.put("fechaActualizacionHorometro", System.currentTimeMillis());
+
+        db.collection("gruposElectrogenos").document(idDoc).update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    horometroActualEquipo = nuevoH;
+                    if (grupoActual != null) grupoActual.setHorometroActual(nuevoH);
+                    Toast.makeText(getContext(), "Horómetro actualizado correctamente", Toast.LENGTH_SHORT).show();
+                    cargarEstadoSaludMantenimiento(codigoGrupo, idDoc);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error actualizando horómetro: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }

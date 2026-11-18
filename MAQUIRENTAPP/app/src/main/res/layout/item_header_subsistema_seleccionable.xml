@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardHeaderSubsistema"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="2dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="2dp"
+    android:layout_marginBottom="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/background_dark"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="46dp"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp">
+
+        <!-- Barra de acento vertical -->
+        <View
+            android:layout_width="3.5dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="10dp"
+            android:background="@color/selection_indicator" />
+
+        <!-- Nombre del Subsistema -->
+        <TextView
+            android:id="@+id/tvTituloSubsistemaHeader"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/anta_font"
+            android:text="LUBRICACIÓN"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <!-- Contador de tareas / seleccionadas -->
+        <TextView
+            android:id="@+id/tvContadorSubsistemaHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_bottom_nav_rounded"
+            android:backgroundTint="#243447"
+            android:fontFamily="@font/anta_font"
+            android:paddingStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp"
+            android:text="0 de 3"
+            android:textColor="#90CAF9"
+            android:textSize="11sp" />
+
+        <!-- Chevron desplegable -->
+        <ImageView
+            android:id="@+id/ivChevronHeader"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="Expandir o colapsar"
+            android:src="@drawable/ic_chevron_down"
+            app:tint="@color/white" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

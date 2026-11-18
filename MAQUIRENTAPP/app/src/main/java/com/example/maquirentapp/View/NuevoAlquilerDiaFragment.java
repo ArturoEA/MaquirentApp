@@ -35,15 +35,19 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Repository.GeneradorRepository;
 import com.example.maquirentapp.Repository.UsuarioRepository;
 import com.example.maquirentapp.R;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class NuevoAlquilerDiaFragment extends Fragment {
 
@@ -71,6 +75,7 @@ public class NuevoAlquilerDiaFragment extends Fragment {
     private UsuarioRepository usuarioRepository;
     private AlquilerDia alquilerActual;
     private List<GrupoElectrogeno> listaGrupos = new ArrayList<>();
+    private boolean advertenciaMantenimientoAceptada = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -340,14 +345,52 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             return;
         }
 
-        if (alquilerActual == null) {
-            alquilerActual = new AlquilerDia();
-        }
-
         if (vieneDeHome) {
             int pos = spinnerGrupo.getSelectedItemPosition() - 1;
             idGrupo = listaGrupos.get(pos).getId();
         }
+
+        // Validación informativa no bloqueante de mantenimiento si es alquiler nuevo
+        if (!modoEdicion && !advertenciaMantenimientoAceptada && idGrupo != null) {
+            MantenimientoSaludManager.evaluarSalud(idGrupo, new Callback<MantenimientoSaludManager.ResultadoSalud>() {
+                @Override
+                public void onSuccess(MantenimientoSaludManager.ResultadoSalud salud) {
+                    if (getContext() != null && salud != null && salud.isVencido()) {
+                        new MaterialAlertDialogBuilder(requireContext(), R.style.DialogoConFuenteAnta)
+                                .setTitle("Mantenimiento Vencido")
+                                .setMessage("Atención: El equipo seleccionado presenta mantenimiento pendiente o vencido:\n\n"
+                                        + salud.getMotivo()
+                                        + "\n\n¿Desea continuar con el registro del alquiler de todas formas?")
+                                .setPositiveButton("Continuar con alquiler", (dialog, which) -> {
+                                    advertenciaMantenimientoAceptada = true;
+                                    ejecutarGuardadoAlquiler(finalizar);
+                                })
+                                .setNegativeButton("Revisar equipo", (dialog, which) -> {
+                                    if (finalizar) btnFinalizar.setEnabled(true);
+                                })
+                                .setCancelable(false)
+                                .show();
+                    } else {
+                        ejecutarGuardadoAlquiler(finalizar);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    ejecutarGuardadoAlquiler(finalizar);
+                }
+            });
+            return;
+        }
+
+        ejecutarGuardadoAlquiler(finalizar);
+    }
+
+    private void ejecutarGuardadoAlquiler(boolean finalizar) {
+        if (alquilerActual == null) {
+            alquilerActual = new AlquilerDia();
+        }
+
         alquilerActual.setIdGrupo(idGrupo);
         alquilerActual.setNombreCliente(inputCliente.getText().toString().trim());
         alquilerActual.setUbicacion(inputLugar.getText().toString().trim());
@@ -463,6 +506,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
                                 if (getContext() != null) {
                                     Toast.makeText(getContext(), "Alquiler finalizado e ingresos registrados", Toast.LENGTH_SHORT).show();
                                 }
+                                if (idGrupo != null && alquilerActual != null) {
+                                    actualizarHorometroYCrearTareaRetorno(idGrupo, alquilerActual.getHorometroFinal());
+                                }
                                 deshabilitarCampos();
                                 hideGlobalFab();
                                 if (getView() != null) {
@@ -574,5 +620,21 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).hideGlobalFab();
         }
+    }
+
+    private void actualizarHorometroYCrearTareaRetorno(String idGrupoTarget, double horometroFinal) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("gruposElectrogenos").document(idGrupoTarget).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                String codigoG = doc.getString("codigo");
+                Map<String, Object> up = new HashMap<>();
+                if (horometroFinal > 0) {
+                    up.put("horometroActual", horometroFinal);
+                    up.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                }
+                db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
+                MantenimientoSaludManager.crearTareaRetornoCarreta(codigoG != null ? codigoG : idGrupoTarget, null);
+            }
+        });
     }
 }

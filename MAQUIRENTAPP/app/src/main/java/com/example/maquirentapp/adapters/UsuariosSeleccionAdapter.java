@@ -30,6 +30,14 @@ public class UsuariosSeleccionAdapter extends RecyclerView.Adapter<UsuariosSelec
         return seleccionados;
     }
 
+    public void setSeleccionados(List<String> iniciales) {
+        this.seleccionados.clear();
+        if (iniciales != null) {
+            this.seleccionados.addAll(iniciales);
+        }
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

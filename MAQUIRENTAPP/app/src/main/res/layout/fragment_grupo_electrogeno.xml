@@ -131,7 +131,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Card 1: Mantenimientos -->
+        <!-- Card 1: Mantenimientos con Semáforo -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardMantenimientos"
             android:layout_width="match_parent"
@@ -157,8 +157,9 @@
                     android:src="@drawable/icon_mantenimiento_blanco" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
@@ -169,6 +170,46 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tvEstadoMantenimientoSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:text="Últ. horómetro: --"
+                        android:textColor="#B0BEC5"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end|center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvBadgeSaludMantenimiento"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_bottom_nav_rounded"
+                        android:backgroundTint="#4CAF50"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="Al día"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnActualizarHorometroCampo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="+ Horómetro"
+                        android:textColor="#64B5F6"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:padding="2dp" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
