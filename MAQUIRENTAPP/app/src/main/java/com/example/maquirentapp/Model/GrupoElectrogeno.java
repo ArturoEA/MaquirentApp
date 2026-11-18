@@ -17,6 +17,10 @@ public class GrupoElectrogeno {
     private long fechaActualizacionHorometro = 0;
     private String tipoEquipo = "Grupo electrógeno";
     private String unidadMedida = "HORAS";
+    private long contadorRetornos = 0;
+    private Map<String, Double> relojesTareas = new HashMap<>();
+    private Map<String, Long> fechasTareas = new HashMap<>();
+    private Map<String, Long> retornosTareas = new HashMap<>();
     private Map<String, Double> relojesComponentes = new HashMap<>();
     private Map<String, Long> fechasComponentes = new HashMap<>();
 
@@ -84,6 +88,41 @@ public class GrupoElectrogeno {
 
     public void setUnidadMedida(String unidadMedida) {
         this.unidadMedida = unidadMedida;
+    }
+
+    public long getContadorRetornos() {
+        return contadorRetornos;
+    }
+
+    public void setContadorRetornos(long contadorRetornos) {
+        this.contadorRetornos = contadorRetornos;
+    }
+
+    public Map<String, Double> getRelojesTareas() {
+        if (relojesTareas == null) relojesTareas = new HashMap<>();
+        return relojesTareas;
+    }
+
+    public void setRelojesTareas(Map<String, Double> relojesTareas) {
+        this.relojesTareas = relojesTareas;
+    }
+
+    public Map<String, Long> getFechasTareas() {
+        if (fechasTareas == null) fechasTareas = new HashMap<>();
+        return fechasTareas;
+    }
+
+    public void setFechasTareas(Map<String, Long> fechasTareas) {
+        this.fechasTareas = fechasTareas;
+    }
+
+    public Map<String, Long> getRetornosTareas() {
+        if (retornosTareas == null) retornosTareas = new HashMap<>();
+        return retornosTareas;
+    }
+
+    public void setRetornosTareas(Map<String, Long> retornosTareas) {
+        this.retornosTareas = retornosTareas;
     }
 
     public Map<String, Double> getRelojesComponentes() {

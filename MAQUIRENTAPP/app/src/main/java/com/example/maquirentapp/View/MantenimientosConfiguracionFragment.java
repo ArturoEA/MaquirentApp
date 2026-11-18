@@ -324,7 +324,6 @@ public class MantenimientosConfiguracionFragment extends Fragment {
         TextInputEditText inputIntervaloHoras = dialogView.findViewById(R.id.inputIntervaloHoras);
         TextInputEditText inputMesesMaximos = dialogView.findViewById(R.id.inputMesesMaximos);
         Spinner spinnerFrecuenciaRetornos = dialogView.findViewById(R.id.spinnerFrecuenciaRetornos);
-        Spinner spinnerComponenteKey = dialogView.findViewById(R.id.spinnerComponenteKey);
 
         MaterialButton btnCancelar = dialogView.findViewById(R.id.btnCancelarDialog);
         MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarDialog);
@@ -434,43 +433,6 @@ public class MantenimientosConfiguracionFragment extends Fragment {
             spinnerFrecuenciaRetornos.setSelection(idx);
         }
 
-        // 5. Configurar Spinner Componente Clave
-        String[] componentesNombres = new String[]{
-                "Aceite de motor",
-                "Filtro de combustible",
-                "Filtro de aire",
-                "Fajas y correas",
-                "Calibración de válvulas",
-                "Generador eléctrico",
-                "Compresor de tornillo",
-                "Filtro separador aire y aceite",
-                "Carreta y pernos",
-                "General"
-        };
-        final String[] componentesKeys = new String[]{
-                "aceite",
-                "filtro_petroleo",
-                "filtro_aire",
-                "faja",
-                "valvulas",
-                "generador",
-                "compresor_aceite",
-                "separador_aire_aceite",
-                "carreta",
-                "general"
-        };
-        ArrayAdapter<String> adapterComp = new ArrayAdapter<>(requireContext(), R.layout.spinner_item_white, componentesNombres);
-        adapterComp.setDropDownViewResource(R.layout.spinner_dropdown_item_white);
-        spinnerComponenteKey.setAdapter(adapterComp);
-        if (esEdicion && itemExistente.getComponenteKey() != null) {
-            for (int i = 0; i < componentesKeys.length; i++) {
-                if (componentesKeys[i].equalsIgnoreCase(itemExistente.getComponenteKey())) {
-                    spinnerComponenteKey.setSelection(i);
-                    break;
-                }
-            }
-        }
-
         btnCancelar.setOnClickListener(v -> dialog.dismiss());
 
         btnGuardar.setOnClickListener(v -> {
@@ -507,9 +469,6 @@ public class MantenimientosConfiguracionFragment extends Fragment {
                 }
             }
 
-            int compIdx = spinnerComponenteKey.getSelectedItemPosition();
-            String keyElegida = (compIdx >= 0 && compIdx < componentesKeys.length) ? componentesKeys[compIdx] : "general";
-
             btnGuardar.setEnabled(false);
             btnGuardar.setText("Guardando...");
 
@@ -521,7 +480,7 @@ public class MantenimientosConfiguracionFragment extends Fragment {
             nuevoItem.setMesesMaximos(meses);
             nuevoItem.setEsInspeccionRetorno(esRetorno);
             nuevoItem.setFrecuenciaRetornos(retornos);
-            nuevoItem.setComponenteKey(keyElegida);
+            nuevoItem.setComponenteKey(nuevoItem.getSlugNormalizado());
             nuevoItem.setUnidadMedida("HORAS");
 
             if (esEdicion) {

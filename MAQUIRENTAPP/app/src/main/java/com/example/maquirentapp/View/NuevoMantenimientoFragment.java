@@ -1208,57 +1208,69 @@ public class NuevoMantenimientoFragment extends Fragment {
                     if (query != null && !query.isEmpty()) {
                         for (DocumentSnapshot doc : query.getDocuments()) {
                             String docId = doc.getId();
-                            Map<String, Object> relojes = doc.contains("relojesComponentes") && doc.get("relojesComponentes") instanceof Map
+                            Map<String, Object> relojesTareas = doc.contains("relojesTareas") && doc.get("relojesTareas") instanceof Map
+                                    ? (Map<String, Object>) doc.get("relojesTareas") : new HashMap<>();
+                            Map<String, Object> fechasTareas = doc.contains("fechasTareas") && doc.get("fechasTareas") instanceof Map
+                                    ? (Map<String, Object>) doc.get("fechasTareas") : new HashMap<>();
+                            Map<String, Object> retornosTareas = doc.contains("retornosTareas") && doc.get("retornosTareas") instanceof Map
+                                    ? (Map<String, Object>) doc.get("retornosTareas") : new HashMap<>();
+
+                            Map<String, Object> relojesComponentes = doc.contains("relojesComponentes") && doc.get("relojesComponentes") instanceof Map
                                     ? (Map<String, Object>) doc.get("relojesComponentes") : new HashMap<>();
-                            Map<String, Object> fechas = doc.contains("fechasComponentes") && doc.get("fechasComponentes") instanceof Map
+                            Map<String, Object> fechasComponentes = doc.contains("fechasComponentes") && doc.get("fechasComponentes") instanceof Map
                                     ? (Map<String, Object>) doc.get("fechasComponentes") : new HashMap<>();
 
                             long now = System.currentTimeMillis();
+                            long contadorRetornosActual = doc.contains("contadorRetornos") && doc.getLong("contadorRetornos") != null
+                                    ? doc.getLong("contadorRetornos") : 0L;
 
-                            relojes.put("aceite", horometro);
-                            fechas.put("aceite", now);
-
+                            // Actualizar única y exclusivamente las tareas marcadas
                             for (String it : items) {
+                                if (it == null || it.trim().isEmpty()) continue;
                                 MantenimientoConfiguracion cfg = buscarConfigPorId(it);
-                                String clave = (cfg != null && cfg.getClaveRelojComponente() != null && !cfg.getClaveRelojComponente().trim().isEmpty())
-                                        ? cfg.getClaveRelojComponente().trim().toLowerCase() : "";
-                                String nombre = cfg != null && cfg.getNombre() != null ? cfg.getNombre().toLowerCase() : it.toLowerCase();
+                                String taskId = it.trim();
+                                String taskSlug = cfg != null ? cfg.getSlugNormalizado() : "";
 
-                                if (!clave.isEmpty()) {
-                                    relojes.put(clave, horometro);
-                                    fechas.put(clave, now);
+                                // 1. Reloj de horas y fecha por ID de tarea
+                                relojesTareas.put(taskId, horometro);
+                                fechasTareas.put(taskId, now);
+
+                                // 2. Reloj por slug semántico para persistencia entre versiones
+                                if (!taskSlug.isEmpty()) {
+                                    relojesTareas.put(taskSlug, horometro);
+                                    fechasTareas.put(taskSlug, now);
                                 }
-                                if (clave.equals("aceite") || nombre.contains("aceite")) {
-                                    relojes.put("aceite", horometro);
-                                    fechas.put("aceite", now);
+
+                                // 3. Reloj por retornos de alquiler si corresponde
+                                if (cfg != null && cfg.isEsInspeccionRetorno()) {
+                                    retornosTareas.put(taskId, contadorRetornosActual);
+                                    if (!taskSlug.isEmpty()) {
+                                        retornosTareas.put(taskSlug, contadorRetornosActual);
+                                    }
                                 }
-                                if (clave.equals("faja") || nombre.contains("faja") || nombre.contains("correa")) {
-                                    relojes.put("faja", horometro);
-                                    fechas.put("faja", now);
-                                }
-                                if (clave.equals("filtro_aire") || nombre.contains("filtro de aire") || nombre.contains("filtro aire")) {
-                                    relojes.put("filtro_aire", horometro);
-                                    fechas.put("filtro_aire", now);
-                                }
-                                if (clave.equals("filtro_petroleo") || nombre.contains("combustible") || nombre.contains("petróleo") || nombre.contains("petroleo") || nombre.contains("separador")) {
-                                    relojes.put("filtro_petroleo", horometro);
-                                    fechas.put("filtro_petroleo", now);
-                                }
-                                if (clave.equals("carreta") || nombre.contains("carreta") || nombre.contains("perno") || nombre.contains("chasis") || nombre.contains("lanza")) {
-                                    relojes.put("carreta", horometro);
-                                    fechas.put("carreta", now);
-                                }
-                                if (clave.equals("tornillo_compresor") || nombre.contains("tornillo") || nombre.contains("coalescente")) {
-                                    relojes.put("tornillo_compresor", horometro);
-                                    fechas.put("tornillo_compresor", now);
+
+                                // 4. Retrocompatibilidad para módulo de salud tradicional
+                                String nombre = cfg != null && cfg.getNombre() != null ? cfg.getNombre().toLowerCase() : "";
+                                if (nombre.contains("aceite") && (nombre.contains("cambio") || nombre.contains("15w-40"))) {
+                                    relojesTareas.put("aceite", horometro);
+                                    fechasTareas.put("aceite", now);
+                                    relojesComponentes.put("aceite", horometro);
+                                    fechasComponentes.put("aceite", now);
                                 }
                             }
+
+                            // Sincronizar copias en relojesComponentes para compatibilidad
+                            relojesComponentes.putAll(relojesTareas);
+                            fechasComponentes.putAll(fechasTareas);
 
                             Map<String, Object> updates = new HashMap<>();
                             updates.put("horometroActual", horometro);
                             updates.put("fechaActualizacionHorometro", now);
-                            updates.put("relojesComponentes", relojes);
-                            updates.put("fechasComponentes", fechas);
+                            updates.put("relojesTareas", relojesTareas);
+                            updates.put("fechasTareas", fechasTareas);
+                            updates.put("retornosTareas", retornosTareas);
+                            updates.put("relojesComponentes", relojesComponentes);
+                            updates.put("fechasComponentes", fechasComponentes);
 
                             db.collection("gruposElectrogenos").document(docId).update(updates);
                         }

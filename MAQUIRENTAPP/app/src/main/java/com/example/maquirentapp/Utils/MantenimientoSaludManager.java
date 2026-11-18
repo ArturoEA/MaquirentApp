@@ -100,6 +100,58 @@ public class MantenimientoSaludManager {
         }
     }
 
+    public static class EstadoSaludTarea {
+        public String idTarea;
+        public String nombre;
+        public String subsistema;
+        public boolean esInspeccionRetorno;
+        public int intervaloHoras;
+        public int mesesMaximos;
+        public int frecuenciaRetornos;
+
+        public double ultimoHorometro = 0.0;
+        public long ultimaFecha = 0;
+        public long ultimoRetorno = 0;
+
+        public double horasTranscurridas = 0.0;
+        public int mesesTranscurridos = 0;
+        public long retornosTranscurridos = 0;
+
+        public double horasRestantes = 0.0;
+        public double horasExceso = 0.0;
+        public int porcentajeUso = 0;
+
+        public EstadoSalud estado = EstadoSalud.OPTIMO;
+        public String colorHex = "#4CAF50";
+        public String badgeTexto = "Al día";
+
+        public boolean isVencido() {
+            return estado == EstadoSalud.VENCIDO_HORAS || estado == EstadoSalud.VENCIDO_TIEMPO;
+        }
+    }
+
+    public static class ReporteSaludEquipo {
+        public String codigoGrupo;
+        public String tipoEquipo = "Grupo electrógeno";
+        public double horometroActual = 0.0;
+        public long fechaActualizacionHorometro = 0;
+        public long contadorRetornos = 0;
+
+        public EstadoSalud estadoGeneral = EstadoSalud.OPTIMO;
+        public String colorGeneralHex = "#4CAF50";
+        public String badgeGeneral = "Operativo y al día";
+        public int indiceSaludPorcentaje = 100;
+
+        public int totalTareas = 0;
+        public int tareasAlDia = 0;
+        public int tareasProximas = 0;
+        public int tareasVencidas = 0;
+
+        public List<EstadoSaludTarea> todasLasTareas = new ArrayList<>();
+        public Map<String, List<EstadoSaludTarea>> tareasPorSubsistema = new java.util.LinkedHashMap<>();
+        public MetricasPuntualidad metricasPuntualidad;
+    }
+
     // =========================================================================
     // 1. CÁLCULO DE SALUD Y SEMÁFORO
     // =========================================================================
@@ -211,6 +263,266 @@ public class MantenimientoSaludManager {
                 .addOnFailureListener(e -> {
                     if (callback != null) callback.onError(e);
                 });
+    }
+
+    public static void generarReporteSaludCompleto(String codigoGrupo, Context context, Callback<ReporteSaludEquipo> callback) {
+        if (codigoGrupo == null || codigoGrupo.trim().isEmpty()) {
+            if (callback != null) callback.onError(new IllegalArgumentException("Código de máquina requerido"));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("gruposElectrogenos")
+                .whereEqualTo("codigo", codigoGrupo)
+                .get()
+                .addOnSuccessListener(queryGrupo -> {
+                    GrupoElectrogeno grupo = null;
+                    if (queryGrupo != null && !queryGrupo.isEmpty()) {
+                        com.google.firebase.firestore.DocumentSnapshot doc = queryGrupo.getDocuments().get(0);
+                        grupo = doc.toObject(GrupoElectrogeno.class);
+                        if (grupo != null) grupo.setId(doc.getId());
+                    }
+
+                    final GrupoElectrogeno grupoFinal = grupo != null ? grupo : new GrupoElectrogeno(codigoGrupo, "");
+
+                    db.collection("mantenimientos")
+                            .whereEqualTo("codigoGrupo", codigoGrupo)
+                            .get()
+                            .addOnSuccessListener(snapMant -> {
+                                List<Mantenimiento> mantenimientos = new ArrayList<>();
+                                if (snapMant != null) {
+                                    for (QueryDocumentSnapshot mDoc : snapMant) {
+                                        Mantenimiento m = mDoc.toObject(Mantenimiento.class);
+                                        m.setId(mDoc.getId());
+                                        mantenimientos.add(m);
+                                    }
+                                }
+
+                                List<MantenimientoConfiguracion> configs = new ArrayList<>();
+                                if (context != null) {
+                                    configs.addAll(MantenimientoOfflineManager.obtenerConfiguracionBackup(context));
+                                }
+
+                                if (!configs.isEmpty()) {
+                                    ReporteSaludEquipo rep = procesarReporte(grupoFinal, configs, mantenimientos);
+                                    if (callback != null) callback.onSuccess(rep);
+                                } else {
+                                    db.collection("mantenimientos_configuracion").get().addOnSuccessListener(snapCfg -> {
+                                        List<MantenimientoConfiguracion> listaCfg = new ArrayList<>();
+                                        if (snapCfg != null) {
+                                            for (QueryDocumentSnapshot cDoc : snapCfg) {
+                                                MantenimientoConfiguracion c = cDoc.toObject(MantenimientoConfiguracion.class);
+                                                c.setId(cDoc.getId());
+                                                listaCfg.add(c);
+                                            }
+                                        }
+                                        if (listaCfg.isEmpty()) {
+                                            listaCfg.addAll(PlanesMantenimientoDefaults.obtenerPlanGruposElectrogenos());
+                                        }
+                                        ReporteSaludEquipo rep = procesarReporte(grupoFinal, listaCfg, mantenimientos);
+                                        if (callback != null) callback.onSuccess(rep);
+                                    }).addOnFailureListener(e -> {
+                                        List<MantenimientoConfiguracion> defaults = PlanesMantenimientoDefaults.obtenerPlanGruposElectrogenos();
+                                        ReporteSaludEquipo rep = procesarReporte(grupoFinal, defaults, mantenimientos);
+                                        if (callback != null) callback.onSuccess(rep);
+                                    });
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                if (callback != null) callback.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
+
+    private static ReporteSaludEquipo procesarReporte(GrupoElectrogeno grupo,
+                                                      List<MantenimientoConfiguracion> plantillas,
+                                                      List<Mantenimiento> mantenimientos) {
+        ReporteSaludEquipo rep = new ReporteSaludEquipo();
+        rep.codigoGrupo = grupo.getCodigo();
+        rep.tipoEquipo = grupo.getTipoEquipo() != null ? grupo.getTipoEquipo() : "Grupo electrógeno";
+        rep.horometroActual = grupo.getHorometroActual();
+        rep.fechaActualizacionHorometro = grupo.getFechaActualizacionHorometro();
+        rep.contadorRetornos = grupo.getContadorRetornos();
+
+        List<Mantenimiento> mantOrdenados = new ArrayList<>(mantenimientos);
+        Collections.sort(mantOrdenados, (a, b) -> {
+            int comp = Long.compare(b.getFechaMantenimientoMillis(), a.getFechaMantenimientoMillis());
+            if (comp != 0) return comp;
+            return Long.compare(b.getFechaCreacion(), a.getFechaCreacion());
+        });
+
+        boolean esCompresor = rep.tipoEquipo.toLowerCase(Locale.ROOT).contains("compresor");
+        List<MantenimientoConfiguracion> tareasFiltradas = new ArrayList<>();
+        for (MantenimientoConfiguracion t : plantillas) {
+            String tipoCfg = t.getTipoEquipo() != null ? t.getTipoEquipo().toLowerCase(Locale.ROOT) : "";
+            boolean coincide = esCompresor
+                    ? tipoCfg.contains("compresor")
+                    : (tipoCfg.isEmpty() || tipoCfg.contains("grupo") || tipoCfg.contains("electr"));
+            if (coincide) tareasFiltradas.add(t);
+        }
+
+        long now = System.currentTimeMillis();
+        Map<String, Double> relojes = grupo.getRelojesTareas();
+        Map<String, Long> fechas = grupo.getFechasTareas();
+        Map<String, Long> retornosMap = grupo.getRetornosTareas();
+
+        for (MantenimientoConfiguracion cfg : tareasFiltradas) {
+            EstadoSaludTarea est = new EstadoSaludTarea();
+            est.idTarea = cfg.getId();
+            est.nombre = cfg.getNombre();
+            est.subsistema = cfg.getSubsistema() != null && !cfg.getSubsistema().trim().isEmpty() ? cfg.getSubsistema() : "General";
+            est.esInspeccionRetorno = cfg.isEsInspeccionRetorno();
+            est.intervaloHoras = cfg.getIntervaloHoras();
+            est.mesesMaximos = cfg.getMesesMaximos();
+            est.frecuenciaRetornos = cfg.getFrecuenciaRetornos() > 0 ? cfg.getFrecuenciaRetornos() : 1;
+
+            String slug = cfg.getSlugNormalizado();
+
+            double ultH = 0.0;
+            long ultF = 0L;
+            long ultRet = 0L;
+
+            if (relojes.containsKey(cfg.getId())) {
+                Double v = relojes.get(cfg.getId());
+                if (v != null) ultH = v;
+            } else if (!slug.isEmpty() && relojes.containsKey(slug)) {
+                Double v = relojes.get(slug);
+                if (v != null) ultH = v;
+            } else if (grupo.getRelojesComponentes().containsKey(cfg.getComponenteKey())) {
+                Double v = grupo.getRelojesComponentes().get(cfg.getComponenteKey());
+                if (v != null) ultH = v;
+            }
+
+            if (fechas.containsKey(cfg.getId())) {
+                Long f = fechas.get(cfg.getId());
+                if (f != null) ultF = f;
+            } else if (!slug.isEmpty() && fechas.containsKey(slug)) {
+                Long f = fechas.get(slug);
+                if (f != null) ultF = f;
+            } else if (grupo.getFechasComponentes().containsKey(cfg.getComponenteKey())) {
+                Long f = grupo.getFechasComponentes().get(cfg.getComponenteKey());
+                if (f != null) ultF = f;
+            }
+
+            if (retornosMap.containsKey(cfg.getId())) {
+                Long r = retornosMap.get(cfg.getId());
+                if (r != null) ultRet = r;
+            } else if (!slug.isEmpty() && retornosMap.containsKey(slug)) {
+                Long r = retornosMap.get(slug);
+                if (r != null) ultRet = r;
+            }
+
+            if (ultH <= 0.0 && ultF <= 0L) {
+                for (Mantenimiento m : mantOrdenados) {
+                    List<String> items = m.getItemsRealizados();
+                    if (items != null && (items.contains(cfg.getId()) || (cfg.getNombre() != null && items.contains(cfg.getNombre())))) {
+                        ultH = parseDoubleSafe(m.getHorometro());
+                        ultF = m.getFechaMantenimientoMillis() > 0 ? m.getFechaMantenimientoMillis() : m.getFechaCreacion();
+                        break;
+                    }
+                }
+            }
+
+            est.ultimoHorometro = ultH;
+            est.ultimaFecha = ultF;
+            est.ultimoRetorno = ultRet;
+
+            if (est.esInspeccionRetorno) {
+                long retornosPasados = Math.max(0, rep.contadorRetornos - ultRet);
+                est.retornosTranscurridos = retornosPasados;
+                if (rep.contadorRetornos > 0 && retornosPasados >= est.frecuenciaRetornos) {
+                    est.estado = EstadoSalud.VENCIDO_HORAS;
+                    est.colorHex = "#F44336";
+                    est.badgeTexto = "Toca inspección";
+                    est.porcentajeUso = 100;
+                    rep.tareasVencidas++;
+                } else {
+                    est.estado = EstadoSalud.OPTIMO;
+                    est.colorHex = "#4CAF50";
+                    est.badgeTexto = "Al día";
+                    est.porcentajeUso = (int) Math.min(100, (retornosPasados * 100) / Math.max(1, est.frecuenciaRetornos));
+                    rep.tareasAlDia++;
+                }
+            } else {
+                if (est.intervaloHoras <= 0) {
+                    est.estado = EstadoSalud.OPTIMO;
+                    est.colorHex = "#4CAF50";
+                    est.badgeTexto = "Inspección rutinaria";
+                    est.porcentajeUso = 0;
+                    rep.tareasAlDia++;
+                } else {
+                    double horasTrans = Math.max(0, rep.horometroActual - ultH);
+                    est.horasTranscurridas = horasTrans;
+
+                    if (ultF > 0) {
+                        long diffMs = Math.max(0, now - ultF);
+                        est.mesesTranscurridos = (int) (diffMs / (1000L * 60 * 60 * 24 * 30));
+                    }
+
+                    int pct = (int) Math.round((horasTrans / (double) est.intervaloHoras) * 100);
+                    est.porcentajeUso = pct;
+
+                    if (horasTrans >= est.intervaloHoras) {
+                        est.estado = EstadoSalud.VENCIDO_HORAS;
+                        est.horasExceso = horasTrans - est.intervaloHoras;
+                        est.colorHex = "#F44336";
+                        est.badgeTexto = String.format(Locale.US, "Vencido (+%.0f h)", est.horasExceso);
+                        rep.tareasVencidas++;
+                    } else if (est.mesesMaximos > 0 && est.mesesTranscurridos >= est.mesesMaximos) {
+                        est.estado = EstadoSalud.VENCIDO_TIEMPO;
+                        est.colorHex = "#F44336";
+                        est.badgeTexto = String.format(Locale.US, "Vencido (+%d meses)", est.mesesTranscurridos - est.mesesMaximos);
+                        rep.tareasVencidas++;
+                    } else if (horasTrans >= 0.85 * est.intervaloHoras || (est.mesesMaximos > 0 && est.mesesTranscurridos >= est.mesesMaximos - 1)) {
+                        est.estado = EstadoSalud.PROXIMO;
+                        est.horasRestantes = est.intervaloHoras - horasTrans;
+                        est.colorHex = "#FFC107";
+                        est.badgeTexto = String.format(Locale.US, "Próximo (faltan %.0f h)", est.horasRestantes);
+                        rep.tareasProximas++;
+                    } else {
+                        est.estado = EstadoSalud.OPTIMO;
+                        est.horasRestantes = est.intervaloHoras - horasTrans;
+                        est.colorHex = "#4CAF50";
+                        est.badgeTexto = "Al día";
+                        rep.tareasAlDia++;
+                    }
+                }
+            }
+
+            rep.totalTareas++;
+            rep.todasLasTareas.add(est);
+
+            if (!rep.tareasPorSubsistema.containsKey(est.subsistema)) {
+                rep.tareasPorSubsistema.put(est.subsistema, new ArrayList<>());
+            }
+            rep.tareasPorSubsistema.get(est.subsistema).add(est);
+        }
+
+        if (rep.tareasVencidas > 0) {
+            rep.estadoGeneral = EstadoSalud.VENCIDO_HORAS;
+            rep.colorGeneralHex = "#F44336";
+            rep.badgeGeneral = String.format(Locale.US, "%d tareas vencidas", rep.tareasVencidas);
+        } else if (rep.tareasProximas > 0) {
+            rep.estadoGeneral = EstadoSalud.PROXIMO;
+            rep.colorGeneralHex = "#FFC107";
+            rep.badgeGeneral = String.format(Locale.US, "%d tareas próximas", rep.tareasProximas);
+        } else {
+            rep.estadoGeneral = EstadoSalud.OPTIMO;
+            rep.colorGeneralHex = "#4CAF50";
+            rep.badgeGeneral = "Operativo y al día";
+        }
+
+        if (rep.totalTareas > 0) {
+            int penalizacion = (rep.tareasVencidas * 25) + (rep.tareasProximas * 8);
+            rep.indiceSaludPorcentaje = Math.max(10, Math.min(100, 100 - penalizacion));
+        }
+
+        rep.metricasPuntualidad = calcularMetricasPuntualidad(mantenimientos);
+
+        return rep;
     }
 
     // =========================================================================

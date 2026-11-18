@@ -400,6 +400,14 @@ public class MainActivity extends AppCompatActivity {
                             : "GEP";
                     setHeaderIcon(R.drawable.icon_mantenimiento_blanco);
                     setHeaderTitle("Mantenimientos\n" + codigo);
+                } else if (dest.getId() == R.id.saludMantenimientoFragment) {
+                    String codigo = args != null
+                            ? args.getString("codigo", "GEP")
+                            : "GEP";
+                    setHeaderIcon(R.drawable.ic_metricas_salud);
+                    headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));
+                    setHeaderTitle("Salud de maquinaria\n" + codigo);
+                    updateNavigationUI(1);
                 } else if (dest.getId() == R.id.gestionarUsuariosFragment) {
                     setHeaderIcon(R.drawable.icon_blanco_gestionar_usuarios);
                     headerIcon.setColorFilter(ContextCompat.getColor(this, R.color.white));

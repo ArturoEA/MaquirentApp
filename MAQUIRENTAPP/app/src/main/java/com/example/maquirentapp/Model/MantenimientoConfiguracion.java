@@ -150,4 +150,23 @@ public class MantenimientoConfiguracion {
     public void setFrecuenciaRetornos(int frecuenciaRetornos) {
         this.frecuenciaRetornos = frecuenciaRetornos;
     }
+
+    public String getClaveTarea() {
+        if (id != null && !id.trim().isEmpty()) return id.trim();
+        return getSlugNormalizado();
+    }
+
+    public String getSlugNormalizado() {
+        if (nombre == null) return "";
+        return nombre.toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[áàäâ]", "a")
+                .replaceAll("[éèëê]", "e")
+                .replaceAll("[íìïî]", "i")
+                .replaceAll("[óòöô]", "o")
+                .replaceAll("[úùüû]", "u")
+                .replaceAll("[ñ]", "n")
+                .replaceAll("[^a-z0-9]", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_|_$", "");
+    }
 }

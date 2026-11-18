@@ -29,6 +29,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -597,102 +598,13 @@ public class MantenimientosFragment extends Fragment {
     }
 
     private void mostrarDialogoMetricasSalud() {
-        if (getContext() == null || codigo == null) return;
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_metricas_salud_mantenimiento, null);
-        builder.setView(dialogView);
-
-        AlertDialog dialog = builder.create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        if (getView() == null || codigo == null) return;
+        Bundle args = new Bundle();
+        args.putString("codigo", codigo);
+        try {
+            Navigation.findNavController(requireView()).navigate(R.id.action_mantenimientos_to_saludMantenimiento, args);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        TextView tvTitulo = dialogView.findViewById(R.id.tvTituloMetricas);
-        TextView tvSubtitulo = dialogView.findViewById(R.id.tvSubtituloMetricas);
-        TextView tvValorPuntualidad = dialogView.findViewById(R.id.tvValorPuntualidad);
-        TextView tvValorIntervaloPromedio = dialogView.findViewById(R.id.tvValorIntervaloPromedio);
-        TextView tvDiagnostico = dialogView.findViewById(R.id.tvDiagnosticoSalud);
-        LinearLayout layoutBarras = dialogView.findViewById(R.id.layoutBarrasIntervalos);
-        Button btnCerrar = dialogView.findViewById(R.id.btnCerrarMetricas);
-
-        tvTitulo.setText("Salud & Disciplina: " + codigo);
-        tvSubtitulo.setText("Analizando historial de mantenimientos...");
-
-        btnCerrar.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-
-        db.collection("mantenimientos")
-                .whereEqualTo("codigoGrupo", codigo)
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<Mantenimiento> todosM = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) {
-                        Mantenimiento m = doc.toObject(Mantenimiento.class);
-                        m.setId(doc.getId());
-                        todosM.add(m);
-                    }
-
-                    MantenimientoSaludManager.MetricasPuntualidad metricas =
-                            MantenimientoSaludManager.calcularMetricasPuntualidad(todosM);
-
-                    tvSubtitulo.setText(String.format(Locale.US, "Historial de %d mantenimientos evaluados", todosM.size()));
-                    tvValorPuntualidad.setText(String.format(Locale.US, "%.0f%%", metricas.indicePuntualidad));
-
-                    if (metricas.indicePuntualidad >= 85) {
-                        tvValorPuntualidad.setTextColor(Color.parseColor("#4CAF50"));
-                    } else if (metricas.indicePuntualidad >= 60) {
-                        tvValorPuntualidad.setTextColor(Color.parseColor("#FFC107"));
-                    } else {
-                        tvValorPuntualidad.setTextColor(Color.parseColor("#F44336"));
-                    }
-
-                    tvValorIntervaloPromedio.setText(String.format(Locale.US, "%.1f h", metricas.intervaloPromedio));
-                    tvDiagnostico.setText(metricas.diagnostico);
-
-                    layoutBarras.removeAllViews();
-                    if (metricas.intervalos.isEmpty()) {
-                        TextView tvVacio = new TextView(getContext());
-                        tvVacio.setText("Aún no hay suficientes mantenimientos para calcular intervalos.");
-                        tvVacio.setTextColor(Color.GRAY);
-                        tvVacio.setTextSize(12);
-                        layoutBarras.addView(tvVacio);
-                    } else {
-                        for (int i = 0; i < metricas.intervalos.size(); i++) {
-                            MantenimientoSaludManager.PuntoHistorialIntervalo p = metricas.intervalos.get(i);
-                            LinearLayout itemFila = new LinearLayout(getContext());
-                            itemFila.setOrientation(LinearLayout.VERTICAL);
-                            itemFila.setPadding(0, 10, 0, 10);
-
-                            TextView tvCabecera = new TextView(getContext());
-                            String estadoStr = p.esATiempo ? "[A TIEMPO]" : String.format(Locale.US, "[+%.0f h exceso]", p.deltaHoras - 250);
-                            tvCabecera.setText(String.format(Locale.US, "Servicio #%d al horómetro %.1f h  %s", i + 1, p.horometro, estadoStr));
-                            tvCabecera.setTextColor(Color.WHITE);
-                            tvCabecera.setTextSize(12);
-                            tvCabecera.setTypeface(null, android.graphics.Typeface.BOLD);
-
-                            TextView tvSub = new TextView(getContext());
-                            tvSub.setText(String.format(Locale.US, "Fecha: %s | Intervalo: %.1f horas", p.fecha, p.deltaHoras));
-                            tvSub.setTextColor(Color.parseColor("#B0BEC5"));
-                            tvSub.setTextSize(11);
-
-                            ProgressBar barra = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleHorizontal);
-                            barra.setMax(400);
-                            barra.setProgress((int) Math.min(400, p.deltaHoras));
-                            barra.getProgressDrawable().setColorFilter(
-                                    Color.parseColor(p.esATiempo ? "#4CAF50" : "#F44336"),
-                                    android.graphics.PorterDuff.Mode.SRC_IN
-                            );
-
-                            itemFila.addView(tvCabecera);
-                            itemFila.addView(tvSub);
-                            itemFila.addView(barra);
-                            layoutBarras.addView(itemFila);
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    tvSubtitulo.setText("Error al cargar historial: " + e.getMessage());
-                });
     }
 }

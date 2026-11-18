@@ -172,27 +172,6 @@
                 android:spinnerMode="dropdown" />
         </LinearLayout>
 
-        <!-- Componente Clave para Reloj Independiente -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="Reloj de componente asociado:"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <Spinner
-            android:id="@+id/spinnerComponenteKey"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/spinner_background"
-            android:gravity="center_vertical"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:spinnerMode="dropdown" />
-
         <!-- Botones de acción -->
         <LinearLayout
             android:layout_width="match_parent"
