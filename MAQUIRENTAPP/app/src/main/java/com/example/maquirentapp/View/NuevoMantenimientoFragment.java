@@ -1949,16 +1949,9 @@ public class NuevoMantenimientoFragment extends Fragment {
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        hideGlobalFab();
-    }
-
-    @Override
     public void onDestroyView() {
         super.onDestroyView();
         ocultarDialogoCargando();
-        hideGlobalFab();
     }
 
     private void configureGlobalFab() {

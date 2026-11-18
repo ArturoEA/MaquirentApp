@@ -321,6 +321,9 @@ public class MainActivity extends AppCompatActivity {
                 if (dest.getId() != R.id.cgeFragment) {
                     hideHeaderActionButton();
                 }
+                if (!destinationUsesGlobalFab(dest.getId())) {
+                    hideGlobalFab();
+                }
                 if (dest.getId() == R.id.authFragment) {
                     configurarUIParaAuth();
                 } else if (dest.getId() == R.id.tareasFragment) {
@@ -776,5 +779,25 @@ public class MainActivity extends AppCompatActivity {
         } else {
             btnGlobal.setVisibility(View.GONE);
         }
+    }
+
+    private boolean destinationUsesGlobalFab(int destinationId) {
+        return destinationId == R.id.mantenimientosFragment
+                || destinationId == R.id.nuevoMantenimientoFragment
+                || destinationId == R.id.mantenimientosConfiguracionFragment
+                || destinationId == R.id.historialAlquilerDiarioFragment
+                || destinationId == R.id.historialAlquilerMensualFragment
+                || destinationId == R.id.nuevoAlquilerDiaFragment
+                || destinationId == R.id.nuevoAlquilerMensualFragment
+                || destinationId == R.id.fichasTecnicasFragment
+                || destinationId == R.id.fotosEquipoFragment
+                || destinationId == R.id.planosCambioVoltajeFragment
+                || destinationId == R.id.listaGruposElectrogenosFragment
+                || destinationId == R.id.accesoriosAlquilerDiarioFragment
+                || destinationId == R.id.accesoriosAlquilerMensualFragment
+                || destinationId == R.id.tareasFragment
+                || destinationId == R.id.perfilFragment
+                || destinationId == R.id.HistorialCotizacionesFragment
+                || destinationId == R.id.listaClientesValorizaciones;
     }
 }

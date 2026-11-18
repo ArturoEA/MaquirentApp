@@ -579,18 +579,6 @@ public class MantenimientosFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        hideGlobalFab();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        hideGlobalFab();
-    }
-
     private void configureGlobalFab() {
         if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
             com.example.maquirentapp.MainActivity main = (com.example.maquirentapp.MainActivity) getActivity();
