@@ -50,7 +50,7 @@
                 android:fontFamily="@font/anta_font"
                 android:inputType="textCapSentences|textMultiLine"
                 android:minLines="1"
-                android:maxLines="4"
+                android:maxLines="5"
                 android:padding="16dp"
                 android:textColor="@color/black" />
         </com.google.android.material.textfield.TextInputLayout>
