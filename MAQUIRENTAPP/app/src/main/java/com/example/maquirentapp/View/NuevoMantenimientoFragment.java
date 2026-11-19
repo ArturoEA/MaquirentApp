@@ -195,6 +195,19 @@ public class NuevoMantenimientoFragment extends Fragment {
             mostrarFotos();
             cargarUltimoHorometroEquipo();
         }
+        
+        // Ensure FAB is shown early, but with delay to avoid race conditions
+        if (getActivity() instanceof com.example.maquirentapp.MainActivity) {
+            if (getView() != null) {
+                getView().post(() -> {
+                    if (isAdded() && getView() != null) {
+                        configureGlobalFab();
+                    }
+                });
+            } else {
+                configureGlobalFab();
+            }
+        }
     }
 
     private void initializeFirebase() {
@@ -1957,13 +1970,20 @@ public class NuevoMantenimientoFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        configureGlobalFab();
+        if (getView() != null) {
+            getView().post(() -> {
+                if (isAdded() && getView() != null) {
+                    configureGlobalFab();
+                }
+            });
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         ocultarDialogoCargando();
+        hideGlobalFab();
     }
 
     private void configureGlobalFab() {

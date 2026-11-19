@@ -788,6 +788,17 @@ public class MainActivity extends AppCompatActivity {
             btnGlobal.setVisibility(View.GONE);
         }
     }
+    
+    public void ensureGlobalFabVisible() {
+        if (btnGlobal == null) {
+            btnGlobal = findViewById(R.id.btnGlobal);
+        }
+        if (btnGlobal != null && btnGlobal.getVisibility() != View.VISIBLE) {
+            btnGlobal.setVisibility(View.VISIBLE);
+            btnGlobal.setAlpha(1f);
+            btnGlobal.animate().cancel();
+        }
+    }
 
     private boolean destinationUsesGlobalFab(int destinationId) {
         return destinationId == R.id.mantenimientosFragment

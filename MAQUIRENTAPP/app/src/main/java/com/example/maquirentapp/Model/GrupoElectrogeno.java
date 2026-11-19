@@ -31,7 +31,30 @@ public class GrupoElectrogeno {
         this.foto = foto;
     }
 
-    // Getters y setters
+    
+    // Placeholder health percentage
+    public int getIndiceSaludPorcentaje() {
+        // TODO: compute actual health based on maintenance data
+        return 100;
+    }
+
+    // Returns the current horometer value
+    public Double getHorometroTotal() {
+        return horometroActual;
+    }
+
+    // Retrieves a task by its key; not implemented yet
+    public Tarea getTareaPorClave(String key) {
+        // TODO: implement actual lookup from task repository
+        return null;
+    }
+
+    // Returns all tasks associated with this group; placeholder empty list
+    public java.util.List<Tarea> getListaTareas() {
+        // TODO: integrate with actual task storage
+        return new java.util.ArrayList<>();
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <!-- Toolbar with close button -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarChecklist"
+        style="@style/Widget.MaterialComponents.Toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:navigationIcon="@drawable/ic_arrow_back_white"
+        app:title="Checklist de Mantenimiento"
+        app:titleTextColor="@color/white"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        />
+
+    <ScrollView
+        android:id="@+id/scrollChecklist"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        android:layout_marginBottom="64dp"
+        android:padding="16dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/llChecklistContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGuardarChecklist"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        android:text="Guardar"
+        android:textColor="@color/white"
+        app:strokeColor="@color/white"
+        app:strokeWidth="1dp"
+        />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

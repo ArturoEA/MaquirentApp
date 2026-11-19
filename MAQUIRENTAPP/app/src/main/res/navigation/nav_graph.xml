@@ -75,7 +75,15 @@
         android:id="@+id/tareasFragment"
         android:name="com.example.maquirentapp.View.TareasFragment"
         android:label="Tareas"
-        tools:layout="@layout/fragment_tareas" />
+        tools:layout="@layout/fragment_tareas">
+        <action
+            android:id="@+id/action_tareas_to_nuevoMantenimiento"
+            app:destination="@id/nuevoMantenimientoFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
 
     <fragment
         android:id="@+id/homeFragment"

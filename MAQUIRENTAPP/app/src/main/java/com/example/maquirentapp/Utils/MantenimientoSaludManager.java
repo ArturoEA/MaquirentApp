@@ -337,7 +337,12 @@ public class MantenimientoSaludManager {
                 });
     }
 
-    private static ReporteSaludEquipo procesarReporte(GrupoElectrogeno grupo,
+    public static ReporteSaludEquipo evaluarSaludGrupo(GrupoElectrogeno grupo,
+                                                       List<MantenimientoConfiguracion> plantillas) {
+        return procesarReporte(grupo, plantillas, Collections.emptyList());
+    }
+
+    public static ReporteSaludEquipo procesarReporte(GrupoElectrogeno grupo,
                                                       List<MantenimientoConfiguracion> plantillas,
                                                       List<Mantenimiento> mantenimientos) {
         ReporteSaludEquipo rep = new ReporteSaludEquipo();
