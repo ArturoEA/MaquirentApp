@@ -831,6 +831,84 @@ public class MantenimientoSaludManager {
     // HELPERS
     // =========================================================================
 
+    /**
+     * Actualiza horometroActual del documento en gruposElectrogenos únicamente si nuevoHorometro
+     * es estrictamente mayor al valor actual registrado. Nunca retrocede el horómetro global.
+     */
+    public static void cargarPlantillasConfiguracion(Context context, Callback<List<MantenimientoConfiguracion>> callback) {
+        FirebaseFirestore.getInstance().collection("mantenimientos_configuracion")
+                .get()
+                .addOnSuccessListener(snapCfg -> {
+                    List<MantenimientoConfiguracion> listaCfg = new ArrayList<>();
+                    if (snapCfg != null) {
+                        for (QueryDocumentSnapshot cDoc : snapCfg) {
+                            MantenimientoConfiguracion c = cDoc.toObject(MantenimientoConfiguracion.class);
+                            c.setId(cDoc.getId());
+                            listaCfg.add(c);
+                        }
+                    }
+                    if (listaCfg.isEmpty() && context != null) {
+                        listaCfg.addAll(MantenimientoOfflineManager.obtenerConfiguracionBackup(context));
+                    }
+                    if (listaCfg.isEmpty()) {
+                        listaCfg.addAll(PlanesMantenimientoDefaults.obtenerPlanGruposElectrogenos());
+                    }
+                    if (callback != null) callback.onSuccess(listaCfg);
+                })
+                .addOnFailureListener(e -> {
+                    List<MantenimientoConfiguracion> listaCfg = new ArrayList<>();
+                    if (context != null) {
+                        listaCfg.addAll(MantenimientoOfflineManager.obtenerConfiguracionBackup(context));
+                    }
+                    if (listaCfg.isEmpty()) {
+                        listaCfg.addAll(PlanesMantenimientoDefaults.obtenerPlanGruposElectrogenos());
+                    }
+                    if (callback != null) callback.onSuccess(listaCfg);
+                });
+    }
+
+    public static void actualizarHorometroSiEsMayor(FirebaseFirestore db, String idGrupo, double nuevoHorometro) {
+        if (db == null || idGrupo == null || idGrupo.trim().isEmpty() || nuevoHorometro <= 0) return;
+        db.collection("gruposElectrogenos").document(idGrupo).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc == null || !doc.exists()) return;
+                    Double actual = doc.getDouble("horometroActual");
+                    if (actual == null || nuevoHorometro > actual) {
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("horometroActual", nuevoHorometro);
+                        updates.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                        db.collection("gruposElectrogenos").document(idGrupo).update(updates);
+                    }
+                });
+    }
+
+    /**
+     * Variante por código de grupo para módulos que solo conocen codigoGrupo.
+     */
+    public static void actualizarHorometroPorCodigoSiEsMayor(FirebaseFirestore db, String codigoGrupo, double nuevoHorometro) {
+        if (db == null || codigoGrupo == null || codigoGrupo.trim().isEmpty() || nuevoHorometro <= 0) return;
+        db.collection("gruposElectrogenos")
+                .whereEqualTo("codigo", codigoGrupo)
+                .get()
+                .addOnSuccessListener(query -> {
+                    if (query == null || query.isEmpty()) return;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : query.getDocuments()) {
+                        Double actual = doc.getDouble("horometroActual");
+                        if (actual == null || nuevoHorometro > actual) {
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("horometroActual", nuevoHorometro);
+                            updates.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                            db.collection("gruposElectrogenos").document(doc.getId()).update(updates);
+                        }
+                    }
+                });
+    }
+
+    public static String formatearHorometroSinDecimal(double h) {
+        if (h <= 0) return "-";
+        return String.format(Locale.US, "%.0f h", h);
+    }
+
     public static double parseDoubleSafe(String val) {
         if (val == null || val.trim().isEmpty()) return 0.0;
         try {

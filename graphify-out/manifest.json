@@ -1,0 +1,1484 @@
+{
+  "MAQUIRENTAPP/app/build.gradle.kts": {
+    "mtime": 1793650579.4702208,
+    "seen": 1795188426.3905237,
+    "ast_hash": "ea8b6847db88a91a141086a95733d4f7",
+    "semantic_hash": "ea8b6847db88a91a141086a95733d4f7"
+  },
+  "MAQUIRENTAPP/app/google-services.json": {
+    "mtime": 1764362873.8450375,
+    "seen": 1795188426.3905237,
+    "ast_hash": "6440b14f5da5b540638a7d8fff8d01dd",
+    "semantic_hash": "6440b14f5da5b540638a7d8fff8d01dd",
+    "ast_empty": true
+  },
+  "MAQUIRENTAPP/app/release/output-metadata.json": {
+    "mtime": 1772299313.3994777,
+    "seen": 1795188426.3905237,
+    "ast_hash": "4367b2a8c10a8669454e2cc8928206db",
+    "semantic_hash": "4367b2a8c10a8669454e2cc8928206db",
+    "ast_empty": true
+  },
+  "MAQUIRENTAPP/app/src/androidTest/java/com/example/maquirentapp/ExampleInstrumentedTest.java": {
+    "mtime": 1792526229.236936,
+    "seen": 1795188426.3905237,
+    "ast_hash": "5967767611e9ce4e81b45ef42b0c2eca",
+    "semantic_hash": "5967767611e9ce4e81b45ef42b0c2eca"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/MainActivity.java": {
+    "mtime": 1795101870.6552787,
+    "seen": 1795188426.3905237,
+    "ast_hash": "84c4c5d9f88fe13a295d946a3c578d74",
+    "semantic_hash": "84c4c5d9f88fe13a295d946a3c578d74"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/MaquirentApplication.java": {
+    "mtime": 1792527774.6336057,
+    "seen": 1795188426.3905237,
+    "ast_hash": "1a52a530e5331cc6ad0b120bd81b37e6",
+    "semantic_hash": "1a52a530e5331cc6ad0b120bd81b37e6"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Accesorio.java": {
+    "mtime": 1792526229.2417424,
+    "seen": 1795188426.3905237,
+    "ast_hash": "7420c1b82cc8ec57ff6578803f992506",
+    "semantic_hash": "7420c1b82cc8ec57ff6578803f992506"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/AlquilerDia.java": {
+    "mtime": 1792519411.0846624,
+    "seen": 1795188426.3905237,
+    "ast_hash": "f9d41b44b95195a2e23853b5bc917ccf",
+    "semantic_hash": "f9d41b44b95195a2e23853b5bc917ccf"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/AlquilerMensual.java": {
+    "mtime": 1792519361.0210626,
+    "seen": 1795188426.3920379,
+    "ast_hash": "0b6eebdac3a87fe9a22e0e45d46c05f5",
+    "semantic_hash": "0b6eebdac3a87fe9a22e0e45d46c05f5"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/CertificadoOperatividad.java": {
+    "mtime": 1793110145.0243962,
+    "seen": 1795188426.3920379,
+    "ast_hash": "1d2fe2d4c8440f48e0061cbe82296015",
+    "semantic_hash": "1d2fe2d4c8440f48e0061cbe82296015"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/ClienteValorizacion.java": {
+    "mtime": 1792526229.2422667,
+    "seen": 1795188426.3920379,
+    "ast_hash": "2dc4a753b38024f4392cccd44d78b682",
+    "semantic_hash": "2dc4a753b38024f4392cccd44d78b682"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/CondicionComercialItem.java": {
+    "mtime": 1792690503.3673935,
+    "seen": 1795188426.3920379,
+    "ast_hash": "6805e7661cc2cd83fdb50e0a98ff3909",
+    "semantic_hash": "6805e7661cc2cd83fdb50e0a98ff3909"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Cotizacion.java": {
+    "mtime": 1793283512.733357,
+    "seen": 1795188426.3920379,
+    "ast_hash": "84cc2621f7d46e924c4eb9210ab59ce8",
+    "semantic_hash": "84cc2621f7d46e924c4eb9210ab59ce8"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/DetalleMes.java": {
+    "mtime": 1792678990.4644754,
+    "seen": 1795188426.3920379,
+    "ast_hash": "449a32e3d83a9987ba151fe3a16122eb",
+    "semantic_hash": "449a32e3d83a9987ba151fe3a16122eb"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/FichaTecnica.java": {
+    "mtime": 1792526229.2422667,
+    "seen": 1795188426.3920379,
+    "ast_hash": "a8c8ad838f1fb816e35f15b70847a254",
+    "semantic_hash": "a8c8ad838f1fb816e35f15b70847a254"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/FiltroCategoria.java": {
+    "mtime": 1792526229.2427864,
+    "seen": 1795188426.3920379,
+    "ast_hash": "a4df9a4c0aca2966eee47d9e823a5960",
+    "semantic_hash": "a4df9a4c0aca2966eee47d9e823a5960"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/FiltroItem.java": {
+    "mtime": 1792526229.2427864,
+    "seen": 1795188426.3920379,
+    "ast_hash": "ebd9c45724036f96b5eba4d787c4eee1",
+    "semantic_hash": "ebd9c45724036f96b5eba4d787c4eee1"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/FotoEquipo.java": {
+    "mtime": 1792526229.2427864,
+    "seen": 1795188426.3920379,
+    "ast_hash": "077571780d7ddb0eabcc9fbbcf01ce28",
+    "semantic_hash": "077571780d7ddb0eabcc9fbbcf01ce28"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/GrupoElectrogeno.java": {
+    "mtime": 1795101024.117245,
+    "seen": 1795188426.3930519,
+    "ast_hash": "0f2a59877ac177ce6a67836b1dfe367c",
+    "semantic_hash": "0f2a59877ac177ce6a67836b1dfe367c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/InfoPlaca.java": {
+    "mtime": 1793286940.298785,
+    "seen": 1795188426.3930519,
+    "ast_hash": "25d3f87190a9e3ffb7932480305950a5",
+    "semantic_hash": "25d3f87190a9e3ffb7932480305950a5"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Ingreso.java": {
+    "mtime": 1792526229.2433295,
+    "seen": 1795188426.3930519,
+    "ast_hash": "28f98ae5e4108f2f0e09e73bc024d6fd",
+    "semantic_hash": "28f98ae5e4108f2f0e09e73bc024d6fd"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/ItemCotizacion.java": {
+    "mtime": 1793288518.3629446,
+    "seen": 1795188426.3930519,
+    "ast_hash": "307f1bbc7689c59f131c18da5e26aa54",
+    "semantic_hash": "307f1bbc7689c59f131c18da5e26aa54"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/ItemValorizacion.java": {
+    "mtime": 1792526229.2433295,
+    "seen": 1795188426.3930519,
+    "ast_hash": "a8bcaec0d6c1f7d22ff8ea27e1666af5",
+    "semantic_hash": "a8bcaec0d6c1f7d22ff8ea27e1666af5"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Mantenimiento.java": {
+    "mtime": 1793896769.3592653,
+    "seen": 1795188426.3930519,
+    "ast_hash": "be4fd16bf133dbe22e0677023885aaec",
+    "semantic_hash": "be4fd16bf133dbe22e0677023885aaec"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/MantenimientoConfiguracion.java": {
+    "mtime": 1795020359.9613602,
+    "seen": 1795188426.3930519,
+    "ast_hash": "c685292c282cfcda8e5a238ebfc5b2eb",
+    "semantic_hash": "c685292c282cfcda8e5a238ebfc5b2eb"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/PagoPendiente.java": {
+    "mtime": 1793116190.8040743,
+    "seen": 1795188426.3930519,
+    "ast_hash": "431d8de909907d19bbb0d3890b7f99cb",
+    "semantic_hash": "431d8de909907d19bbb0d3890b7f99cb"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Plano.java": {
+    "mtime": 1792526229.244392,
+    "seen": 1795188426.3930519,
+    "ast_hash": "84aa32b9c9687ddc842d2efec8dd2b15",
+    "semantic_hash": "84aa32b9c9687ddc842d2efec8dd2b15"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Tarea.java": {
+    "mtime": 1793898936.0930686,
+    "seen": 1795188426.3930519,
+    "ast_hash": "68a62360c8f52584140d54c778d362fd",
+    "semantic_hash": "68a62360c8f52584140d54c778d362fd"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Usuario.java": {
+    "mtime": 1792526229.244392,
+    "seen": 1795188426.394047,
+    "ast_hash": "ad500ddee9fdbeefc500d8d3f4ccf090",
+    "semantic_hash": "ad500ddee9fdbeefc500d8d3f4ccf090"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Model/Valorizacion.java": {
+    "mtime": 1792516811.3306677,
+    "seen": 1795188426.394047,
+    "ast_hash": "c64ec0390140edc7dd6b632c7f674fc7",
+    "semantic_hash": "c64ec0390140edc7dd6b632c7f674fc7"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Network/MyFirebaseMessagingService.java": {
+    "mtime": 1792526229.244981,
+    "seen": 1795188426.394047,
+    "ast_hash": "7ecf106feab481f5dcc1b263e90bb915",
+    "semantic_hash": "7ecf106feab481f5dcc1b263e90bb915"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/AlquilerRepository.java": {
+    "mtime": 1793646279.8913605,
+    "seen": 1795188426.394047,
+    "ast_hash": "15f92a1fbec7f20deac00edc8a070293",
+    "semantic_hash": "15f92a1fbec7f20deac00edc8a070293"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/Callback.java": {
+    "mtime": 1792082402.633201,
+    "seen": 1795188426.394047,
+    "ast_hash": "ca3251c1e26a0bba22eb349a5a9bc8c5",
+    "semantic_hash": "ca3251c1e26a0bba22eb349a5a9bc8c5"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/CertificadosRepository.java": {
+    "mtime": 1793120493.9511125,
+    "seen": 1795188426.394047,
+    "ast_hash": "2aac416fc7299b01b4192714770947f0",
+    "semantic_hash": "2aac416fc7299b01b4192714770947f0"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/CotizacionesRepository.java": {
+    "mtime": 1793643264.5999005,
+    "seen": 1795188426.394047,
+    "ast_hash": "d911be274e27de5fc5e03885d4734b45",
+    "semantic_hash": "d911be274e27de5fc5e03885d4734b45"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/FichaTecnicaRepository.java": {
+    "mtime": 1793646419.3103895,
+    "seen": 1795188426.394047,
+    "ast_hash": "5143a76b13f5c88d0b4145e05309a3d0",
+    "semantic_hash": "5143a76b13f5c88d0b4145e05309a3d0"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/GeneradorRepository.java": {
+    "mtime": 1793646171.8811154,
+    "seen": 1795188426.394047,
+    "ast_hash": "6ccb3df06318862b71834bada5235ebf",
+    "semantic_hash": "6ccb3df06318862b71834bada5235ebf"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/MantenimientoRepository.java": {
+    "mtime": 1792082899.8224518,
+    "seen": 1795188426.3950472,
+    "ast_hash": "c52835721eacb615253a336aca42e4e9",
+    "semantic_hash": "c52835721eacb615253a336aca42e4e9"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/TareaRepository.java": {
+    "mtime": 1793900020.6591914,
+    "seen": 1795188426.3950472,
+    "ast_hash": "d7dd987ead8b630c374f8fab42c3c233",
+    "semantic_hash": "d7dd987ead8b630c374f8fab42c3c233"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/UsuarioRepository.java": {
+    "mtime": 1792084652.5381494,
+    "seen": 1795188426.3950472,
+    "ast_hash": "5142a9a85e7209ae92734038c9130f94",
+    "semantic_hash": "5142a9a85e7209ae92734038c9130f94"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Repository/ValorizacionesRepository.java": {
+    "mtime": 1793120484.4509375,
+    "seen": 1795188426.3950472,
+    "ast_hash": "e9337fa7c2031f26018ea83e5ac13b44",
+    "semantic_hash": "e9337fa7c2031f26018ea83e5ac13b44"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/CalendarioTareoHelper.java": {
+    "mtime": 1792520588.7267842,
+    "seen": 1795188426.3950472,
+    "ast_hash": "a3c0e9520821f99513309b4e985274ee",
+    "semantic_hash": "a3c0e9520821f99513309b4e985274ee"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/CustomDatePickerDialog.java": {
+    "mtime": 1792684041.9383361,
+    "seen": 1795188426.3950472,
+    "ast_hash": "9e4695541f5e6708fee498eb1bf6cd02",
+    "semantic_hash": "9e4695541f5e6708fee498eb1bf6cd02"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/HtmlGenerator.java": {
+    "mtime": 1792183474.7330527,
+    "seen": 1795188426.3950472,
+    "ast_hash": "00b631827effb685e1cfff9300b6b52c",
+    "semantic_hash": "00b631827effb685e1cfff9300b6b52c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/ImageUtils.java": {
+    "mtime": 1792526229.247151,
+    "seen": 1795188426.3950472,
+    "ast_hash": "f0c3e75dd4a4fe33aa2af92df814b49f",
+    "semantic_hash": "f0c3e75dd4a4fe33aa2af92df814b49f"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/InformePdfVectorialGenerator.java": {
+    "mtime": 1793647748.2622395,
+    "seen": 1795188426.3950472,
+    "ast_hash": "d728c322085014fca1f101a88f5b8722",
+    "semantic_hash": "d728c322085014fca1f101a88f5b8722"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/MantenimientoOfflineManager.java": {
+    "mtime": 1793646233.616396,
+    "seen": 1795188426.3950472,
+    "ast_hash": "927882fc3247d81038c22c39120430e7",
+    "semantic_hash": "927882fc3247d81038c22c39120430e7"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/MantenimientoSaludManager.java": {
+    "mtime": 1795190562.7152922,
+    "seen": 1795190723.5876112,
+    "ast_hash": "9df8753011bf9c9f42efbcf375eecd26",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/NetworkUtils.java": {
+    "mtime": 1793290203.4536657,
+    "seen": 1795188426.396047,
+    "ast_hash": "59f04184b8e13c7f9ed9528923d29d91",
+    "semantic_hash": "59f04184b8e13c7f9ed9528923d29d91"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/NumeroALetras.java": {
+    "mtime": 1792516777.770494,
+    "seen": 1795188426.396047,
+    "ast_hash": "95c558d9c01c131a2e70dbf633b4fd23",
+    "semantic_hash": "95c558d9c01c131a2e70dbf633b4fd23"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/PdfCacheManager.java": {
+    "mtime": 1793638192.1715145,
+    "seen": 1795188426.396047,
+    "ast_hash": "0c605576ce87d3526217febaa68db79c",
+    "semantic_hash": "0c605576ce87d3526217febaa68db79c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/PdfGenerator.java": {
+    "mtime": 1793110493.6649191,
+    "seen": 1795188426.396047,
+    "ast_hash": "d3609b5d255558c71bfb627657b83589",
+    "semantic_hash": "d3609b5d255558c71bfb627657b83589"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/PlanesMantenimientoDefaults.java": {
+    "mtime": 1794328802.3912182,
+    "seen": 1795188426.3965497,
+    "ast_hash": "3e08c9a4b7bf94d23e445899da92bf67",
+    "semantic_hash": "3e08c9a4b7bf94d23e445899da92bf67"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/Utils/UpdateManager.java": {
+    "mtime": 1792526229.247676,
+    "seen": 1795188426.3965497,
+    "ast_hash": "8d304d22652d0cf7cc445467789dc9a8",
+    "semantic_hash": "8d304d22652d0cf7cc445467789dc9a8"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/ViewModel/FichaTecnicaViewModel.java": {
+    "mtime": 1793638282.2109394,
+    "seen": 1795188426.3965497,
+    "ast_hash": "2af7e3b1e27e013587f315b46399699c",
+    "semantic_hash": "2af7e3b1e27e013587f315b46399699c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/AccesoriosAlquilerDiarioFragment.java": {
+    "mtime": 1793646306.8708363,
+    "seen": 1795188426.3965497,
+    "ast_hash": "1595aca6eea734df6a8177fb2df9fe36",
+    "semantic_hash": "1595aca6eea734df6a8177fb2df9fe36"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/AccesoriosAlquilerMensualFragment.java": {
+    "mtime": 1793646340.126187,
+    "seen": 1795188426.3965497,
+    "ast_hash": "95af90fb5fb41f132c3cd11d55e3fd8b",
+    "semantic_hash": "95af90fb5fb41f132c3cd11d55e3fd8b"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/AuthFragment.java": {
+    "mtime": 1792526229.2481997,
+    "seen": 1795188426.3965497,
+    "ast_hash": "da6276b72f5a3f1333a5092233898fa6",
+    "semantic_hash": "da6276b72f5a3f1333a5092233898fa6"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/CGEFragment.java": {
+    "mtime": 1793118464.5008433,
+    "seen": 1795188426.3965497,
+    "ast_hash": "ea4c28f31e9fc79b96d2f5c1bb6d09e8",
+    "semantic_hash": "ea4c28f31e9fc79b96d2f5c1bb6d09e8"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/ChecklistDialogFragment.java": {
+    "mtime": 1795193245.0233583,
+    "seen": 1795193339.9495268,
+    "ast_hash": "659068cbfc333093eecff3573a4ee989",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/ConfiguracionFragment.java": {
+    "mtime": 1794326441.1371725,
+    "seen": 1795188426.3965497,
+    "ast_hash": "023ddf17fc1992d242ef759689bd716a",
+    "semantic_hash": "023ddf17fc1992d242ef759689bd716a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/DashboardFinanzasFragment.java": {
+    "mtime": 1764259067.5404472,
+    "seen": 1795188426.3965497,
+    "ast_hash": "cc0d4344799b8343f445b8608e37d4c7",
+    "semantic_hash": "cc0d4344799b8343f445b8608e37d4c7"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/DialogGenerarValorizacion.java": {
+    "mtime": 1794327899.819147,
+    "seen": 1795188426.3975527,
+    "ast_hash": "e17411899317fc0aeeca1edd0da48f5d",
+    "semantic_hash": "e17411899317fc0aeeca1edd0da48f5d"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/FichasTecnicasFragment.java": {
+    "mtime": 1793638343.8294914,
+    "seen": 1795188426.3975527,
+    "ast_hash": "709508f978085d43f1b36694025af7d4",
+    "semantic_hash": "709508f978085d43f1b36694025af7d4"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/FotosEquipoFragment.java": {
+    "mtime": 1792526229.2481997,
+    "seen": 1795188426.3975527,
+    "ast_hash": "eb50206a5332d35564c56e2e47f5b29f",
+    "semantic_hash": "eb50206a5332d35564c56e2e47f5b29f"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/GestionarUsuariosFragment.java": {
+    "mtime": 1792526229.2492075,
+    "seen": 1795188426.3975527,
+    "ast_hash": "3081ad09d40eae79b1ffc7c37c1b8975",
+    "semantic_hash": "3081ad09d40eae79b1ffc7c37c1b8975"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/GrupoElectrogenoFragment.java": {
+    "mtime": 1793973918.594891,
+    "seen": 1795188426.3975527,
+    "ast_hash": "a00ac82107cf48f8bc1aaf7377e0952a",
+    "semantic_hash": "a00ac82107cf48f8bc1aaf7377e0952a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/HistorialAlquilerDiarioFragment.java": {
+    "mtime": 1792526229.2492075,
+    "seen": 1795188426.3975527,
+    "ast_hash": "4c4ad7765a760deca91ad1dc1156b86a",
+    "semantic_hash": "4c4ad7765a760deca91ad1dc1156b86a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/HistorialAlquilerMensualFragment.java": {
+    "mtime": 1793117646.1141298,
+    "seen": 1795188426.3975527,
+    "ast_hash": "7418b4246cfd96438fc6d3cce7e14593",
+    "semantic_hash": "7418b4246cfd96438fc6d3cce7e14593"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/HistorialCotizacionesFragment.java": {
+    "mtime": 1793640713.0474546,
+    "seen": 1795188426.3975527,
+    "ast_hash": "8ca34ba279d034d4db151bb588eebbc2",
+    "semantic_hash": "8ca34ba279d034d4db151bb588eebbc2"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/HistorialValorizacionesClienteFragment.java": {
+    "mtime": 1792598909.2850842,
+    "seen": 1795188426.3975527,
+    "ast_hash": "79972f31bd9969ab7a4a68d7020646e2",
+    "semantic_hash": "79972f31bd9969ab7a4a68d7020646e2"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/HomeFragment.java": {
+    "mtime": 1793116238.4052498,
+    "seen": 1795188426.3975527,
+    "ast_hash": "afa54fa326885a36eab71a2adee32ccb",
+    "semantic_hash": "afa54fa326885a36eab71a2adee32ccb"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/InformacionGeneralFragment.java": {
+    "mtime": 1793286997.726883,
+    "seen": 1795188426.3975527,
+    "ast_hash": "93fe76338e1ce8940dd358104e2b730e",
+    "semantic_hash": "93fe76338e1ce8940dd358104e2b730e"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/ListaClientesValorizacionFragment.java": {
+    "mtime": 1793290188.5968902,
+    "seen": 1795188426.3985524,
+    "ast_hash": "4748e0bbfb173ed6df5cbe905bd1871a",
+    "semantic_hash": "4748e0bbfb173ed6df5cbe905bd1871a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/ListaGruposElectrogenosFragment.java": {
+    "mtime": 1792526229.250208,
+    "seen": 1795188426.3985524,
+    "ast_hash": "4b207b2c15e07d31d8bdd065e3fb5dd1",
+    "semantic_hash": "4b207b2c15e07d31d8bdd065e3fb5dd1"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/Loader.java": {
+    "mtime": 1792526229.250208,
+    "seen": 1795188426.3985524,
+    "ast_hash": "c3a143f60d396d9ae0a3d39e7de14e13",
+    "semantic_hash": "c3a143f60d396d9ae0a3d39e7de14e13"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/MantenimientosConfiguracionFragment.java": {
+    "mtime": 1795020414.3076,
+    "seen": 1795188426.3985524,
+    "ast_hash": "b98af1270c77ad95b80ef724a6959133",
+    "semantic_hash": "b98af1270c77ad95b80ef724a6959133"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/MantenimientosFragment.java": {
+    "mtime": 1795021193.9983144,
+    "seen": 1795188426.3985524,
+    "ast_hash": "572ea351491e90974b95eb7bce234666",
+    "semantic_hash": "572ea351491e90974b95eb7bce234666"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevaCotizacionFragment.java": {
+    "mtime": 1793288562.0727918,
+    "seen": 1795188426.3985524,
+    "ast_hash": "dc560a76dad76ffb99cd3eead7147a48",
+    "semantic_hash": "dc560a76dad76ffb99cd3eead7147a48"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevaValorizacionFragment.java": {
+    "mtime": 1792855552.312585,
+    "seen": 1795188426.3985524,
+    "ast_hash": "4233d50552b085da62509b42164ec121",
+    "semantic_hash": "4233d50552b085da62509b42164ec121"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevoAlquilerDiaFragment.java": {
+    "mtime": 1795190508.9029827,
+    "seen": 1795190723.5906107,
+    "ast_hash": "1f9d5e103d4e6583e3530d3599279a1b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevoAlquilerMensualFragment.java": {
+    "mtime": 1795190670.090348,
+    "seen": 1795190723.5906107,
+    "ast_hash": "ba4baa2bfa31b4cd6e71c44930ebf3ed",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevoCertificadoFragment.java": {
+    "mtime": 1793110314.7996082,
+    "seen": 1795188426.3985524,
+    "ast_hash": "e05de23125ed79ad395d2d73d3b23a97",
+    "semantic_hash": "e05de23125ed79ad395d2d73d3b23a97"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/NuevoMantenimientoFragment.java": {
+    "mtime": 1795190552.4976926,
+    "seen": 1795190723.5906107,
+    "ast_hash": "eb24a638863aeb717bd4fb1cd7cbd5b9",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/PdfViewerActivity.java": {
+    "mtime": 1792527687.4662302,
+    "seen": 1795188426.3995526,
+    "ast_hash": "8b13e1692757797fa3b93389f4980f7f",
+    "semantic_hash": "8b13e1692757797fa3b93389f4980f7f"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/PerfilFragment.java": {
+    "mtime": 1793646200.318498,
+    "seen": 1795188426.3995526,
+    "ast_hash": "bee7a46d5e16b45923f04f56f214544a",
+    "semantic_hash": "bee7a46d5e16b45923f04f56f214544a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/PlanosCambioVoltajeFragment.java": {
+    "mtime": 1792526254.9508932,
+    "seen": 1795188426.3995526,
+    "ast_hash": "0713f8bef09885b95ce5ca89e753f335",
+    "semantic_hash": "0713f8bef09885b95ce5ca89e753f335"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/SaludMantenimientoFragment.java": {
+    "mtime": 1795194662.982177,
+    "seen": 1795194710.1264524,
+    "ast_hash": "0bf5d07d21ce7606998d1085b442c844",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/View/TareasFragment.java": {
+    "mtime": 1795193259.7868333,
+    "seen": 1795193339.9614346,
+    "ast_hash": "fc274b24ace02fa6ccf4037dd1a06d40",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/AccesorioSeleccionAdapter.java": {
+    "mtime": 1792526229.2375686,
+    "seen": 1795188426.3995526,
+    "ast_hash": "14c2ee6c9f82bb9c1258e6b1bb32ff94",
+    "semantic_hash": "14c2ee6c9f82bb9c1258e6b1bb32ff94"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/AccesoriosAdapter.java": {
+    "mtime": 1792526229.2375686,
+    "seen": 1795188426.3995526,
+    "ast_hash": "36a4ec41c53d69f8e976c0f8ae9cc7d8",
+    "semantic_hash": "36a4ec41c53d69f8e976c0f8ae9cc7d8"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/AlquilerDiarioAdapter.java": {
+    "mtime": 1792526229.2385015,
+    "seen": 1795188426.3995526,
+    "ast_hash": "b46e3c7ce91926c284dbbc33d7bb4fcc",
+    "semantic_hash": "b46e3c7ce91926c284dbbc33d7bb4fcc"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/AlquilerMensualAdapter.java": {
+    "mtime": 1792526229.2385015,
+    "seen": 1795188426.3995526,
+    "ast_hash": "c7e61b14fd312d6a869ac6cbbbcaa4bf",
+    "semantic_hash": "c7e61b14fd312d6a869ac6cbbbcaa4bf"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/ClientesValorizacionAdapter.java": {
+    "mtime": 1792850210.3515203,
+    "seen": 1795188426.4005527,
+    "ast_hash": "a52371d4920b0a04f0c3183eddc676bc",
+    "semantic_hash": "a52371d4920b0a04f0c3183eddc676bc"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/CondicionesCotizacionAdapter.java": {
+    "mtime": 1793120307.8041556,
+    "seen": 1795188426.4005527,
+    "ast_hash": "10c44db1902259387f9c8dc14e335262",
+    "semantic_hash": "10c44db1902259387f9c8dc14e335262"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/ConsolidadoValorizacionesAdapter.java": {
+    "mtime": 1793290089.671345,
+    "seen": 1795188426.4005527,
+    "ast_hash": "e458fdf280214c58f7d17a0c04112b9c",
+    "semantic_hash": "e458fdf280214c58f7d17a0c04112b9c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/CotizacionItemsAdapter.java": {
+    "mtime": 1792690541.9494054,
+    "seen": 1795188426.4005527,
+    "ast_hash": "ada3a32102b614cfcc68004bf0e69365",
+    "semantic_hash": "ada3a32102b614cfcc68004bf0e69365"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/CotizacionesAdapter.java": {
+    "mtime": 1792526229.2385015,
+    "seen": 1795188426.4005527,
+    "ast_hash": "d7908312d8178f7dd318e433f1626fc4",
+    "semantic_hash": "d7908312d8178f7dd318e433f1626fc4"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/DetalleMesAdapter.java": {
+    "mtime": 1793113053.3401072,
+    "seen": 1795188426.4005527,
+    "ast_hash": "548704ccae1c6830c0aac44a05fbd51c",
+    "semantic_hash": "548704ccae1c6830c0aac44a05fbd51c"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/FichasTecnicasAdapter.java": {
+    "mtime": 1793638312.714974,
+    "seen": 1795188426.4005527,
+    "ast_hash": "f7a17b74101fa4796c3201983a038f73",
+    "semantic_hash": "f7a17b74101fa4796c3201983a038f73"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/FiltroCategoriasAdapter.java": {
+    "mtime": 1792526229.23901,
+    "seen": 1795188426.4005527,
+    "ast_hash": "8418774f5854d9c636711384e20a33ee",
+    "semantic_hash": "8418774f5854d9c636711384e20a33ee"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/FiltroItemsAdapter.java": {
+    "mtime": 1792526229.23901,
+    "seen": 1795188426.4005527,
+    "ast_hash": "c5a40ee514a675d033f4f221aadd6639",
+    "semantic_hash": "c5a40ee514a675d033f4f221aadd6639"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/FotosEquipoAdapter.java": {
+    "mtime": 1792526229.2395883,
+    "seen": 1795188426.4005527,
+    "ast_hash": "e4acc2e5227afdac4b610eb70d64ba6a",
+    "semantic_hash": "e4acc2e5227afdac4b610eb70d64ba6a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/FotosSimpleAdapter.java": {
+    "mtime": 1792526229.2395883,
+    "seen": 1795188426.4005527,
+    "ast_hash": "bfc82bbdde20c1a97c668a39b2f3baee",
+    "semantic_hash": "bfc82bbdde20c1a97c668a39b2f3baee"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/GrupoElectrogenoAdapter.java": {
+    "mtime": 1792526229.2395883,
+    "seen": 1795188426.4005527,
+    "ast_hash": "4557559b763a92910ba21cb753727aaa",
+    "semantic_hash": "4557559b763a92910ba21cb753727aaa"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/GruposElectrogenosConfiguracionAdapter.java": {
+    "mtime": 1792526229.2395883,
+    "seen": 1795188426.4005527,
+    "ast_hash": "31073600659223b433e05798a6e3355a",
+    "semantic_hash": "31073600659223b433e05798a6e3355a"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/ItemsMantenimientoSeleccionablesAdapter.java": {
+    "mtime": 1794842243.4617026,
+    "seen": 1795188426.4005527,
+    "ast_hash": "b6be77c225fd3265cd02d0700c63dc42",
+    "semantic_hash": "b6be77c225fd3265cd02d0700c63dc42"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/MantenimientoConfiguracionAdapter.java": {
+    "mtime": 1794843350.9795434,
+    "seen": 1795188426.4005527,
+    "ast_hash": "401e8544dd30254e497ee56162012868",
+    "semantic_hash": "401e8544dd30254e497ee56162012868"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/MantenimientosAdapter.java": {
+    "mtime": 1793896803.5657837,
+    "seen": 1795188426.4020555,
+    "ast_hash": "29b901c112688172f9f78a2845449c2d",
+    "semantic_hash": "29b901c112688172f9f78a2845449c2d"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/MaquinaTareaAdapter.java": {
+    "mtime": 1795190576.1191795,
+    "seen": 1795190723.593117,
+    "ast_hash": "708d644acc9b1a782343e5925d1f9d2d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/PagoPendienteAdapter.java": {
+    "mtime": 1793116202.857538,
+    "seen": 1795188426.4020555,
+    "ast_hash": "4ea940930c55ebdb6a432c29863e1f64",
+    "semantic_hash": "4ea940930c55ebdb6a432c29863e1f64"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/PdfPageAdapter.java": {
+    "mtime": 1792526229.2406414,
+    "seen": 1795188426.4020555,
+    "ast_hash": "27d96249499ed5de64e0f8af0b3f11a0",
+    "semantic_hash": "27d96249499ed5de64e0f8af0b3f11a0"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/PlanoAdapter.java": {
+    "mtime": 1792526229.2406414,
+    "seen": 1795188426.4020555,
+    "ast_hash": "976f8ae252e220438ff8d7b33fc34ebc",
+    "semantic_hash": "976f8ae252e220438ff8d7b33fc34ebc"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/SeleccionValorizacionAdapter.java": {
+    "mtime": 1792855543.2545385,
+    "seen": 1795188426.4020555,
+    "ast_hash": "45f6f2730555b1282529634de5e8a7e1",
+    "semantic_hash": "45f6f2730555b1282529634de5e8a7e1"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/SpecsPlacaAdapter.java": {
+    "mtime": 1792526229.2412198,
+    "seen": 1795188426.4020555,
+    "ast_hash": "f66b882aec2c68791af8276f72c91fdd",
+    "semantic_hash": "f66b882aec2c68791af8276f72c91fdd"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/TareasAdapter.java": {
+    "mtime": 1794327820.4940746,
+    "seen": 1795188426.4020555,
+    "ast_hash": "bd1c056de0f07dce79d461b3b1b2b59e",
+    "semantic_hash": "bd1c056de0f07dce79d461b3b1b2b59e"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/UsuariosAdapter.java": {
+    "mtime": 1793117300.4113925,
+    "seen": 1795188426.4020555,
+    "ast_hash": "52dd0702f4e143f25ad3cd679a568a40",
+    "semantic_hash": "52dd0702f4e143f25ad3cd679a568a40"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/UsuariosSeleccionAdapter.java": {
+    "mtime": 1793900008.4286835,
+    "seen": 1795188426.4020555,
+    "ast_hash": "8de0e67f56ada8d731af4a071e348b1f",
+    "semantic_hash": "8de0e67f56ada8d731af4a071e348b1f"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/adapters/ValorizacionesAdapter.java": {
+    "mtime": 1792517746.9834747,
+    "seen": 1795188426.4030585,
+    "ast_hash": "c7b056cf3b5419d5fff108248c693e54",
+    "semantic_hash": "c7b056cf3b5419d5fff108248c693e54"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/strategy/BasePdfGeneratorStrategy.java": {
+    "mtime": 1793287818.7782137,
+    "seen": 1795188426.4030585,
+    "ast_hash": "6a26548c923c5b60c0f66147a8d490a7",
+    "semantic_hash": "6a26548c923c5b60c0f66147a8d490a7"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/strategy/CalculadoraAlquilerStrategy.java": {
+    "mtime": 1792182734.9203737,
+    "seen": 1795188426.4030585,
+    "ast_hash": "7b3f497e759d901f9f929f41141dfb07",
+    "semantic_hash": "7b3f497e759d901f9f929f41141dfb07"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/strategy/CorrelativoStrategy.java": {
+    "mtime": 1793120418.7838914,
+    "seen": 1795188426.4030585,
+    "ast_hash": "332b3512c2a43526889d5ff0626a80c7",
+    "semantic_hash": "332b3512c2a43526889d5ff0626a80c7"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/strategy/PdfGeneratorStrategy.java": {
+    "mtime": 1792690549.81711,
+    "seen": 1795188426.4030585,
+    "ast_hash": "b5a57864965e05972d496ad04feb28bf",
+    "semantic_hash": "b5a57864965e05972d496ad04feb28bf"
+  },
+  "MAQUIRENTAPP/app/src/main/java/com/example/maquirentapp/strategy/ResultadoHorasExtras.java": {
+    "mtime": 1792182726.8784628,
+    "seen": 1795188426.4030585,
+    "ast_hash": "854f8cd38a589216567e724a65aa5e49",
+    "semantic_hash": "854f8cd38a589216567e724a65aa5e49"
+  },
+  "MAQUIRENTAPP/app/src/maquirent/google-services.json": {
+    "mtime": 1792182668.993291,
+    "seen": 1795188426.4030585,
+    "ast_hash": "856e0d6746bdb69938ddbace64b9d9fc",
+    "semantic_hash": "856e0d6746bdb69938ddbace64b9d9fc",
+    "ast_empty": true
+  },
+  "MAQUIRENTAPP/app/src/maquirent/java/com/example/maquirentapp/strategy/MaquirentCalculadoraStrategy.java": {
+    "mtime": 1792182896.7046583,
+    "seen": 1795188426.4030585,
+    "ast_hash": "9cc72b9d01b812cfea0abe3b5ecd2d75",
+    "semantic_hash": "9cc72b9d01b812cfea0abe3b5ecd2d75"
+  },
+  "MAQUIRENTAPP/app/src/maquirent/java/com/example/maquirentapp/strategy/MaquirentCorrelativoStrategy.java": {
+    "mtime": 1793640078.8365932,
+    "seen": 1795188426.4030585,
+    "ast_hash": "1085d88df06bbb9a80793554e1b75bfb",
+    "semantic_hash": "1085d88df06bbb9a80793554e1b75bfb"
+  },
+  "MAQUIRENTAPP/app/src/maquirent/java/com/example/maquirentapp/strategy/MaquirentPdfStrategy.java": {
+    "mtime": 1793120389.180853,
+    "seen": 1795188426.4030585,
+    "ast_hash": "9f134a09e4f00c6dc1904d54a63f436d",
+    "semantic_hash": "9f134a09e4f00c6dc1904d54a63f436d"
+  },
+  "MAQUIRENTAPP/app/src/maquirent/java/com/example/maquirentapp/strategy/StrategyProvider.java": {
+    "mtime": 1792182912.7014737,
+    "seen": 1795188426.4030585,
+    "ast_hash": "008de2dc5e3bb031dad35de92d03bdc0",
+    "semantic_hash": "008de2dc5e3bb031dad35de92d03bdc0"
+  },
+  "MAQUIRENTAPP/app/src/test/java/com/example/maquirentapp/Utils/MantenimientoSaludManagerTest.java": {
+    "mtime": 1794932866.7072556,
+    "seen": 1795188426.4040592,
+    "ast_hash": "08589106fd9735a743126fe656bfa5f4",
+    "semantic_hash": "08589106fd9735a743126fe656bfa5f4"
+  },
+  "MAQUIRENTAPP/app/src/volker/google-services.json": {
+    "mtime": 1792269434.4971583,
+    "seen": 1795188426.4040592,
+    "ast_hash": "8b81af5d24029e0b4655aab2b5def4d1",
+    "semantic_hash": "8b81af5d24029e0b4655aab2b5def4d1",
+    "ast_empty": true
+  },
+  "MAQUIRENTAPP/app/src/volker/java/com/example/maquirentapp/strategy/StrategyProvider.java": {
+    "mtime": 1792269495.0377474,
+    "seen": 1795188426.4040592,
+    "ast_hash": "54a585a2f1e3556235f7ca4e031c026f",
+    "semantic_hash": "54a585a2f1e3556235f7ca4e031c026f"
+  },
+  "MAQUIRENTAPP/app/src/volker/java/com/example/maquirentapp/strategy/VolkerCalculadoraStrategy.java": {
+    "mtime": 1792269482.3848834,
+    "seen": 1795188426.4040592,
+    "ast_hash": "79ce46b7ca3b335a972543983bf5dd69",
+    "semantic_hash": "79ce46b7ca3b335a972543983bf5dd69"
+  },
+  "MAQUIRENTAPP/app/src/volker/java/com/example/maquirentapp/strategy/VolkerCorrelativoStrategy.java": {
+    "mtime": 1793640092.2672212,
+    "seen": 1795188426.4040592,
+    "ast_hash": "cb7a8c730406384b0968a5e8cabbe438",
+    "semantic_hash": "cb7a8c730406384b0968a5e8cabbe438"
+  },
+  "MAQUIRENTAPP/app/src/volker/java/com/example/maquirentapp/strategy/VolkerPdfStrategy.java": {
+    "mtime": 1793120406.6230896,
+    "seen": 1795188426.4040592,
+    "ast_hash": "6d238becab50a1ceedc595a37427425b",
+    "semantic_hash": "6d238becab50a1ceedc595a37427425b"
+  },
+  "MAQUIRENTAPP/build.gradle.kts": {
+    "mtime": 1764191775.2679758,
+    "seen": 1795188426.4040592,
+    "ast_hash": "a9d3bd8b8d5f41f93f263138899ce535",
+    "semantic_hash": "a9d3bd8b8d5f41f93f263138899ce535"
+  },
+  "MAQUIRENTAPP/gradlew": {
+    "mtime": 1761236322.6490045,
+    "seen": 1795188426.4040592,
+    "ast_hash": "c6ea21dea2d500b277296894708cf792",
+    "semantic_hash": "c6ea21dea2d500b277296894708cf792"
+  },
+  "MAQUIRENTAPP/settings.gradle.kts": {
+    "mtime": 1763595022.442784,
+    "seen": 1795188426.4040592,
+    "ast_hash": "fdd8a795374c591597392f07a68f2564",
+    "semantic_hash": "fdd8a795374c591597392f07a68f2564"
+  },
+  "firebase.json": {
+    "mtime": 1793646105.9117992,
+    "seen": 1795188426.4040592,
+    "ast_hash": "ffdc2250bc3fa1f56af5fc73591786cc",
+    "semantic_hash": "ffdc2250bc3fa1f56af5fc73591786cc",
+    "ast_empty": true
+  },
+  "firestore.indexes.json": {
+    "mtime": 1792526438.5264452,
+    "seen": 1795188426.4040592,
+    "ast_hash": "afa37a6b1d424fd2bd99ec39bf73dfc8",
+    "semantic_hash": "afa37a6b1d424fd2bd99ec39bf73dfc8",
+    "ast_empty": true
+  },
+  "functions/index.js": {
+    "mtime": 1792686062.3762553,
+    "seen": 1795188426.4040592,
+    "ast_hash": "a69995b939588fbdc7eefa8d568a3237",
+    "semantic_hash": "a69995b939588fbdc7eefa8d568a3237"
+  },
+  "functions/package.json": {
+    "mtime": 1792082279.0862036,
+    "seen": 1795188426.4040592,
+    "ast_hash": "8ce88c285494fe4431ec8b63a9db0847",
+    "semantic_hash": "8ce88c285494fe4431ec8b63a9db0847"
+  },
+  "MAQUIRENTAPP/AGENTS.md": {
+    "mtime": 1794932589.1472788,
+    "seen": 1795190723.5961199,
+    "ast_hash": "9c9200425215c39e62e5f02c4a881233",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/assets/templates/PlantillaValorizacion.pdf": {
+    "mtime": 1792594501.2606914,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a9485bb61de6d1320778bc1da4faa4dd",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/assets/templates/PlantillaValorizacionHE.pdf": {
+    "mtime": 1792594501.2606914,
+    "seen": 1795190723.5961199,
+    "ast_hash": "2c26a19793c31c7aef0aeb9931b1b2b2",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/ic_launcher-playstore.png": {
+    "mtime": 1761236322.5484395,
+    "seen": 1795190723.5961199,
+    "ast_hash": "2488860b0829d1b2de0c894b22a71ffb",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/cge1.jpg": {
+    "mtime": 1761236322.6030223,
+    "seen": 1795190723.5961199,
+    "ast_hash": "ee8292b2e0c9a08290dfe9865972991b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/firma_representante.png": {
+    "mtime": 1689688894.0,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f7e4493fc34e9c304f106234afa5a976",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/firmahep.png": {
+    "mtime": 1689688894.0,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f7e4493fc34e9c304f106234afa5a976",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/ico_voltaje_blanco.png": {
+    "mtime": 1761236322.6040225,
+    "seen": 1795190723.5961199,
+    "ast_hash": "7451c747b3eb7879974aca68ae4d8f5b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icocge1.jpeg": {
+    "mtime": 1761236322.6040225,
+    "seen": 1795190723.5961199,
+    "ast_hash": "842844837bed931a80699c945ab30057",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icocge2.jpeg": {
+    "mtime": 1761236322.6050825,
+    "seen": 1795190723.5961199,
+    "ast_hash": "6967245247dcdae3554aecb7e5497c66",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icocge3.jpeg": {
+    "mtime": 1761236322.607102,
+    "seen": 1795190723.5961199,
+    "ast_hash": "e60407d92039417c7845d6ad9c5fcf60",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_aceite_blanco.png": {
+    "mtime": 1761236322.607102,
+    "seen": 1795190723.5961199,
+    "ast_hash": "4854730e61e5703dbecf8513c8830755",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_alquiler_blanco.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3bf1d7ad8268d716d0651cf39fa109b1",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_back_blanco.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "aa11419c5872748293a1899dc57c0d55",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_bandeja_blanco.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "7e8349743e8d7a2476d518a9a68d95e6",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_bidon_blanco.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "5e71599ecc169efa545afbe078f5a6ed",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_accesorios_diario.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b856bdca002bfc57c527d3f76ec9f523",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_accesorios_mensual.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "aed2dce7cf7de04551503f51276df002",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_gestionar_usuarios.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "73b78a2d5f581faccbeff7e4c2386bb7",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_historial_ingresos.png": {
+    "mtime": 1764236440.306004,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3258acc23e7e08d4cb26b2ecc306767f",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_informacion_general.png": {
+    "mtime": 1761236322.6080222,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a1cf22279f087d4b28edcc4e36509e42",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_blanco_mantenimientos.png": {
+    "mtime": 1761236322.6094737,
+    "seen": 1795190723.5961199,
+    "ast_hash": "238e3817932dee34e6546e3aafcf52bd",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_cable_blanco.png": {
+    "mtime": 1761236322.6094737,
+    "seen": 1795190723.5961199,
+    "ast_hash": "bccbb246cbef0ca0968b16ca0b307653",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_camara_blanco.png": {
+    "mtime": 1762618665.1184802,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3b99017643d7547cb6685ad489057bdd",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_cerrar_sesion_negro.png": {
+    "mtime": 1761084903.1145842,
+    "seen": 1795190723.5961199,
+    "ast_hash": "5e3278bd102ca4a447d304d39786eee4",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_certificado_blanco.png": {
+    "mtime": 1764014417.7074325,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1b3f2d9c4a73993653f36b46632f8ac4",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_combustible_blanco.png": {
+    "mtime": 1761236322.6094737,
+    "seen": 1795190723.5961199,
+    "ast_hash": "6cbf62303d6affb81181a86820126f4d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_compartir.png": {
+    "mtime": 1764219436.331157,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a9ee5de2a54653b406495f23ee1d5b19",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_compartir_blanco.png": {
+    "mtime": 1764220802.3185923,
+    "seen": 1795190723.5961199,
+    "ast_hash": "88befb945ebf7c7d509267e19ce50c82",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_configuracion_blanco.png": {
+    "mtime": 1761236322.6094737,
+    "seen": 1795190723.5961199,
+    "ast_hash": "c6239238aa1ef7dcf77708052aa8d52d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_contrato_blanco.png": {
+    "mtime": 1761236322.6094737,
+    "seen": 1795190723.5961199,
+    "ast_hash": "d18f452c2512fb1355d6e1b02dd69c9c",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_cotizacion_blanco.png": {
+    "mtime": 1761236322.6104848,
+    "seen": 1795190723.5961199,
+    "ast_hash": "30bc8617aeec39ad3894d92e4b44baa2",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_descargar.png": {
+    "mtime": 1764219466.820151,
+    "seen": 1795190723.5961199,
+    "ast_hash": "409930a4505af0ca590fb2517c481111",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_descargar_blanco.png": {
+    "mtime": 1764220861.086425,
+    "seen": 1795190723.5961199,
+    "ast_hash": "73e621315cb943106c3d27fd6291966a",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_editar_blanco.png": {
+    "mtime": 1760786755.891501,
+    "seen": 1795190723.5961199,
+    "ast_hash": "8f0750d50900aa2be1e6f648afe2dc93",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_eliminar_negro.png": {
+    "mtime": 1764224321.775466,
+    "seen": 1795190723.5961199,
+    "ast_hash": "7c53c323cf036ffd13198f6cb63c6e1f",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_eliminar_rojo.png": {
+    "mtime": 1761092912.6268444,
+    "seen": 1795190723.5961199,
+    "ast_hash": "5bb647e22030edfd85a27329b25cf5d3",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_embudo.png": {
+    "mtime": 1761236322.6104848,
+    "seen": 1795190723.5961199,
+    "ast_hash": "11b7a9b9a0c3d73ac15132ad4d10d7a5",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_extension_caja_blanco.png": {
+    "mtime": 1761236322.6104848,
+    "seen": 1795190723.5961199,
+    "ast_hash": "cf2536ef0a1df633ff7ed2ebafc69a4a",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_extintor_blanco.png": {
+    "mtime": 1761236322.6104848,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1e67b8bd89405905b7fcf09c9feef722",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_fajas_blanco.png": {
+    "mtime": 1761236322.6104848,
+    "seen": 1795190723.5961199,
+    "ast_hash": "56f9d7cbc6096705dab002ae822e2042",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_ficha_tecnica_blanco.png": {
+    "mtime": 1761236322.6114824,
+    "seen": 1795190723.5961199,
+    "ast_hash": "9d17d615f364830c63fe8242c4587afe",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_filtro_aire_blanco.png": {
+    "mtime": 1761236322.6114824,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b148b4203b6c990ead5e1aff2e75defa",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_flecha_abajo.png": {
+    "mtime": 1761236322.6114824,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a648f9a3d45d759523f2eb37e24ab527",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_flecha_negro.png": {
+    "mtime": 1764227812.6513455,
+    "seen": 1795190723.5961199,
+    "ast_hash": "6e36f14ff0751aac7aad43981c7d703f",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_generador.png": {
+    "mtime": 1761236322.6114824,
+    "seen": 1795190723.5961199,
+    "ast_hash": "9dfe54a84d46e59ba6bfe2792975fb79",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_guardar_blanco.png": {
+    "mtime": 1761236322.6124823,
+    "seen": 1795190723.5961199,
+    "ast_hash": "6ca9da5ae90fc91bc81bf0413abcd43d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_home_blanco.png": {
+    "mtime": 1761236322.6124823,
+    "seen": 1795190723.5961199,
+    "ast_hash": "db7d77888668973896f072a09e46a00e",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_imagenes_blanco.png": {
+    "mtime": 1763772222.740397,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f3673a03494264ae9365910816aaa9b9",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_informacion_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "327c705d101d016a2b24d3b03031474e",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_kit_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "6dbf29a7634552dea38d0e1bc47160a8",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_linea_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "ef20f41c807bf4b8b104a5ebb13068f3",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_lista_tareas_blanco.png": {
+    "mtime": 1763596915.2514994,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a5514ecf9691d22b14409042bf905438",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_llave_hexagonal_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b01dd2aa75d00529fa0553028b57d28b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_llaves_puerta_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "14a002eef0fcc2b70ef87cd3d8de0978",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_lupa.png": {
+    "mtime": 1764190860.4679482,
+    "seen": 1795190723.5961199,
+    "ast_hash": "25e4c9f82fcfcbcf8e7aed5f7d8ce3f7",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_manguera_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "49c8e44bc5ab2a58a00f2692b84d6761",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_mantenimiento_blanco.png": {
+    "mtime": 1761236322.6134813,
+    "seen": 1795190723.5961199,
+    "ast_hash": "665464ac80742c99433523b03466c3a6",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_monedas_blanco.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "226acba57e05d131004bd8abc49aefff",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_newmant.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "9dfe54a84d46e59ba6bfe2792975fb79",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_nuevo_blanco.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a4e83f92e5669283ac335f29ae5b5df4",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_ojo_negro.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b4328ce2b3898c7b5a383d73adc52c2c",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_ordenar_negro.png": {
+    "mtime": 1767630310.9197073,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b4b5c458285129b1c812682643da774c",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_password_negro.png": {
+    "mtime": 1760792087.5510316,
+    "seen": 1795190723.5961199,
+    "ast_hash": "404af9aa5896c3793838a0daf8705b2a",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_pdf_blanco.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "18be6bb37df6608d38a1a96189c90666",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_perfil_blanco.png": {
+    "mtime": 1761236322.6148252,
+    "seen": 1795190723.5961199,
+    "ast_hash": "5a7a1f14e7314ff6f9d41f97cbefe808",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_perno_blanco.png": {
+    "mtime": 1761236322.6158285,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a030d20dff8d14e6a725ce15e9a971a4",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_petroleo_blanco.png": {
+    "mtime": 1761236322.6158285,
+    "seen": 1795190723.5961199,
+    "ast_hash": "40fc3b0d515286e0ff017475798e37b8",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_refrigerante_blanco.png": {
+    "mtime": 1761236322.6158285,
+    "seen": 1795190723.5961199,
+    "ast_hash": "290669f2d3fd8868159e8c2907debfa9",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_remolque_blanco.png": {
+    "mtime": 1761236322.6158285,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a01ade1a4fcbab12da1e20eb85c8bcb4",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_separador_blanco.png": {
+    "mtime": 1761236322.616832,
+    "seen": 1795190723.5961199,
+    "ast_hash": "2050f5d438c8e91b4df83657bfea5717",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_tablero_blanco.png": {
+    "mtime": 1761236322.616832,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f2c6ac8467e3ea1fd28d1b59f352d65d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_taco_blanco.png": {
+    "mtime": 1761236322.616832,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a7b3dabf03f117063cdf6a5dd17d1137",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_tanque_blanco.png": {
+    "mtime": 1761236322.616832,
+    "seen": 1795190723.5961199,
+    "ast_hash": "c93790d8ceb5707443d9903f28198d46",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_ubicacion_blanco.png": {
+    "mtime": 1761236322.616832,
+    "seen": 1795190723.5961199,
+    "ast_hash": "11164edd2231d9b18d1e2dc984eb4c19",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_valorizacion_blanco.png": {
+    "mtime": 1761236322.617833,
+    "seen": 1795190723.5961199,
+    "ast_hash": "630f9c354019f9f5eb7ce4e8db587eb2",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_varilla_blanco.png": {
+    "mtime": 1761236322.617833,
+    "seen": 1795190723.5961199,
+    "ast_hash": "4ee78951e538a9983e8bb4acc91422fb",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/icon_voltaje_blanco.png": {
+    "mtime": 1761236322.617833,
+    "seen": 1795190723.5961199,
+    "ast_hash": "7451c747b3eb7879974aca68ae4d8f5b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/ilustracion_maquinaria_vacio.jpg": {
+    "mtime": 1761236322.6259265,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a9f400e33236c8e438a63e00afe9af42",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/item1_planos_cambio_voltaje.png": {
+    "mtime": 1761236322.6259265,
+    "seen": 1795190723.5961199,
+    "ast_hash": "af2c1caf66c325e160406007b26d4a55",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/logo.png": {
+    "mtime": 1761236322.6269999,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1b0a2e3e59e08b2b92f7e59240397842",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/drawable/logo_horizontal.jpg": {
+    "mtime": 1764045084.4154499,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3523f6710fee9e78e88185611ba6876a",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-hdpi/ic_launcher.webp": {
+    "mtime": 1761236322.6380043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1b5d41def378fec5aedfecd98cdff76b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.webp": {
+    "mtime": 1761236322.6380043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "0716d9d41f573ec6d236bf14706bb72d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-hdpi/ic_launcher_round.webp": {
+    "mtime": 1761236322.6380043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1f1062d44d7f20fc57ec4998a87c2d7b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-mdpi/ic_launcher.webp": {
+    "mtime": 1761236322.6380043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "a8c12051af6374fb900cbbf3e48fb1eb",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp": {
+    "mtime": 1761236322.6410093,
+    "seen": 1795190723.5961199,
+    "ast_hash": "47ff61702796400601b70b088f5767fa",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-mdpi/ic_launcher_round.webp": {
+    "mtime": 1761236322.6410093,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f7dc33b70b80a294253f2265b6d8a41f",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xhdpi/ic_launcher.webp": {
+    "mtime": 1761236322.6410093,
+    "seen": 1795190723.5961199,
+    "ast_hash": "35d785580d5aa80c8c07e149663a9e2d",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp": {
+    "mtime": 1761236322.6410093,
+    "seen": 1795190723.5961199,
+    "ast_hash": "261927168363963096232addf8dabd1b",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp": {
+    "mtime": 1761236322.6420043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "5f94c678842621d54d1b81ffeab3a771",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxhdpi/ic_launcher.webp": {
+    "mtime": 1761236322.6420043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "9b94e1b737f1ca06a681a64d2ba79941",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp": {
+    "mtime": 1761236322.6420043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "79dba2f3061d33b0cb4b9bf7785a6fa6",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp": {
+    "mtime": 1761236322.6420043,
+    "seen": 1795190723.5961199,
+    "ast_hash": "19d0794e1d1c165a44445beb7b125020",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp": {
+    "mtime": 1761236322.6430037,
+    "seen": 1795190723.5961199,
+    "ast_hash": "cd5882b3deb48ed63e421a4109805301",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp": {
+    "mtime": 1761236322.6430037,
+    "seen": 1795190723.5961199,
+    "ast_hash": "39970ad479be285a9cc28970a517a8c3",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp": {
+    "mtime": 1761236322.6430037,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b49e917fb80ce6457d9f05949d465d36",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/maquirent/res/drawable/firma_representante.png": {
+    "mtime": 1689688894.0,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f7e4493fc34e9c304f106234afa5a976",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/maquirent/res/drawable/logo.png": {
+    "mtime": 1761236322.6269999,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1b0a2e3e59e08b2b92f7e59240397842",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/maquirent/res/drawable/logo_horizontal.jpg": {
+    "mtime": 1764045084.4154499,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3523f6710fee9e78e88185611ba6876a",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/volker/res/drawable/firma_representante.png": {
+    "mtime": 1689688894.0,
+    "seen": 1795190723.5961199,
+    "ast_hash": "f7e4493fc34e9c304f106234afa5a976",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/volker/res/drawable/logo.png": {
+    "mtime": 1761236322.6269999,
+    "seen": 1795190723.5961199,
+    "ast_hash": "1b0a2e3e59e08b2b92f7e59240397842",
+    "semantic_hash": ""
+  },
+  "MAQUIRENTAPP/app/src/volker/res/drawable/logo_horizontal.jpg": {
+    "mtime": 1764045084.4154499,
+    "seen": 1795190723.5961199,
+    "ast_hash": "3523f6710fee9e78e88185611ba6876a",
+    "semantic_hash": ""
+  },
+  "functions/package-lock.json": {
+    "mtime": 1761240834.025591,
+    "seen": 1795190723.5961199,
+    "ast_hash": "b247c7e9cfe80e5596c47cb2edc56921",
+    "semantic_hash": ""
+  }
+}

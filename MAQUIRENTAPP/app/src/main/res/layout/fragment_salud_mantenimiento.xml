@@ -10,6 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="8dp"
         android:paddingBottom="40dp">
 
         <!-- Shimmer de carga -->
@@ -26,20 +28,20 @@
 
                 <View
                     android:layout_width="match_parent"
+                    android:layout_height="150dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#263238" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="96dp"
+                    android:layout_marginBottom="14dp"
+                    android:background="#263238" />
+
+                <View
+                    android:layout_width="match_parent"
                     android:layout_height="180dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#333333" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="140dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="#333333" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="220dp"
-                    android:background="#333333" />
+                    android:background="#263238" />
             </LinearLayout>
         </com.facebook.shimmer.ShimmerFrameLayout>
 
@@ -51,15 +53,15 @@
             android:orientation="vertical">
 
             <!-- ========================================================= -->
-            <!-- 1. HERO CARD: ESTADO GENERAL Y HORÓMETRO                 -->
+            <!-- 1. RESUMEN GENERAL DEL EQUIPO                             -->
             <!-- ========================================================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 android:backgroundTint="@color/background_dark"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardElevation="3dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -78,23 +80,26 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:ellipsize="end"
                             android:fontFamily="@font/anta_font"
-                            android:text="Estado Operativo General"
+                            android:singleLine="true"
+                            android:text="GEP-100 · Grupo electrógeno"
                             android:textColor="@color/white"
-                            android:textSize="16sp"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/tvBadgeGeneralSalud"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
                             android:background="@drawable/dialog_rounded_white_background"
                             android:fontFamily="@font/anta_font"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp"
                             android:text="Operativo"
                             android:textColor="@color/white"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -115,9 +120,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="HORÓMETRO ACTUAL"
-                                android:textColor="#B0BEC5"
-                                android:textSize="11sp"
+                                android:text="HORÓMETRO"
+                                android:textColor="#78909C"
+                                android:textSize="10.5sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -126,9 +131,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="@font/anta_font"
-                                android:text="1,750.0 h"
+                                android:text="1,750 h"
                                 android:textColor="@color/white"
-                                android:textSize="24sp"
+                                android:textSize="22sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
@@ -142,9 +147,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="ÍNDICE DE SALUD"
-                                android:textColor="#B0BEC5"
-                                android:textSize="11sp"
+                                android:text="SALUD"
+                                android:textColor="#78909C"
+                                android:textSize="10.5sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -154,17 +159,17 @@
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="@font/anta_font"
                                 android:text="92%"
-                                android:textColor="#4CAF50"
-                                android:textSize="24sp"
+                                android:textColor="#66BB6A"
+                                android:textSize="22sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Contador de Tareas en 3 Bloques -->
+                    <!-- Contadores sobrios y legibles (sin colores saturados) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="14dp"
                         android:orientation="horizontal">
 
                         <LinearLayout
@@ -174,19 +179,19 @@
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:background="@drawable/dialog_rounded_white_background"
-                            android:backgroundTint="#1B5E20"
+                            android:backgroundTint="#263238"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingVertical="10dp">
+                            android:paddingVertical="9dp">
 
                             <TextView
                                 android:id="@+id/tvTotalAlDia"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="24"
-                                android:textColor="#81C784"
-                                android:textSize="18sp"
+                                android:text="0"
+                                android:textColor="#66BB6A"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -194,7 +199,7 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
                                 android:text="Al día"
-                                android:textColor="#E8F5E9"
+                                android:textColor="#B0BEC5"
                                 android:textSize="11sp" />
                         </LinearLayout>
 
@@ -205,19 +210,19 @@
                             android:layout_marginHorizontal="3dp"
                             android:layout_weight="1"
                             android:background="@drawable/dialog_rounded_white_background"
-                            android:backgroundTint="#F57F17"
+                            android:backgroundTint="#263238"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingVertical="10dp">
+                            android:paddingVertical="9dp">
 
                             <TextView
                                 android:id="@+id/tvTotalProximas"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="3"
-                                android:textColor="#FFF59D"
-                                android:textSize="18sp"
+                                android:text="0"
+                                android:textColor="#FFA726"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -225,7 +230,7 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
                                 android:text="Próximas"
-                                android:textColor="#FFFDE7"
+                                android:textColor="#B0BEC5"
                                 android:textSize="11sp" />
                         </LinearLayout>
 
@@ -236,19 +241,19 @@
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:background="@drawable/dialog_rounded_white_background"
-                            android:backgroundTint="#B71C1C"
+                            android:backgroundTint="#263238"
                             android:gravity="center"
                             android:orientation="vertical"
-                            android:paddingVertical="10dp">
+                            android:paddingVertical="9dp">
 
                             <TextView
                                 android:id="@+id/tvTotalVencidas"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="1"
-                                android:textColor="#EF9A9A"
-                                android:textSize="18sp"
+                                android:text="0"
+                                android:textColor="#EF5350"
+                                android:textSize="17sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -256,7 +261,7 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
                                 android:text="Vencidas"
-                                android:textColor="#FFEBEE"
+                                android:textColor="#B0BEC5"
                                 android:textSize="11sp" />
                         </LinearLayout>
 
@@ -267,15 +272,15 @@
             </androidx.cardview.widget.CardView>
 
             <!-- ========================================================= -->
-            <!-- 2. DISCIPLINA Y PUNTUALIDAD                              -->
+            <!-- 2. RESUMEN DE PUNTUALIDAD (SIN BARRAS CONFUSAS)           -->
             <!-- ========================================================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="14dp"
                 android:backgroundTint="@color/background_dark"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -283,19 +288,10 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/anta_font"
-                        android:text="Disciplina de Mantenimiento"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <LinearLayout
@@ -305,22 +301,24 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tvValorPuntualidad"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="85.7%"
-                                android:textColor="#90CAF9"
-                                android:textSize="20sp"
+                                android:text="PUNTUALIDAD"
+                                android:textColor="#78909C"
+                                android:textSize="10.5sp"
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvValorPuntualidad"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
                                 android:fontFamily="@font/anta_font"
-                                android:text="Puntualidad a tiempo"
-                                android:textColor="#B0BEC5"
-                                android:textSize="11sp" />
+                                android:text="-"
+                                android:textColor="#90CAF9"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -331,22 +329,24 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tvValorIntervaloPromedio"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/anta_font"
-                                android:text="248.0 h"
-                                android:textColor="#80CBC4"
-                                android:textSize="20sp"
+                                android:text="INTERVALO PROMEDIO"
+                                android:textColor="#78909C"
+                                android:textSize="10.5sp"
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvValorIntervaloPromedio"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
                                 android:fontFamily="@font/anta_font"
-                                android:text="Intervalo promedio"
-                                android:textColor="#B0BEC5"
-                                android:textSize="11sp" />
+                                android:text="-"
+                                android:textColor="#80CBC4"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -354,19 +354,11 @@
                         android:id="@+id/tvDiagnosticoDisciplina"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="8dp"
                         android:fontFamily="@font/anta_font"
-                        android:text="Excelente disciplina de mantenimiento. La máquina se atiende oportunamente."
-                        android:textColor="#CFD8DC"
-                        android:textSize="12sp" />
-
-                    <!-- Gráfico Visual de Barras de Intervalos -->
-                    <LinearLayout
-                        android:id="@+id/layoutBarrasGrafico"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:orientation="vertical" />
+                        android:text=""
+                        android:textColor="#90A4AE"
+                        android:textSize="11.5sp" />
 
                 </LinearLayout>
 
@@ -378,7 +370,7 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
+                android:layout_marginBottom="10dp"
                 android:scrollbars="none">
 
                 <LinearLayout

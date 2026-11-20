@@ -1,6 +1,7 @@
 package com.example.maquirentapp.adapters;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,36 +14,37 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.maquirentapp.Model.GrupoElectrogeno;
 import com.example.maquirentapp.R;
 import com.example.maquirentapp.Utils.MantenimientoSaludManager;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager.EstadoSalud;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager.EstadoSaludTarea;
+import com.example.maquirentapp.Utils.MantenimientoSaludManager.ReporteSaludEquipo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 /**
- * Adapter: one card per machine. Shows pending/overdue tasks from ReporteSaludEquipo.
- * ponytail: no Tarea model needed — works directly with EstadoSaludTarea from the health report.
+ * Adapter de tarjetas de máquinas en Lista de Tareas.
+ * Muestra el horómetro sin decimales y únicamente las actividades vencidas y próximas a vencer.
  */
 public class MaquinaTareaAdapter extends RecyclerView.Adapter<MaquinaTareaAdapter.ViewHolder> {
 
     public interface OnCardClickListener {
-        void onCardClicked(GrupoElectrogeno grupo);
-//        void onCardClicked(GrupoElectrogeno grupo, MantenimientoSaludManager.ReporteSaludEquipo reporte);
+        void onCardClicked(GrupoElectrogeno grupo, ReporteSaludEquipo reporte);
     }
 
-//    /** Wrapper: grupo + its computed health report. */
-//    public static class MaquinaConReporte {
-//        public final GrupoElectrogeno grupo;
-//        public final MantenimientoSaludManager.ReporteSaludEquipo reporte;
-//
-//        public MaquinaConReporte(GrupoElectrogeno grupo, MantenimientoSaludManager.ReporteSaludEquipo reporte) {
-//            this.grupo = grupo;
-//            this.reporte = reporte;
-//        }
-//    }
+    public static class MaquinaConReporte {
+        public final GrupoElectrogeno grupo;
+        public final ReporteSaludEquipo reporte;
+
+        public MaquinaConReporte(GrupoElectrogeno grupo, ReporteSaludEquipo reporte) {
+            this.grupo = grupo;
+            this.reporte = reporte;
+        }
+    }
 
     private final Context context;
-    private final List<GrupoElectrogeno> data = new ArrayList<>();
-    //    private final List<MaquinaConReporte> data = new ArrayList<>();
+    private final List<MaquinaConReporte> data = new ArrayList<>();
     private final OnCardClickListener listener;
 
     public MaquinaTareaAdapter(Context context, OnCardClickListener listener) {
@@ -50,8 +52,7 @@ public class MaquinaTareaAdapter extends RecyclerView.Adapter<MaquinaTareaAdapte
         this.listener = listener;
     }
 
-    public void setMachineList(List<GrupoElectrogeno> list) {
-//    public void setData(List<MaquinaConReporte> list) {
+    public void setData(List<MaquinaConReporte> list) {
         data.clear();
         if (list != null) data.addAll(list);
         notifyDataSetChanged();
@@ -66,12 +67,13 @@ public class MaquinaTareaAdapter extends RecyclerView.Adapter<MaquinaTareaAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-//        MaquinaConReporte item = data.get(position);
-//        holder.bind(item);
-//        holder.itemView.setOnClickListener(v -> listener.onCardClicked(item.grupo, item.reporte));
-        GrupoElectrogeno grupo = data.get(position);
-        holder.bind(grupo);
-        holder.itemView.setOnClickListener(v -> listener.onCardClicked(grupo));
+        MaquinaConReporte item = data.get(position);
+        holder.bind(item);
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onCardClicked(item.grupo, item.reporte);
+            }
+        });
     }
 
     @Override
@@ -79,13 +81,14 @@ public class MaquinaTareaAdapter extends RecyclerView.Adapter<MaquinaTareaAdapte
         return data.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView tvCodigo, tvBadge, tvHorometro;
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        private final TextView tvCodigo, tvSubtitulo, tvBadge, tvHorometro;
         private final TextView tvVistazoItem1, tvVistazoItem2, tvMasTareas, tvSinTareas;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvCodigo = itemView.findViewById(R.id.tvCodigoMaquinaGrid);
+            tvSubtitulo = itemView.findViewById(R.id.tvSubtituloMaquinaGrid);
             tvBadge = itemView.findViewById(R.id.tvBadgeEstadoGrid);
             tvHorometro = itemView.findViewById(R.id.tvHorometroMaquinaGrid);
             tvVistazoItem1 = itemView.findViewById(R.id.tvVistazoItem1);
@@ -94,102 +97,95 @@ public class MaquinaTareaAdapter extends RecyclerView.Adapter<MaquinaTareaAdapte
             tvSinTareas = itemView.findViewById(R.id.tvSinTareasGrid);
         }
 
-        void bind(GrupoElectrogeno grupo) {
-//        void bind(MaquinaConReporte item) {
-//            GrupoElectrogeno grupo = item.grupo;
-//            MantenimientoSaludManager.ReporteSaludEquipo rep = item.reporte;
+        void bind(MaquinaConReporte item) {
+            GrupoElectrogeno grupo = item.grupo;
+            ReporteSaludEquipo rep = item.reporte;
 
-            tvCodigo.setText(grupo.getCodigo());
+            tvCodigo.setText(grupo.getCodigo() != null ? grupo.getCodigo() : "-");
+            if (tvSubtitulo != null) {
+                tvSubtitulo.setText(rep != null && rep.tipoEquipo != null ? rep.tipoEquipo : "Grupo electrógeno");
+            }
 
-            // Health badge — count pending vs total tasks
-            List<String> pendingKeys = getPendingKeys(grupo);
-            Map<String, Double> relojes = grupo.getRelojesTareas();
-            int total = (relojes != null) ? relojes.size() : 0;
-            int pendientes = pendingKeys.size();
+            double horometro = (rep != null && rep.horometroActual > 0)
+                    ? rep.horometroActual
+                    : grupo.getHorometroActual();
+            tvHorometro.setText(MantenimientoSaludManager.formatearHorometroSinDecimal(horometro));
 
-//            // Badge from real health report
-//            tvBadge.setText(rep.badgeGeneral);
-//            try {
-//                tvBadge.getBackground().setTint(Color.parseColor(rep.colorGeneralHex));
-//            } catch (Exception ignored) {}
+            // Filtrar únicamente tareas vencidas y próximas a vencer
+            List<EstadoSaludTarea> pendientes = new ArrayList<>();
+            int vencidas = 0;
+            int proximas = 0;
+            if (rep != null && rep.todasLasTareas != null) {
+                for (EstadoSaludTarea t : rep.todasLasTareas) {
+                    if (t.isVencido()) {
+                        pendientes.add(t);
+                        vencidas++;
+                    } else if (t.estado == EstadoSalud.PROXIMO) {
+                        pendientes.add(t);
+                        proximas++;
+                    }
+                }
+            }
 
-            if (total == 0) {
-                tvBadge.setText("Sin tareas");
-            } else if (pendientes == 0) {
+            // Ordenar: vencidas primero, luego próximas
+            Collections.sort(pendientes, (a, b) -> Boolean.compare(!a.isVencido(), !b.isVencido()));
+
+            if (vencidas > 0) {
+                tvBadge.setText(vencidas + " venc.");
+                tvBadge.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#D32F2F")));
+            } else if (proximas > 0) {
+                tvBadge.setText(proximas + " próx.");
+                tvBadge.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F57C00")));
+            } else {
                 tvBadge.setText("Al día");
-                tvBadge.setBackgroundResource(R.drawable.bg_chip_anio_selected);
-
-//            // Horometer
-//            if (rep.horometroActual > 0) {
-//                tvHorometro.setText(String.format("%.1f h", rep.horometroActual));
-            } else {
-                tvBadge.setText(pendientes + " pend.");
-                tvBadge.setBackgroundResource(R.drawable.bg_chip_anio_unselected);
-//                tvHorometro.setText("-");
+                tvBadge.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#388E3C")));
             }
 
-            // Horometer display — use horometroActual (double)
-            double horometro = grupo.getHorometroActual();
-            if (horometro > 0) {
-                tvHorometro.setText(String.format("%.1f h", horometro));
-            } else {
-                tvHorometro.setText("-");
-
-
-//            // Collect overdue + próximo tasks
-//            List<MantenimientoSaludManager.EstadoSaludTarea> pendientes = new ArrayList<>();
-//            for (MantenimientoSaludManager.EstadoSaludTarea t : rep.todasLasTareas) {
-//                if (t.isVencido() || t.estado == MantenimientoSaludManager.EstadoSalud.PROXIMO) {
-//                    pendientes.add(t);
-//                }
-            }
-
-            // Pending tasks preview (max 4 shown, 2 items + "más" indicator)
             tvVistazoItem1.setVisibility(View.GONE);
             tvVistazoItem2.setVisibility(View.GONE);
             tvMasTareas.setVisibility(View.GONE);
             tvSinTareas.setVisibility(View.GONE);
 
-            if (pendingKeys.isEmpty()) {
-//            if (pendientes.isEmpty()) {
+            if (pendientes.isEmpty()) {
                 tvSinTareas.setVisibility(View.VISIBLE);
                 return;
             }
 
-            if (pendingKeys.size() >= 1) {
-                String key1 = pendingKeys.get(0);
-                Double val1 = relojes.get(key1);
-                String label1 = "• " + key1.replace("_", " ");
-                if (val1 != null) label1 += " (+" + String.format("%.0f", val1) + " h)";
-                tvVistazoItem1.setText(label1);
+            if (pendientes.size() >= 1) {
+                aplicarVistazo(tvVistazoItem1, pendientes.get(0));
             }
-            if (pendingKeys.size() >= 2) {
-                String key2 = pendingKeys.get(1);
-                Double val2 = relojes.get(key2);
-                String label2 = "• " + key2.replace("_", " ");
-                if (val2 != null) label2 += " (+" + String.format("%.0f", val2) + " h)";
-                tvVistazoItem2.setText(label2);
+            if (pendientes.size() >= 2) {
+                aplicarVistazo(tvVistazoItem2, pendientes.get(1));
             }
-            if (pendingKeys.size() > 2) {
-                int more = pendingKeys.size() - 2;
-                tvMasTareas.setText("+ " + more + " tareas más");
+            if (pendientes.size() > 2) {
+                int mas = pendientes.size() - 2;
+                tvMasTareas.setText("+ " + mas + (mas == 1 ? " tarea más" : " tareas más"));
+                tvMasTareas.setVisibility(View.VISIBLE);
             }
         }
 
-        /**
-         * Returns keys from relojesTareas where the value > 0 (pending tasks).
-         */
-        private List<String> getPendingKeys(GrupoElectrogeno grupo) {
-            List<String> pending = new ArrayList<>();
-            Map<String, Double> relojes = grupo.getRelojesTareas();
-            if (relojes == null) return pending;
-            for (Map.Entry<String, Double> entry : relojes.entrySet()) {
-                Double valor = entry.getValue();
-                if (valor != null && valor > 0) {
-                    pending.add(entry.getKey());
-                }
+        private void aplicarVistazo(TextView tv, EstadoSaludTarea t) {
+            String nombre = t.nombre != null ? t.nombre : "Actividad";
+            String sufijo;
+            int color;
+            if (t.estado == EstadoSalud.VENCIDO_HORAS) {
+                sufijo = String.format(Locale.US, " (+%.0fh)", Math.max(0, t.horasExceso));
+                color = Color.parseColor("#EF9A9A");
+            } else if (t.estado == EstadoSalud.VENCIDO_TIEMPO) {
+                sufijo = " (" + t.mesesTranscurridos + "m)";
+                color = Color.parseColor("#EF9A9A");
+            } else if (t.isVencido()) {
+                sufijo = " (venc.)";
+                color = Color.parseColor("#EF9A9A");
+            } else {
+                sufijo = t.horasRestantes > 0
+                        ? String.format(Locale.US, " (en %.0fh)", t.horasRestantes)
+                        : " (próx.)";
+                color = Color.parseColor("#FFE082");
             }
-            return pending;
+            tv.setText("• " + nombre + sufijo);
+            tv.setTextColor(color);
+            tv.setVisibility(View.VISIBLE);
         }
     }
 }

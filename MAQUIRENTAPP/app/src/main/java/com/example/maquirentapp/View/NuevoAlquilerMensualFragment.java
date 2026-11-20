@@ -1068,10 +1068,14 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             alquiler.setAdminUid(uid);
         }
 
+        final double maxHorometroAlquiler = Math.max(horometroInicial, horometroFinal);
+
         if (modoEdicion) {
             alquilerRepository.actualizarAlquilerMensual(alquiler, new Callback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
+                    MantenimientoSaludManager.actualizarHorometroSiEsMayor(
+                            FirebaseFirestore.getInstance(), idGrupo, maxHorometroAlquiler);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Alquiler actualizado correctamente", Toast.LENGTH_SHORT).show();
                     }
@@ -1092,6 +1096,8 @@ public class NuevoAlquilerMensualFragment extends Fragment {
             alquilerRepository.crearAlquilerMensualConPrimerMes(alquiler, primerMes, new Callback<AlquilerMensual>() {
                 @Override
                 public void onSuccess(AlquilerMensual alquilerCreado) {
+                    MantenimientoSaludManager.actualizarHorometroSiEsMayor(
+                            FirebaseFirestore.getInstance(), idGrupo, maxHorometroAlquiler);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Alquiler registrado correctamente", Toast.LENGTH_SHORT).show();
                     }
@@ -1151,6 +1157,10 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         alquilerRepository.actualizarDetalleMes(detalle, new Callback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                if (idGrupo != null && detalle.getHorometro() > 0) {
+                    MantenimientoSaludManager.actualizarHorometroSiEsMayor(
+                            FirebaseFirestore.getInstance(), idGrupo, detalle.getHorometro());
+                }
             }
 
             @Override
@@ -1651,12 +1661,13 @@ public class NuevoAlquilerMensualFragment extends Fragment {
         db.collection("gruposElectrogenos").document(idGrupoTarget).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 String codigoG = doc.getString("codigo");
-                Map<String, Object> up = new HashMap<>();
-                if (horometroFinal > 0) {
+                Double actual = doc.getDouble("horometroActual");
+                if (horometroFinal > 0 && (actual == null || horometroFinal > actual)) {
+                    Map<String, Object> up = new HashMap<>();
                     up.put("horometroActual", horometroFinal);
                     up.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                    db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
                 }
-                db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
                 MantenimientoSaludManager.crearTareaRetornoCarreta(codigoG != null ? codigoG : idGrupoTarget, null);
             }
         });

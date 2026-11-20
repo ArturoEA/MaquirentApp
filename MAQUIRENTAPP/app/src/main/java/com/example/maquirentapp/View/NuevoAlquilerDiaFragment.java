@@ -422,6 +422,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             alquilerRepository.actualizarAlquilerDia(alquilerActual, new Callback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
+                    double maxH = Math.max(alquilerActual.getHorometroInicial(), alquilerActual.getHorometroFinal());
+                    MantenimientoSaludManager.actualizarHorometroSiEsMayor(
+                            FirebaseFirestore.getInstance(), alquilerActual.getIdGrupo(), maxH);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Alquiler actualizado", Toast.LENGTH_SHORT).show();
                     }
@@ -444,6 +447,9 @@ public class NuevoAlquilerDiaFragment extends Fragment {
             alquilerRepository.crearAlquilerDia(alquilerActual, new Callback<AlquilerDia>() {
                 @Override
                 public void onSuccess(AlquilerDia alquiler) {
+                    double maxH = Math.max(alquilerActual.getHorometroInicial(), alquilerActual.getHorometroFinal());
+                    MantenimientoSaludManager.actualizarHorometroSiEsMayor(
+                            FirebaseFirestore.getInstance(), alquilerActual.getIdGrupo(), maxH);
                     if (getContext() != null) {
                         Toast.makeText(getContext(), "Alquiler creado", Toast.LENGTH_SHORT).show();
                     }
@@ -627,12 +633,13 @@ public class NuevoAlquilerDiaFragment extends Fragment {
         db.collection("gruposElectrogenos").document(idGrupoTarget).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 String codigoG = doc.getString("codigo");
-                Map<String, Object> up = new HashMap<>();
-                if (horometroFinal > 0) {
+                Double actual = doc.getDouble("horometroActual");
+                if (horometroFinal > 0 && (actual == null || horometroFinal > actual)) {
+                    Map<String, Object> up = new HashMap<>();
                     up.put("horometroActual", horometroFinal);
                     up.put("fechaActualizacionHorometro", System.currentTimeMillis());
+                    db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
                 }
-                db.collection("gruposElectrogenos").document(idGrupoTarget).update(up);
                 MantenimientoSaludManager.crearTareaRetornoCarreta(codigoG != null ? codigoG : idGrupoTarget, null);
             }
         });

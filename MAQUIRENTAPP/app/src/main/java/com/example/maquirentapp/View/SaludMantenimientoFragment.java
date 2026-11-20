@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
@@ -25,11 +24,12 @@ import com.example.maquirentapp.Repository.Callback;
 import com.example.maquirentapp.Utils.MantenimientoSaludManager;
 import com.example.maquirentapp.Utils.MantenimientoSaludManager.EstadoSalud;
 import com.example.maquirentapp.Utils.MantenimientoSaludManager.EstadoSaludTarea;
-import com.example.maquirentapp.Utils.MantenimientoSaludManager.PuntoHistorialIntervalo;
 import com.example.maquirentapp.Utils.MantenimientoSaludManager.ReporteSaludEquipo;
 import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.android.material.button.MaterialButton;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,6 +46,7 @@ public class SaludMantenimientoFragment extends Fragment {
     private String codigo = "";
     private ReporteSaludEquipo ultimoReporte = null;
     private FiltroEstado filtroActual = FiltroEstado.TODAS;
+    private final Map<String, Boolean> subsistemasExpandidos = new HashMap<>();
 
     private ShimmerFrameLayout shimmerSalud;
     private LinearLayout layoutContenidoSalud;
@@ -66,7 +67,6 @@ public class SaludMantenimientoFragment extends Fragment {
     private TextView tvValorPuntualidad;
     private TextView tvValorIntervaloPromedio;
     private TextView tvDiagnosticoDisciplina;
-    private LinearLayout layoutBarrasGrafico;
 
     // Chips de Filtro
     private TextView chipFiltroTodas;
@@ -127,7 +127,6 @@ public class SaludMantenimientoFragment extends Fragment {
         tvValorPuntualidad = view.findViewById(R.id.tvValorPuntualidad);
         tvValorIntervaloPromedio = view.findViewById(R.id.tvValorIntervaloPromedio);
         tvDiagnosticoDisciplina = view.findViewById(R.id.tvDiagnosticoDisciplina);
-        layoutBarrasGrafico = view.findViewById(R.id.layoutBarrasGrafico);
 
         chipFiltroTodas = view.findViewById(R.id.chipFiltroTodas);
         chipFiltroVencidas = view.findViewById(R.id.chipFiltroVencidas);
@@ -231,7 +230,7 @@ public class SaludMantenimientoFragment extends Fragment {
     private void poblarHeroCard(ReporteSaludEquipo rep) {
         if (rep == null) return;
 
-        tvTituloEquipoSalud.setText(rep.codigoGrupo + " - " + rep.tipoEquipo);
+        tvTituloEquipoSalud.setText(rep.codigoGrupo + " · " + rep.tipoEquipo);
         tvBadgeGeneralSalud.setText(rep.badgeGeneral);
 
         try {
@@ -239,15 +238,17 @@ public class SaludMantenimientoFragment extends Fragment {
             tvBadgeGeneralSalud.setBackgroundTintList(ColorStateList.valueOf(colorBadge));
         } catch (Exception ignored) {}
 
-        tvHorometroActualGrande.setText(String.format(Locale.US, "%,.1f h", rep.horometroActual));
+        tvHorometroActualGrande.setText(rep.horometroActual > 0
+                ? String.format(Locale.US, "%,.0f h", rep.horometroActual)
+                : "-");
         tvIndiceSaludPorcentaje.setText(rep.indiceSaludPorcentaje + "%");
 
         if (rep.indiceSaludPorcentaje >= 85) {
-            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#4CAF50"));
+            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#66BB6A"));
         } else if (rep.indiceSaludPorcentaje >= 60) {
-            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#FFC107"));
+            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#FFA726"));
         } else {
-            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#F44336"));
+            tvIndiceSaludPorcentaje.setTextColor(Color.parseColor("#EF5350"));
         }
 
         tvTotalAlDia.setText(String.valueOf(rep.tareasAlDia));
@@ -261,86 +262,17 @@ public class SaludMantenimientoFragment extends Fragment {
 
         tvValorPuntualidad.setText(String.format(Locale.US, "%.0f%%", m.indicePuntualidad));
         if (m.indicePuntualidad >= 85) {
-            tvValorPuntualidad.setTextColor(Color.parseColor("#4CAF50"));
+            tvValorPuntualidad.setTextColor(Color.parseColor("#66BB6A"));
         } else if (m.indicePuntualidad >= 60) {
-            tvValorPuntualidad.setTextColor(Color.parseColor("#FFC107"));
+            tvValorPuntualidad.setTextColor(Color.parseColor("#FFA726"));
         } else {
-            tvValorPuntualidad.setTextColor(Color.parseColor("#F44336"));
+            tvValorPuntualidad.setTextColor(Color.parseColor("#EF5350"));
         }
 
-        tvValorIntervaloPromedio.setText(String.format(Locale.US, "%.1f h", m.intervaloPromedio));
+        tvValorIntervaloPromedio.setText(m.intervaloPromedio > 0
+                ? String.format(Locale.US, "%.0f h", m.intervaloPromedio)
+                : "-");
         tvDiagnosticoDisciplina.setText(m.diagnostico);
-
-        layoutBarrasGrafico.removeAllViews();
-        if (m.intervalos == null || m.intervalos.isEmpty()) {
-            TextView tvVacio = new TextView(getContext());
-            tvVacio.setText("Aún no hay suficientes mantenimientos para calcular intervalos.");
-            tvVacio.setTextColor(Color.parseColor("#90A4AE"));
-            tvVacio.setTextSize(12);
-            if (fontAnta != null) tvVacio.setTypeface(fontAnta);
-            layoutBarrasGrafico.addView(tvVacio);
-        } else {
-            for (int i = 0; i < m.intervalos.size(); i++) {
-                PuntoHistorialIntervalo p = m.intervalos.get(i);
-                View vistaFila = crearFilaGraficoIntervalo(i + 1, p);
-                layoutBarrasGrafico.addView(vistaFila);
-            }
-        }
-    }
-
-    private View crearFilaGraficoIntervalo(int numeroServicio, PuntoHistorialIntervalo p) {
-        LinearLayout container = new LinearLayout(getContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(0, 10, 0, 10);
-
-        // Header fila: Servicio # y Badge
-        LinearLayout headerRow = new LinearLayout(getContext());
-        headerRow.setOrientation(LinearLayout.HORIZONTAL);
-        headerRow.setGravity(Gravity.CENTER_VERTICAL);
-
-        TextView tvTitulo = new TextView(getContext());
-        tvTitulo.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
-        tvTitulo.setText(String.format(Locale.US, "Servicio #%d (Horómetro %.1f h)", numeroServicio, p.horometro));
-        tvTitulo.setTextColor(Color.WHITE);
-        tvTitulo.setTextSize(12);
-        if (fontAnta != null) tvTitulo.setTypeface(fontAnta, Typeface.BOLD);
-
-        TextView tvBadge = new TextView(getContext());
-        String estadoTexto = p.esATiempo ? "A tiempo" : String.format(Locale.US, "+%.0f h exceso", p.deltaHoras - 250);
-        tvBadge.setText(estadoTexto);
-        tvBadge.setTextSize(11);
-        tvBadge.setPadding(16, 4, 16, 4);
-        tvBadge.setBackgroundResource(R.drawable.dialog_rounded_white_background);
-        int colorBadge = Color.parseColor(p.esATiempo ? "#2E7D32" : "#C62828");
-        tvBadge.setBackgroundTintList(ColorStateList.valueOf(colorBadge));
-        tvBadge.setTextColor(Color.WHITE);
-        if (fontAnta != null) tvBadge.setTypeface(fontAnta, Typeface.BOLD);
-
-        headerRow.addView(tvTitulo);
-        headerRow.addView(tvBadge);
-
-        // Subtítulo con fecha y delta
-        TextView tvSub = new TextView(getContext());
-        tvSub.setText(String.format(Locale.US, "Fecha: %s | Intervalo: %.1f h (Meta: 250.0 h)", p.fecha, p.deltaHoras));
-        tvSub.setTextColor(Color.parseColor("#B0BEC5"));
-        tvSub.setTextSize(11);
-        tvSub.setPadding(0, 4, 0, 6);
-        if (fontAnta != null) tvSub.setTypeface(fontAnta);
-
-        // Barra de progreso estilizada
-        ProgressBar pb = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleHorizontal);
-        pb.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 16));
-        pb.setMax(350);
-        pb.setProgress((int) Math.min(350, p.deltaHoras));
-        pb.setProgressDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.bg_progress_salud, null));
-        int colorBarra = Color.parseColor(p.esATiempo ? "#4CAF50" : "#F44336");
-        pb.setProgressTintList(ColorStateList.valueOf(colorBarra));
-
-        container.addView(headerRow);
-        container.addView(tvSub);
-        container.addView(pb);
-
-        return container;
     }
 
     private void renderizarTareas() {
@@ -354,27 +286,43 @@ public class SaludMantenimientoFragment extends Fragment {
             String subsistemaNombre = entry.getKey();
             List<EstadoSaludTarea> lista = entry.getValue();
 
-            // Filtrar tareas que coincidan con el filtro actual
-            java.util.ArrayList<EstadoSaludTarea> listaFiltrada = new java.util.ArrayList<>();
+            List<EstadoSaludTarea> listaFiltrada = new ArrayList<>();
+            boolean tienePendientes = false;
             for (EstadoSaludTarea t : lista) {
                 if (coincideConFiltro(t)) {
                     listaFiltrada.add(t);
+                    if (t.isVencido() || t.estado == EstadoSalud.PROXIMO) {
+                        tienePendientes = true;
+                    }
                 }
             }
 
             if (listaFiltrada.isEmpty()) continue;
-
             totalTareasMostradas += listaFiltrada.size();
 
-            // 1. Cabecera del subsistema
-            View headerSubsistema = crearHeaderSubsistema(subsistemaNombre, listaFiltrada.size());
+            // En vista TODAS, expandir por defecto solo subsistemas con tareas vencidas o próximas
+            boolean expandido;
+            if (filtroActual != FiltroEstado.TODAS) {
+                expandido = true;
+            } else if (subsistemasExpandidos.containsKey(subsistemaNombre)) {
+                expandido = Boolean.TRUE.equals(subsistemasExpandidos.get(subsistemaNombre));
+            } else {
+                expandido = tienePendientes;
+                subsistemasExpandidos.put(subsistemaNombre, expandido);
+            }
+
+            LinearLayout contenedorTareasSub = new LinearLayout(requireContext());
+            contenedorTareasSub.setOrientation(LinearLayout.VERTICAL);
+            contenedorTareasSub.setVisibility(expandido ? View.VISIBLE : View.GONE);
+
+            View headerSubsistema = crearHeaderSubsistema(subsistemaNombre, listaFiltrada.size(), tienePendientes, expandido, contenedorTareasSub);
             layoutSubsistemasTareas.addView(headerSubsistema);
 
-            // 2. Tarjetas de cada tarea
             for (EstadoSaludTarea tarea : listaFiltrada) {
-                View cardTarea = inflarCardTarea(inflater, layoutSubsistemasTareas, tarea);
-                layoutSubsistemasTareas.addView(cardTarea);
+                View cardTarea = inflarCardTarea(inflater, contenedorTareasSub, tarea);
+                contenedorTareasSub.addView(cardTarea);
             }
+            layoutSubsistemasTareas.addView(contenedorTareasSub);
         }
 
         if (totalTareasMostradas == 0) {
@@ -384,7 +332,7 @@ public class SaludMantenimientoFragment extends Fragment {
                     LinearLayout.LayoutParams.WRAP_CONTENT));
             tvVacio.setGravity(Gravity.CENTER);
             tvVacio.setPadding(24, 40, 24, 40);
-            tvVacio.setText("No hay tareas para mostrar en la categoría seleccionada.");
+            tvVacio.setText("No hay tareas en esta categoría.");
             tvVacio.setTextColor(Color.parseColor("#B0BEC5"));
             tvVacio.setTextSize(13);
             if (fontAnta != null) tvVacio.setTypeface(fontAnta);
@@ -400,26 +348,34 @@ public class SaludMantenimientoFragment extends Fragment {
         return true;
     }
 
-    private View crearHeaderSubsistema(String nombreSubsistema, int cantidadTareas) {
+    private View crearHeaderSubsistema(String nombreSubsistema, int cantidadTareas, boolean tienePendientes,
+                                       boolean expandidoInicial, LinearLayout contenedorHijo) {
         LinearLayout layoutHeader = new LinearLayout(requireContext());
         layoutHeader.setOrientation(LinearLayout.HORIZONTAL);
         layoutHeader.setGravity(Gravity.CENTER_VERTICAL);
-        layoutHeader.setPadding(0, 16, 0, 8);
+        layoutHeader.setPadding(4, 18, 4, 8);
 
         TextView tvNombre = new TextView(requireContext());
         tvNombre.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
         tvNombre.setText(nombreSubsistema.toUpperCase(Locale.ROOT));
-        tvNombre.setTextColor(Color.WHITE);
-        tvNombre.setTextSize(13);
+        tvNombre.setTextColor(tienePendientes ? Color.WHITE : Color.parseColor("#B0BEC5"));
+        tvNombre.setTextSize(12.5f);
         if (fontAnta != null) tvNombre.setTypeface(fontAnta, Typeface.BOLD);
 
         TextView tvContador = new TextView(requireContext());
-        tvContador.setText(cantidadTareas + (cantidadTareas == 1 ? " tarea" : " tareas"));
+        tvContador.setText(cantidadTareas + (expandidoInicial ? " ▲" : " ▼"));
         tvContador.setTextColor(Color.parseColor("#90CAF9"));
         tvContador.setTextSize(11);
-        tvContador.setPadding(16, 4, 16, 4);
+        tvContador.setPadding(18, 5, 18, 5);
         tvContador.setBackgroundResource(R.drawable.bg_chip_anio_unselected);
         if (fontAnta != null) tvContador.setTypeface(fontAnta);
+
+        layoutHeader.setOnClickListener(v -> {
+            boolean nuevoEstado = contenedorHijo.getVisibility() != View.VISIBLE;
+            contenedorHijo.setVisibility(nuevoEstado ? View.VISIBLE : View.GONE);
+            subsistemasExpandidos.put(nombreSubsistema, nuevoEstado);
+            tvContador.setText(cantidadTareas + (nuevoEstado ? " ▲" : " ▼"));
+        });
 
         layoutHeader.addView(tvNombre);
         layoutHeader.addView(tvContador);
@@ -432,10 +388,8 @@ public class SaludMantenimientoFragment extends Fragment {
         TextView tvNombre = card.findViewById(R.id.tvNombreTareaSalud);
         TextView tvBadge = card.findViewById(R.id.tvBadgeEstadoTarea);
         TextView tvFrecuencia = card.findViewById(R.id.tvFrecuenciaTarea);
-        TextView tvUltimo = card.findViewById(R.id.tvUltimoServicioTarea);
         ProgressBar pb = card.findViewById(R.id.pbDesgasteTarea);
         TextView tvHorasAcumuladas = card.findViewById(R.id.tvHorasAcumuladasDetalle);
-        TextView tvPorcentaje = card.findViewById(R.id.tvPorcentajeUso);
 
         tvNombre.setText(tarea.nombre);
         tvBadge.setText(tarea.badgeTexto);
@@ -444,43 +398,38 @@ public class SaludMantenimientoFragment extends Fragment {
             int colorEstado = Color.parseColor(tarea.colorHex);
             tvBadge.setBackgroundTintList(ColorStateList.valueOf(colorEstado));
             pb.setProgressTintList(ColorStateList.valueOf(colorEstado));
-            tvPorcentaje.setTextColor(colorEstado);
         } catch (Exception ignored) {}
 
-        // Frecuencia
+        // Línea compacta: Frecuencia · Último servicio
+        String freqStr;
         if (tarea.esInspeccionRetorno) {
-            String freqStr = tarea.frecuenciaRetornos > 1
-                    ? "Frecuencia: Cada " + tarea.frecuenciaRetornos + " retornos"
-                    : "Frecuencia: Cada retorno de alquiler";
-            tvFrecuencia.setText(freqStr);
-        } else if (tarea.intervaloHoras > 0 && tarea.mesesMaximos > 0) {
-            tvFrecuencia.setText(String.format(Locale.US, "Frecuencia: Cada %d h (máx. %d m)", tarea.intervaloHoras, tarea.mesesMaximos));
+            freqStr = tarea.frecuenciaRetornos > 1 ? "Cada " + tarea.frecuenciaRetornos + " retornos" : "Cada retorno";
         } else if (tarea.intervaloHoras > 0) {
-            tvFrecuencia.setText(String.format(Locale.US, "Frecuencia: Cada %d h", tarea.intervaloHoras));
+            freqStr = "Cada " + tarea.intervaloHoras + " h";
         } else {
-            tvFrecuencia.setText("Frecuencia: Inspección de rutina");
+            freqStr = "Rutina";
         }
 
-        // Último servicio
+        String ultimoStr;
         if (tarea.esInspeccionRetorno) {
-            tvUltimo.setText(tarea.ultimoRetorno > 0 ? "Último: Retorno #" + tarea.ultimoRetorno : "Último: Sin registro");
+            ultimoStr = tarea.ultimoRetorno > 0 ? "Último: #" + tarea.ultimoRetorno : "Sin registro";
         } else if (tarea.ultimoHorometro > 0) {
-            tvUltimo.setText(String.format(Locale.US, "Último: %,.1f h", tarea.ultimoHorometro));
+            ultimoStr = String.format(Locale.US, "Último: %,.0f h", tarea.ultimoHorometro);
         } else {
-            tvUltimo.setText("Último: Sin registros previos");
+            ultimoStr = "Sin registro";
         }
+        tvFrecuencia.setText(freqStr + " · " + ultimoStr);
 
-        // Progreso y Horas
+        // Progreso y uso corto sin decimales innecesarios
         int progreso = Math.min(100, Math.max(0, tarea.porcentajeUso));
         pb.setProgress(progreso);
-        tvPorcentaje.setText(progreso + "%");
 
         if (tarea.esInspeccionRetorno) {
-            tvHorasAcumuladas.setText(tarea.retornosTranscurridos + " retornos acumulados de " + tarea.frecuenciaRetornos);
+            tvHorasAcumuladas.setText(tarea.retornosTranscurridos + " / " + tarea.frecuenciaRetornos + " ret.");
         } else if (tarea.intervaloHoras > 0) {
-            tvHorasAcumuladas.setText(String.format(Locale.US, "%,.1f h acumuladas de %d h", tarea.horasTranscurridas, tarea.intervaloHoras));
+            tvHorasAcumuladas.setText(String.format(Locale.US, "%.0f / %d h", Math.max(0, tarea.horasTranscurridas), tarea.intervaloHoras));
         } else {
-            tvHorasAcumuladas.setText("Inspección periódica");
+            tvHorasAcumuladas.setText("-");
         }
 
         return card;

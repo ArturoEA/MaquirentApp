@@ -88,10 +88,12 @@ public class NuevoMantenimientoFragment extends Fragment {
     private static final String TAG = "NuevoMantenimiento";
     private static final String ARG_CODIGO = "codigo";
     private static final String ARG_MANTENIMIENTO_ID = "mantenimiento_id";
+    public static final String ARG_ITEMS_PRESELECCIONADOS = "items_preseleccionados";
     private static final int MAX_FOTOS = 4;
 
     private String codigoGrupo;
     private String mantenimientoId;
+    private ArrayList<String> itemsPreseleccionados;
     private boolean modoLectura = true;
     private double ultimoHorometroRegistrado = 0.0;
 
@@ -140,6 +142,7 @@ public class NuevoMantenimientoFragment extends Fragment {
         if (getArguments() != null) {
             codigoGrupo = getArguments().getString(ARG_CODIGO);
             mantenimientoId = getArguments().getString(ARG_MANTENIMIENTO_ID);
+            itemsPreseleccionados = getArguments().getStringArrayList(ARG_ITEMS_PRESELECCIONADOS);
             modoLectura = mantenimientoId != null;
         }
 
@@ -336,6 +339,8 @@ public class NuevoMantenimientoFragment extends Fragment {
 
         if (mantenimientoActual != null && mantenimientoActual.getItemsRealizados() != null) {
             itemsAdapter.setItemsSeleccionados(mantenimientoActual.getItemsRealizados());
+        } else if (mantenimientoActual == null && itemsPreseleccionados != null && !itemsPreseleccionados.isEmpty()) {
+            itemsAdapter.setItemsSeleccionados(itemsPreseleccionados);
         }
     }
 
@@ -1236,22 +1241,31 @@ public class NuevoMantenimientoFragment extends Fragment {
                             long now = System.currentTimeMillis();
                             long contadorRetornosActual = doc.contains("contadorRetornos") && doc.getLong("contadorRetornos") != null
                                     ? doc.getLong("contadorRetornos") : 0L;
+                            Double horometroActualDoc = doc.getDouble("horometroActual");
 
-                            // Actualizar única y exclusivamente las tareas marcadas
+                            // Actualizar única y exclusivamente las tareas marcadas (sin retroceder relojes más recientes)
                             for (String it : items) {
                                 if (it == null || it.trim().isEmpty()) continue;
                                 MantenimientoConfiguracion cfg = buscarConfigPorId(it);
                                 String taskId = it.trim();
                                 String taskSlug = cfg != null ? cfg.getSlugNormalizado() : "";
 
-                                // 1. Reloj de horas y fecha por ID de tarea
-                                relojesTareas.put(taskId, horometro);
-                                fechasTareas.put(taskId, now);
+                                // 1. Reloj de horas y fecha por ID de tarea (solo si >= al último registrado)
+                                double relojPrevId = relojesTareas.get(taskId) instanceof Number
+                                        ? ((Number) relojesTareas.get(taskId)).doubleValue() : -1.0;
+                                if (horometro >= relojPrevId) {
+                                    relojesTareas.put(taskId, horometro);
+                                    fechasTareas.put(taskId, now);
+                                }
 
                                 // 2. Reloj por slug semántico para persistencia entre versiones
                                 if (!taskSlug.isEmpty()) {
-                                    relojesTareas.put(taskSlug, horometro);
-                                    fechasTareas.put(taskSlug, now);
+                                    double relojPrevSlug = relojesTareas.get(taskSlug) instanceof Number
+                                            ? ((Number) relojesTareas.get(taskSlug)).doubleValue() : -1.0;
+                                    if (horometro >= relojPrevSlug) {
+                                        relojesTareas.put(taskSlug, horometro);
+                                        fechasTareas.put(taskSlug, now);
+                                    }
                                 }
 
                                 // 3. Reloj por retornos de alquiler si corresponde
@@ -1265,10 +1279,14 @@ public class NuevoMantenimientoFragment extends Fragment {
                                 // 4. Retrocompatibilidad para módulo de salud tradicional
                                 String nombre = cfg != null && cfg.getNombre() != null ? cfg.getNombre().toLowerCase() : "";
                                 if (nombre.contains("aceite") && (nombre.contains("cambio") || nombre.contains("15w-40"))) {
-                                    relojesTareas.put("aceite", horometro);
-                                    fechasTareas.put("aceite", now);
-                                    relojesComponentes.put("aceite", horometro);
-                                    fechasComponentes.put("aceite", now);
+                                    double relojPrevAceite = relojesTareas.get("aceite") instanceof Number
+                                            ? ((Number) relojesTareas.get("aceite")).doubleValue() : -1.0;
+                                    if (horometro >= relojPrevAceite) {
+                                        relojesTareas.put("aceite", horometro);
+                                        fechasTareas.put("aceite", now);
+                                        relojesComponentes.put("aceite", horometro);
+                                        fechasComponentes.put("aceite", now);
+                                    }
                                 }
                             }
 
@@ -1277,8 +1295,11 @@ public class NuevoMantenimientoFragment extends Fragment {
                             fechasComponentes.putAll(fechasTareas);
 
                             Map<String, Object> updates = new HashMap<>();
-                            updates.put("horometroActual", horometro);
-                            updates.put("fechaActualizacionHorometro", now);
+                            // Solo actualizar horometroActual si el mantenimiento registrado supera al actual
+                            if (horometro > 0 && (horometroActualDoc == null || horometro > horometroActualDoc)) {
+                                updates.put("horometroActual", horometro);
+                                updates.put("fechaActualizacionHorometro", now);
+                            }
                             updates.put("relojesTareas", relojesTareas);
                             updates.put("fechasTareas", fechasTareas);
                             updates.put("retornosTareas", retornosTareas);
